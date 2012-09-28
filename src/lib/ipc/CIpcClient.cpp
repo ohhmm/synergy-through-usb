@@ -53,7 +53,7 @@ void
 CIpcClient::connect()
 {
 	EVENTQUEUE->adoptHandler(
-		IDataSocket::getConnectedEvent(), m_socket.getEventTarget(),
+		IDataTransfer::getConnectedEvent(), m_socket.getEventTarget(),
 		new TMethodEventJob<CIpcClient>(
 		this, &CIpcClient::handleConnected));
 
@@ -69,7 +69,7 @@ CIpcClient::connect()
 void
 CIpcClient::disconnect()
 {
-	EVENTQUEUE->removeHandler(IDataSocket::getConnectedEvent(), m_socket.getEventTarget());
+	EVENTQUEUE->removeHandler(IDataTransfer::getConnectedEvent(), m_socket.getEventTarget());
 	EVENTQUEUE->removeHandler(CIpcServerProxy::getMessageReceivedEvent(), m_server);
 
 	m_server->disconnect();

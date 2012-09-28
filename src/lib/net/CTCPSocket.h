@@ -19,7 +19,7 @@
 #ifndef CTCPSOCKET_H
 #define CTCPSOCKET_H
 
-#include "IDataSocket.h"
+#include "IDataTransfer.h"
 #include "CStreamBuffer.h"
 #include "CCondVar.h"
 #include "CMutex.h"
@@ -33,7 +33,7 @@ class ISocketMultiplexerJob;
 /*!
 A data socket using TCP.
 */
-class CTCPSocket : public IDataSocket {
+class CTCPSocket : public IDataTransfer {
 public:
 	CTCPSocket();
 	CTCPSocket(CArchSocket);
@@ -53,7 +53,7 @@ public:
 	virtual bool		isReady() const;
 	virtual UInt32		getSize() const;
 
-	// IDataSocket overrides
+	// IDataTransfer overrides
 	virtual void		connect(const CNetworkAddress&);
 
 private:

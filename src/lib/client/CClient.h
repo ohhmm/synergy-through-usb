@@ -27,7 +27,7 @@
 class CEventQueueTimer;
 class CScreen;
 class CServerProxy;
-class IDataSocket;
+class IDataTransfer;
 class ISocketFactory;
 namespace synergy { class IStream; }
 class IStreamFilterFactory;

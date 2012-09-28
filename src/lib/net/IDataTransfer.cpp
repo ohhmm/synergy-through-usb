@@ -16,39 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "IDataSocket.h"
+#include "IDataTransfer.h"
 #include "CEventQueue.h"
 
 //
-// IDataSocket
+// IDataTransfer
 //
 
-CEvent::Type			IDataSocket::s_connectedEvent = CEvent::kUnknown;
-CEvent::Type			IDataSocket::s_failedEvent    = CEvent::kUnknown;
+CEvent::Type			IDataTransfer::s_connectedEvent = CEvent::kUnknown;
+CEvent::Type			IDataTransfer::s_failedEvent    = CEvent::kUnknown;
 
 CEvent::Type
-IDataSocket::getConnectedEvent()
+IDataTransfer::getConnectedEvent()
 {
 	return EVENTQUEUE->registerTypeOnce(s_connectedEvent,
-							"IDataSocket::connected");
+							"IDataTransfer::connected");
 }
 
 CEvent::Type
-IDataSocket::getConnectionFailedEvent()
+IDataTransfer::getConnectionFailedEvent()
 {
 	return EVENTQUEUE->registerTypeOnce(s_failedEvent,
-							"IDataSocket::failed");
+							"IDataTransfer::failed");
 }
 
 void
-IDataSocket::close()
+IDataTransfer::close()
 {
 	// this is here to work around a VC++6 bug.  see the header file.
 	assert(0 && "bad call");
 }
 
 void*
-IDataSocket::getEventTarget() const
+IDataTransfer::getEventTarget() const
 {
 	// this is here to work around a VC++6 bug.  see the header file.
 	assert(0 && "bad call");

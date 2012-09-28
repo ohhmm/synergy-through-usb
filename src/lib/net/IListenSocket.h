@@ -21,7 +21,7 @@
 
 #include "ISocket.h"
 
-class IDataSocket;
+class IDataTransfer;
 
 //! Listen socket interface
 /*!
@@ -39,7 +39,7 @@ public:
 	data stream.  Returns NULL if no socket is waiting to be accepted.
 	This is only valid after a call to \c bind().
 	*/
-	virtual IDataSocket*	accept() = 0;
+	virtual IDataTransfer*	accept() = 0;
 
 	//@}
 	//! @name accessors

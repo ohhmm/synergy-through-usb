@@ -25,7 +25,7 @@
 #include "ProtocolTypes.h"
 #include "XScreen.h"
 #include "XSynergy.h"
-#include "IDataSocket.h"
+#include "IDataTransfer.h"
 #include "IListenSocket.h"
 #include "XSocket.h"
 #include "IEventQueue.h"

@@ -21,7 +21,7 @@
 #include "CClientProxyUnknown.h"
 #include "CPacketStreamFilter.h"
 #include "IStreamFilterFactory.h"
-#include "IDataSocket.h"
+#include "IDataTransfer.h"
 #include "IListenSocket.h"
 #include "ISocketFactory.h"
 #include "XSocket.h"

@@ -16,40 +16,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CTCPLISTENSOCKET_H
-#define CTCPLISTENSOCKET_H
+#ifndef CUSBDATALINK_H
+#define CUSBDATALINK_H
 
-#include "IListenSocket.h"
+#include "IDataTransfer.h"
 #include "IArchNetwork.h"
 
-class CMutex;
-class ISocketMultiplexerJob;
-
-//! TCP listen socket
+//! TCP data socket
 /*!
-A listen socket using TCP.
+A data socket using TCP.
 */
-class CTCPListenSocket : public IListenSocket {
+class CUSBDataLink : public IDataTransfer {
 public:
-	CTCPListenSocket();
-	~CTCPListenSocket();
+	CUSBDataLink();
+	CUSBDataLink(CArchSocket);
+	~CUSBDataLink();
 
 	// ISocket overrides
 	virtual void		bind(const CNetworkAddress&);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 
-	// IListenSocket overrides
-	virtual IDataTransfer*	accept();
+	// IStream overrides
+	virtual UInt32		read(void* buffer, UInt32 n);
+	virtual void		write(const void* buffer, UInt32 n);
+	virtual void		flush();
+	virtual void		shutdownInput();
+	virtual void		shutdownOutput();
+	virtual bool		isReady() const;
+	virtual UInt32		getSize() const;
+
+	// IDataTransfer overrides
+	virtual void		connect(const CNetworkAddress&);
 
 private:
-	ISocketMultiplexerJob*
-						serviceListening(ISocketMultiplexerJob*,
-							bool, bool, bool);
+	void				init();
 
-private:
-	CArchSocket			m_socket;
-	CMutex*				m_mutex;
 };
 
 #endif

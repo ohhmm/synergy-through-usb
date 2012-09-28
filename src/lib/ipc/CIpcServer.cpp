@@ -24,7 +24,7 @@
 #include "CLog.h"
 #include "CIpcClientProxy.h"
 #include "IStream.h"
-#include "IDataSocket.h"
+#include "IDataTransfer.h"
 #include "CIpcMessage.h"
 
 CEvent::Type			CIpcServer::s_clientConnectedEvent = CEvent::kUnknown;

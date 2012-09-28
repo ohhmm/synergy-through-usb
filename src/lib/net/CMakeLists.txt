@@ -19,8 +19,9 @@ set(inc
 	CSocketMultiplexer.h
 	CTCPListenSocket.h
 	CTCPSocket.h
+	CUSBDataLink.h
 	CTCPSocketFactory.h
-	IDataSocket.h
+	IDataTransfer.h
 	IListenSocket.h
 	ISocket.h
 	ISocketFactory.h
@@ -34,8 +35,9 @@ set(src
 	CSocketMultiplexer.cpp
 	CTCPListenSocket.cpp
 	CTCPSocket.cpp
+	CUSBDataLink.cpp
 	CTCPSocketFactory.cpp
-	IDataSocket.cpp
+	IDataTransfer.cpp
 	IListenSocket.cpp
 	ISocket.cpp
 	XSocket.cpp

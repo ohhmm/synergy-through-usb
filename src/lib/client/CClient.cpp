@@ -24,7 +24,7 @@
 #include "CProtocolUtil.h"
 #include "ProtocolTypes.h"
 #include "XSynergy.h"
-#include "IDataSocket.h"
+#include "IDataTransfer.h"
 #include "ISocketFactory.h"
 #include "IStreamFilterFactory.h"
 #include "CLog.h"
@@ -138,7 +138,7 @@ CClient::connect()
 		}
 
 		// create the socket
-		IDataSocket* socket = m_socketFactory->create();
+		IDataTransfer* socket = m_socketFactory->create();
 
 		// filter socket messages, including a packetizing filter
 		m_stream = socket;
@@ -450,11 +450,11 @@ CClient::setupConnecting()
 {
 	assert(m_stream != NULL);
 
-	m_eventQueue.adoptHandler(IDataSocket::getConnectedEvent(),
+	m_eventQueue.adoptHandler(IDataTransfer::getConnectedEvent(),
 							m_stream->getEventTarget(),
 							new TMethodEventJob<CClient>(this,
 								&CClient::handleConnected));
-	m_eventQueue.adoptHandler(IDataSocket::getConnectionFailedEvent(),
+	m_eventQueue.adoptHandler(IDataTransfer::getConnectionFailedEvent(),
 							m_stream->getEventTarget(),
 							new TMethodEventJob<CClient>(this,
 								&CClient::handleConnectionFailed));
@@ -519,9 +519,9 @@ void
 CClient::cleanupConnecting()
 {
 	if (m_stream != NULL) {
-		m_eventQueue.removeHandler(IDataSocket::getConnectedEvent(),
+		m_eventQueue.removeHandler(IDataTransfer::getConnectedEvent(),
 							m_stream->getEventTarget());
-		m_eventQueue.removeHandler(IDataSocket::getConnectionFailedEvent(),
+		m_eventQueue.removeHandler(IDataTransfer::getConnectionFailedEvent(),
 							m_stream->getEventTarget());
 	}
 }
@@ -590,8 +590,8 @@ CClient::handleConnected(const CEvent&, void*)
 void
 CClient::handleConnectionFailed(const CEvent& event, void*)
 {
-	IDataSocket::CConnectionFailedInfo* info =
-		reinterpret_cast<IDataSocket::CConnectionFailedInfo*>(event.getData());
+	IDataTransfer::CConnectionFailedInfo* info =
+		reinterpret_cast<IDataTransfer::CConnectionFailedInfo*>(event.getData());
 
 	cleanupTimer();
 	cleanupConnecting();

@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IDATASOCKET_H
-#define IDATASOCKET_H
+#ifndef IDATATRANSFER_H
+#define IDATATRANSFER_H
 
 #include "ISocket.h"
 #include "IStream.h"
@@ -28,7 +28,7 @@
 This interface defines the methods common to all network sockets that
 represent a full-duplex data stream.
 */
-class IDataSocket : public ISocket, public synergy::IStream {
+class IDataTransfer : public ISocket, public synergy::IStream {
 public:
 	class CConnectionFailedInfo {
 	public:
