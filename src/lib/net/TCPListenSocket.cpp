@@ -105,10 +105,10 @@ TCPListenSocket::getEventTarget() const
 	return const_cast<void*>(reinterpret_cast<const void*>(this));
 }
 
-IDataSocket*
+IDataTransfer*
 TCPListenSocket::accept()
 {
-	IDataSocket* socket = NULL;
+	IDataTransfer* socket = NULL;
 	try {
 		socket = new CTCPSocket(m_events, m_socketMultiplexer, ARCH->acceptSocket(m_socket, NULL));
 		if (socket != NULL) {

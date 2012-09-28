@@ -37,7 +37,7 @@ CTCPSocketFactory::~CTCPSocketFactory()
 	// do nothing
 }
 
-IDataSocket*
+IDataTransfer*
 CTCPSocketFactory::create() const
 {
 	return new CTCPSocket(m_events, m_socketMultiplexer);

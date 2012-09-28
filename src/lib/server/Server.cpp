@@ -30,7 +30,7 @@
 #include "synergy/FileChunker.h"
 #include "synergy/KeyState.h"
 #include "synergy/Screen.h"
-#include "net/IDataSocket.h"
+#include "net/IDataTransfer.h"
 #include "net/IListenSocket.h"
 #include "net/XSocket.h"
 #include "mt/Thread.h"

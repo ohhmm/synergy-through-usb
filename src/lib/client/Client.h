@@ -30,7 +30,7 @@
 class EventQueueTimer;
 namespace synergy { class Screen; }
 class ServerProxy;
-class IDataSocket;
+class IDataTransfer;
 class ISocketFactory;
 namespace synergy { class IStream; }
 class IStreamFilterFactory;

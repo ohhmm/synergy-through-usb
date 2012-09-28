@@ -1,6 +1,6 @@
 /*
  * synergy -- mouse and keyboard sharing utility
- * Copyright (C) 2012 Synergy Si Ltd.
+ * Copyright (C) 2012 Bolton Software Ltd.
  * Copyright (C) 2002 Chris Schoeneman
  * 
  * This package is free software; you can redistribute it and/or
@@ -16,29 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef CUSBDATALINK_H
+#define CUSBDATALINK_H
 
-#include "net/IDataTransfer.h"
-#include "io/StreamBuffer.h"
-#include "mt/CondVar.h"
-#include "mt/Mutex.h"
+#include "IDataTransfer.h"
 #include "arch/IArchNetwork.h"
-
-class Mutex;
-class Thread;
-class ISocketMultiplexerJob;
-class IEventQueue;
-class SocketMultiplexer;
 
 //! TCP data socket
 /*!
 A data socket using TCP.
 */
-class CTCPSocket : public IDataTransfer {
+class CUSBDataLink : public IDataTransfer {
+    typedef IDataTransfer base_t;
 public:
-	CTCPSocket(IEventQueue* events, SocketMultiplexer* socketMultiplexer);
-	CTCPSocket(IEventQueue* events, SocketMultiplexer* socketMultiplexer, ArchSocket socket);
-	~CTCPSocket();
+    CUSBDataLink(IEventQueue* events);
+	~CUSBDataLink();
 
 	// ISocket overrides
 	virtual void		bind(const NetworkAddress&);
@@ -60,32 +52,6 @@ public:
 private:
 	void				init();
 
-	void				setJob(ISocketMultiplexerJob*);
-	ISocketMultiplexerJob*	newJob();
-	void				sendConnectionFailedEvent(const char*);
-	void				sendEvent(Event::Type);
-
-	void				onConnected();
-	void				onInputShutdown();
-	void				onOutputShutdown();
-	void				onDisconnected();
-
-	ISocketMultiplexerJob*
-						serviceConnecting(ISocketMultiplexerJob*,
-							bool, bool, bool);
-	ISocketMultiplexerJob*
-						serviceConnected(ISocketMultiplexerJob*,
-							bool, bool, bool);
-
-private:
-	Mutex				m_mutex;
-	ArchSocket			m_socket;
-	StreamBuffer		m_inputBuffer;
-	StreamBuffer		m_outputBuffer;
-	CondVar<bool>		m_flushed;
-	bool				m_connected;
-	bool				m_readable;
-	bool				m_writable;
-	IEventQueue*		m_events;
-	SocketMultiplexer* m_socketMultiplexer;
 };
+
+#endif

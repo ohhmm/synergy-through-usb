@@ -21,7 +21,7 @@
 #include "ipc/Ipc.h"
 #include "ipc/IpcClientProxy.h"
 #include "ipc/IpcMessage.h"
-#include "net/IDataSocket.h"
+#include "net/IDataTransfer.h"
 #include "io/IStream.h"
 #include "base/IEventQueue.h"
 #include "base/TMethodEventJob.h"

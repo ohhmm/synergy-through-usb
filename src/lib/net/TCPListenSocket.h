@@ -41,7 +41,7 @@ public:
 	virtual void*		getEventTarget() const;
 
 	// IListenSocket overrides
-	virtual IDataSocket*	accept();
+	virtual IDataTransfer*	accept();
 
 private:
 	ISocketMultiplexerJob*

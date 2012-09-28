@@ -31,7 +31,7 @@
 #include "mt/Thread.h"
 #include "io/IStreamFilterFactory.h"
 #include "io/CryptoStream.h"
-#include "net/IDataSocket.h"
+#include "net/IDataTransfer.h"
 #include "net/ISocketFactory.h"
 #include "arch/Arch.h"
 #include "base/Log.h"
@@ -150,7 +150,7 @@ Client::connect()
 		}
 
 		// create the socket
-		IDataSocket* socket = m_socketFactory->create();
+		IDataTransfer* socket = m_socketFactory->create();
 
 		// filter socket messages, including a packetizing filter
 		m_stream = socket;
@@ -582,8 +582,8 @@ Client::handleConnected(const Event&, void*)
 void
 Client::handleConnectionFailed(const Event& event, void*)
 {
-	IDataSocket::ConnectionFailedInfo* info =
-		reinterpret_cast<IDataSocket::ConnectionFailedInfo*>(event.getData());
+	IDataTransfer::ConnectionFailedInfo* info =
+		reinterpret_cast<IDataTransfer::ConnectionFailedInfo*>(event.getData());
 
 	cleanupTimer();
 	cleanupConnecting();

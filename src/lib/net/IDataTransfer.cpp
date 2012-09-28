@@ -16,22 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "net/IDataSocket.h"
+#include "net/IDataTransfer.h"
 #include "base/EventQueue.h"
 
 //
-// IDataSocket
+// IDataTransfer
 //
 
 void
-IDataSocket::close()
+IDataTransfer::close()
 {
 	// this is here to work around a VC++6 bug.  see the header file.
 	assert(0 && "bad call");
 }
 
 void*
-IDataSocket::getEventTarget() const
+IDataTransfer::getEventTarget() const
 {
 	// this is here to work around a VC++6 bug.  see the header file.
 	assert(0 && "bad call");

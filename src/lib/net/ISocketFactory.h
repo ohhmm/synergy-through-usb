@@ -20,7 +20,7 @@
 
 #include "common/IInterface.h"
 
-class IDataSocket;
+class IDataTransfer;
 class IListenSocket;
 
 //! Socket factory
@@ -34,7 +34,7 @@ public:
 	//@{
 
 	//! Create data socket
-	virtual IDataSocket*	create() const = 0;
+	virtual IDataTransfer*	create() const = 0;
 
 	//! Create listen socket
 	virtual IListenSocket*	createListen() const = 0;

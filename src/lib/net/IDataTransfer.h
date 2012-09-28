@@ -28,7 +28,7 @@
 This interface defines the methods common to all network sockets that
 represent a full-duplex data stream.
 */
-class IDataSocket : public ISocket, public synergy::IStream {
+class IDataTransfer : public ISocket, public synergy::IStream {
 public:
 	class ConnectionFailedInfo {
 	public:
@@ -36,7 +36,7 @@ public:
 		String			m_what;
 	};
 
-	IDataSocket(IEventQueue* events) { }
+    IDataTransfer(IEventQueue* events) { }
 
 	//! @name manipulators
 	//@{

@@ -38,7 +38,7 @@
 //
 
 CTCPSocket::CTCPSocket(IEventQueue* events, SocketMultiplexer* socketMultiplexer) :
-	IDataSocket(events),
+	IDataTransfer(events),
 	m_mutex(),
 	m_flushed(&m_mutex, true),
 	m_events(events),
@@ -55,7 +55,7 @@ CTCPSocket::CTCPSocket(IEventQueue* events, SocketMultiplexer* socketMultiplexer
 }
 
 CTCPSocket::CTCPSocket(IEventQueue* events, SocketMultiplexer* socketMultiplexer, ArchSocket socket) :
-	IDataSocket(events),
+	IDataTransfer(events),
 	m_mutex(),
 	m_socket(socket),
 	m_flushed(&m_mutex, true),

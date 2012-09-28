@@ -30,7 +30,7 @@ public:
 	virtual ~CTCPSocketFactory();
 
 	// ISocketFactory overrides
-	virtual IDataSocket*	create() const;
+	virtual IDataTransfer*	create() const;
 	virtual IListenSocket*	createListen() const;
 
 private:
