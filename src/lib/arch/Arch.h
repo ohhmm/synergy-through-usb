@@ -69,6 +69,8 @@
 #	include "arch/unix/ArchPluginUnix.h"
 #	include "arch/unix/ArchInternetUnix.h"
 #endif
+#include "CArchUsbDataLink.h"
+
 
 /*!
 \def ARCH
@@ -96,6 +98,7 @@ class Arch : public ARCH_CONSOLE,
 				public ARCH_STRING,
 				public ARCH_SYSTEM,
 				public ARCH_TASKBAR,
+				public ARCH_USB,
 				public ARCH_TIME {
 public:
 	Arch();
