@@ -37,12 +37,14 @@ if (WIN32)
 		CArchTaskBarWindows.h
 		CArchTimeWindows.h
 		CArchConsoleStd.h
+		CArchUsbDataLink.h
 		XArchWindows.h
 		CMultibyte.h
 		vsnprintf.h
 		XArch.h
 		IArchPlugin.h
 		CArchPluginWindows.h
+		IArchUsbDataLink.h
 	)
 
 	list(APPEND src
@@ -61,6 +63,7 @@ if (WIN32)
 		CArchTimeWindows.cpp
 		XArchWindows.cpp
 		CArchPluginWindows.cpp
+		CArchUsbDataLink.cpp
 	)
 	
 elseif (UNIX)
@@ -80,6 +83,7 @@ elseif (UNIX)
 		XArchUnix.cpp
 		CArchDaemonNone.cpp
 		CArchPluginUnix.cpp
+		CArchUsbDataLink.cpp
 	)
 	
 endif()

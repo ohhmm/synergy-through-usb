@@ -16,40 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUSBDATALINK_H
-#define CUSBDATALINK_H
+#ifndef CARCHUSBDATALINK_H
+#define CARCHUSBDATALINK_H
 
-#include "IDataTransfer.h"
-#include "IArchNetwork.h"
+#include "IArchUsbDataLink.h"
 
-//! TCP data socket
+#define ARCH_USB CArchUsbDataLink
+
+
+//! Class for architecture dependent USB
 /*!
-A data socket using TCP.
-*/
-class CUSBDataLink : public IDataTransfer {
-public:
-	CUSBDataLink();
-	~CUSBDataLink();
-
-	// ISocket overrides
-	virtual void		bind(const CNetworkAddress&);
-	virtual void		close();
-	virtual void*		getEventTarget() const;
-
-	// IStream overrides
-	virtual UInt32		read(void* buffer, UInt32 n);
-	virtual void		write(const void* buffer, UInt32 n);
-	virtual void		flush();
-	virtual void		shutdownInput();
-	virtual void		shutdownOutput();
-	virtual bool		isReady() const;
-	virtual UInt32		getSize() const;
-
-	// IDataTransfer overrides
-	virtual void		connect(const CNetworkAddress&);
-
-private:
-	void				init();
+ This interface defines the USB transport operations for
+ platforms supported by libusb.
+ */
+class CArchUsbDataLink: public IArchUsbDataLink {
 
 };
 

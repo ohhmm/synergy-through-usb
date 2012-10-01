@@ -29,11 +29,6 @@ CUSBDataLink::CUSBDataLink()
 	init();
 }
 
-CUSBDataLink::CUSBDataLink(CArchSocket socket)
-{
-	// TODO : USB
-}
-
 CUSBDataLink::~CUSBDataLink()
 {
 	// TODO : USB

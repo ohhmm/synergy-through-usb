@@ -68,6 +68,8 @@
 #	include "CArchTimeUnix.h"
 #	include "CArchPluginUnix.h"
 #endif
+#include "CArchUsbDataLink.h"
+
 
 /*!
 \def ARCH
@@ -95,6 +97,7 @@ class CArch : public ARCH_CONSOLE,
 				public ARCH_STRING,
 				public ARCH_SYSTEM,
 				public ARCH_TASKBAR,
+				public ARCH_USB,
 				public ARCH_TIME {
 public:
 	CArch();
