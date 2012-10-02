@@ -37,8 +37,11 @@ if (SYNERGY_ADD_HEADERS)
 	list(APPEND sources ${headers})
 endif()
 
+find_package(libusb-1.0 REQUIRED)
+
 include_directories(
 	../
+	${LIBUSB_1_INCLUDE_DIRS}
 )
 
 if (UNIX)
@@ -48,6 +51,10 @@ if (UNIX)
 endif()
 
 add_library(arch STATIC ${sources})
+
+set(libs
+	${LIBUSB_1_LIBRARIES}
+	)
 
 if (UNIX)
 	target_link_libraries(arch ${libs})

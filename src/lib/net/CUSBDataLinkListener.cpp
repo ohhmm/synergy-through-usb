@@ -17,7 +17,7 @@
  */
 
 #include "CUSBDataLinkListener.h"
-#include "CNetworkAddress.h"
+#include "NetworkAddress.h"
 
 //
 // CUSBDataLinkListener
@@ -34,7 +34,7 @@ CUSBDataLinkListener::~CUSBDataLinkListener()
 }
 
 void
-CUSBDataLinkListener::bind(const CNetworkAddress& addr)
+CUSBDataLinkListener::bind(const NetworkAddress& addr)
 {
 	// TODO : USB
 }
@@ -52,7 +52,7 @@ CUSBDataLinkListener::getEventTarget() const
 	return NULL;
 }
 
-IDataTransfer*
+IDataSocket*
 CUSBDataLinkListener::accept()
 {
 	// TODO : USB

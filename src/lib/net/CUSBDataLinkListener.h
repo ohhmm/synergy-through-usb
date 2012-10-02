@@ -31,12 +31,12 @@ public:
 	~CUSBDataLinkListener();
 
 	// ISocket overrides
-	virtual void		bind(const CNetworkAddress&);
+	virtual void		bind(const NetworkAddress&);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 
 	// IListenSocket overrides
-	virtual IDataTransfer*	accept();
+	virtual IDataSocket*	accept();
 };
 
 #endif
