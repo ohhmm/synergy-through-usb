@@ -88,12 +88,15 @@ elseif (UNIX)
 	
 endif()
 
+find_package(libusb-1.0 REQUIRED)
+
 set(inc
 	../base
 	../common
 	../mt
 	../platform
 	../synergy
+	${LIBUSB_1_INCLUDE_DIRS}
 )
 
 if (UNIX)
@@ -106,8 +109,14 @@ endif()
 include_directories(${inc})
 add_library(arch STATIC ${src})
 
+set(libs
+	${LIBUSB_1_LIBRARIES}
+	)
+
 if (WIN32)
 	if (GAME_DEVICE_SUPPORT)
-		target_link_libraries(arch synxinhk)
+		list(APPEND libs synxinhk)
 	endif()
 endif()
+
+target_link_libraries(arch ${libs})
