@@ -20,6 +20,7 @@ set(inc
 	CTCPListenSocket.h
 	CTCPSocket.h
 	CUSBDataLink.h
+	CUSBDataLinkListener.h
 	CTCPSocketFactory.h
 	IDataTransfer.h
 	IListenSocket.h
@@ -36,6 +37,7 @@ set(src
 	CTCPListenSocket.cpp
 	CTCPSocket.cpp
 	CUSBDataLink.cpp
+	CUSBDataLinkListener.cpp
 	CTCPSocketFactory.cpp
 	IDataTransfer.cpp
 	IListenSocket.cpp

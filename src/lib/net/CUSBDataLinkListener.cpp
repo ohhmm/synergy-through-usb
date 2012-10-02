@@ -16,96 +16,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CUSBDataLink.h"
+#include "CUSBDataLinkListener.h"
+#include "CNetworkAddress.h"
 
 //
-// CUSBDataLink
+// CUSBDataLinkListener
 //
 
-CUSBDataLink::CUSBDataLink()
+CUSBDataLinkListener::CUSBDataLinkListener()
 {
-	// TODO : USB
 
-	init();
 }
 
-CUSBDataLink::~CUSBDataLink()
+CUSBDataLinkListener::~CUSBDataLinkListener()
+{
+
+}
+
+void
+CUSBDataLinkListener::bind(const CNetworkAddress& addr)
 {
 	// TODO : USB
 }
 
 void
-CUSBDataLink::bind(const CNetworkAddress& addr)
-{
-	// TODO : USB
-}
-
-void
-CUSBDataLink::close()
+CUSBDataLinkListener::close()
 {
 	// TODO : USB
 }
 
 void*
-CUSBDataLink::getEventTarget() const
+CUSBDataLinkListener::getEventTarget() const
 {
 	// TODO : USB
 	return NULL;
 }
 
-UInt32
-CUSBDataLink::read(void* buffer, UInt32 n)
+IDataTransfer*
+CUSBDataLinkListener::accept()
 {
 	// TODO : USB
-	return 0;
-}
-
-void
-CUSBDataLink::write(const void* buffer, UInt32 n)
-{
-	// TODO : USB
-}
-
-void
-CUSBDataLink::flush()
-{
-	// TODO : USB
-}
-
-void
-CUSBDataLink::shutdownInput()
-{
-	// TODO : USB
-}
-
-void
-CUSBDataLink::shutdownOutput()
-{
-	// TODO : USB
-}
-
-bool
-CUSBDataLink::isReady() const
-{
-	// TODO : USB
-	return false;
-}
-
-UInt32
-CUSBDataLink::getSize() const
-{
-	// TODO : USB
-	return 0;
-}
-
-void
-CUSBDataLink::connect(const CNetworkAddress& addr)
-{
-	// TODO : USB
-}
-
-void
-CUSBDataLink::init()
-{
-	// TODO : USB
+	return NULL;
 }
