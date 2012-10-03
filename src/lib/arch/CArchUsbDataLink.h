@@ -40,7 +40,7 @@ public:
 
 	USBDeviceHandle usbOpenDevice(int vid, int pid, int ifid);
 	void usbCloseDevice(USBDeviceHandle dev, int ifid);
-	int usbBulkTransfer(USBDeviceHandle dev, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
+	int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
 
 private:
 	USBContextHandle m_usbContext;

@@ -24,6 +24,15 @@
 typedef struct libusb_context* USBContextHandle;
 typedef struct libusb_device_handle* USBDeviceHandle;
 
+struct USBDataLinkConfig
+{
+	int vid;
+	int pid;
+	int ifid;
+	int bulkin;
+	int bulkout;
+};
+
 //! Interface for architecture dependent USB
 /*!
 This interface defines the USB transport operations required by
@@ -39,7 +48,7 @@ public:
 
 	virtual USBDeviceHandle usbOpenDevice(int vid, int pid, int ifid) = 0;
 	virtual void usbCloseDevice(USBDeviceHandle dev, int ifid) = 0;
-	virtual int usbBulkTransfer(USBDeviceHandle dev, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
+	virtual int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
 };
 
 #endif
