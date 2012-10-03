@@ -20,16 +20,15 @@
 #define CUSBDATALINK_H
 
 #include "IDataTransfer.h"
-#include "IArchNetwork.h"
+#include "IArchUsbDataLink.h"
 
-//! TCP data socket
-/*!
-A data socket using TCP.
-*/
 class CUSBDataLink : public IDataTransfer {
 public:
 	CUSBDataLink();
 	~CUSBDataLink();
+
+	// IDataTransfer overrides
+	virtual void		connect(const CNetworkAddress&);
 
 	// ISocket overrides
 	virtual void		bind(const CNetworkAddress&);
@@ -45,12 +44,12 @@ public:
 	virtual bool		isReady() const;
 	virtual UInt32		getSize() const;
 
-	// IDataTransfer overrides
-	virtual void		connect(const CNetworkAddress&);
-
 private:
 	void				init();
 
+private:
+	USBDeviceHandle m_device;
+	USBDataLinkConfig m_config;
 };
 
 #endif

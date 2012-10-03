@@ -78,14 +78,16 @@ void CArchUsbDataLink::usbCloseDevice(USBDeviceHandle dev, int ifid)
 	}
 }
 
-int CArchUsbDataLink::usbBulkTransfer(USBDeviceHandle dev, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout)
+int CArchUsbDataLink::usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout)
 {
-	int actual = 0;
-	int rc = libusb_bulk_transfer(dev, port, buf, len, &actual, timeout);
+	unsigned char iomode = write ? LIBUSB_ENDPOINT_OUT : LIBUSB_ENDPOINT_IN;
+
+	int transferred = 0;
+	int rc = libusb_bulk_transfer(dev, port | iomode, buf, len, &transferred, timeout);
 	if (rc != 0)
 	{
 		throw XArchNetwork("libusb_bulk_transfer failed");
 	}
 
-	return actual;
+	return transferred;
 }

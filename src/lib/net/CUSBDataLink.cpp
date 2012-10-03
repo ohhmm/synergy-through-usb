@@ -16,54 +16,77 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "CArch.h"
+#include "XArch.h"
 #include "CUSBDataLink.h"
 
 //
 // CUSBDataLink
 //
 
-CUSBDataLink::CUSBDataLink()
+CUSBDataLink::CUSBDataLink() :
+	m_device(NULL)
 {
-	// TODO : USB
-
-	init();
+	memset(&m_config, 0, sizeof(m_config));
 }
 
 CUSBDataLink::~CUSBDataLink()
 {
-	// TODO : USB
+	close();
 }
+
+//
+// IDataTransfer overrides
+//
+
+void
+CUSBDataLink::connect(const CNetworkAddress& addr)
+{
+	m_device = ARCH->usbOpenDevice(m_config.vid, m_config.pid, m_config.ifid);
+}
+
+//
+// ISocket overrides
+//
 
 void
 CUSBDataLink::bind(const CNetworkAddress& addr)
 {
-	// TODO : USB
+	// not required
 }
 
 void
 CUSBDataLink::close()
 {
-	// TODO : USB
+	if (m_device)
+	{
+		ARCH->usbCloseDevice(m_device, m_config.ifid);
+		m_device = NULL;
+	}
 }
 
 void*
 CUSBDataLink::getEventTarget() const
 {
-	// TODO : USB
-	return NULL;
+	return const_cast<void*>(reinterpret_cast<const void*>(this)); // WTF?
 }
+
+//
+// IStream overrides
+//
+
+// TODO : use timeout or maybe use async methods?
 
 UInt32
 CUSBDataLink::read(void* buffer, UInt32 n)
 {
-	// TODO : USB
-	return 0;
+	return ARCH->usbBulkTransfer(m_device, false, m_config.bulkin, (unsigned char*)buffer, n, 0);
 }
 
 void
 CUSBDataLink::write(const void* buffer, UInt32 n)
 {
-	// TODO : USB
+	ARCH->usbBulkTransfer(m_device, true, m_config.bulkin, (unsigned char*)buffer, n, 0);
 }
 
 void
@@ -75,13 +98,13 @@ CUSBDataLink::flush()
 void
 CUSBDataLink::shutdownInput()
 {
-	// TODO : USB
+	// not required?
 }
 
 void
 CUSBDataLink::shutdownOutput()
 {
-	// TODO : USB
+	// not required?
 }
 
 bool
@@ -98,14 +121,12 @@ CUSBDataLink::getSize() const
 	return 0;
 }
 
-void
-CUSBDataLink::connect(const CNetworkAddress& addr)
-{
-	// TODO : USB
-}
+//
+// private
+//
 
 void
 CUSBDataLink::init()
 {
-	// TODO : USB
+	// not required?
 }
