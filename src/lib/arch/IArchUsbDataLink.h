@@ -21,13 +21,25 @@
 
 #include "IInterface.h"
 
+typedef struct libusb_context* USBContextHandle;
+typedef struct libusb_device_handle* USBDeviceHandle;
+
 //! Interface for architecture dependent USB
 /*!
 This interface defines the USB transport operations required by
 synergy.  Each architecture must implement this interface.
 */
 class IArchUsbDataLink : public IInterface {
+public:
+	virtual void init() = 0;
 
+	virtual void usbInit() = 0;
+	virtual void usbShut() = 0;
+	virtual USBContextHandle usbGetContext() = 0;
+
+	virtual USBDeviceHandle usbOpenDevice(int vid, int pid, int ifid) = 0;
+	virtual void usbCloseDevice(USBDeviceHandle dev, int ifid) = 0;
+	virtual int usbBulkTransfer(USBDeviceHandle dev, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
 };
 
 #endif
