@@ -41,6 +41,7 @@ void
 Arch::init()
 {
 	ARCH_NETWORK::init();
+	ARCH_USB::init();
 #if SYSAPI_WIN32
 	ARCH_TASKBAR::init();
 	ArchMiscWindows::init();

@@ -23,14 +23,27 @@
 
 #define ARCH_USB CArchUsbDataLink
 
-
 //! Class for architecture dependent USB
 /*!
  This interface defines the USB transport operations for
  platforms supported by libusb.
  */
-class CArchUsbDataLink: public IArchUsbDataLink {
+class CArchUsbDataLink : public IArchUsbDataLink {
+public:
+	CArchUsbDataLink();
+	virtual ~CArchUsbDataLink();
+	
+	void init();
+	void usbInit();
+	void usbShut();
+	USBContextHandle usbGetContext();
 
+	USBDeviceHandle usbOpenDevice(int vid, int pid, int ifid);
+	void usbCloseDevice(USBDeviceHandle dev, int ifid);
+	int usbBulkTransfer(USBDeviceHandle dev, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
+
+private:
+	USBContextHandle m_usbContext;
 };
 
 #endif
