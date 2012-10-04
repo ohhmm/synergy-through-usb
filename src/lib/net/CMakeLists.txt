@@ -31,6 +31,7 @@ set(inc
 	ISocketMultiplexerJob.h
 	TSocketMultiplexerMethodJob.h
 	XSocket.h
+	CUSBDataLinkFactory.h
 )
 
 set(src
@@ -47,6 +48,7 @@ set(src
 	IListenSocket.cpp
 	ISocket.cpp
 	XSocket.cpp
+	CUSBDataLinkFactory.cpp
 )
 
 if (WIN32)
