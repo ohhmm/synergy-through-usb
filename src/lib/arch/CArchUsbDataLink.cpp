@@ -84,9 +84,28 @@ int CArchUsbDataLink::usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned 
 
 	int transferred = 0;
 	int rc = libusb_bulk_transfer(dev, port | iomode, buf, len, &transferred, timeout);
+	if (rc != 0) // libusb error
+	{
+		if (rc == LIBUSB_ERROR_TIMEOUT)
+		{
+			return 0; // not error, just zero bytes transferred
+		}
+
+		throw XArchUsbTransferFailure("libusb_bulk_transfer failed");
+	}
+
+	return transferred;
+}
+
+int CArchUsbDataLink::usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout)
+{
+	unsigned char iomode = write ? LIBUSB_ENDPOINT_OUT : LIBUSB_ENDPOINT_IN;
+
+	int transferred = 0;
+	int rc = libusb_bulk_transfer(dev, port | iomode, buf, len, &transferred, timeout);
 	if (rc != 0)
 	{
-		throw XArchNetwork("libusb_bulk_transfer failed");
+		transferred = 0;
 	}
 
 	return transferred;
