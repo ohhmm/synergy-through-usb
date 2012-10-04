@@ -41,7 +41,7 @@ public:
 	~CTCPSocket();
 
 	// ISocket overrides
-	virtual void		bind(const NetworkAddress&);
+	virtual void		bind(const BaseAddress &);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 
@@ -55,7 +55,7 @@ public:
 	virtual UInt32		getSize() const;
 
 	// IDataSocket overrides
-	virtual void		connect(const NetworkAddress&);
+	virtual void		connect(const BaseAddress&);
 
 private:
 	void				init();

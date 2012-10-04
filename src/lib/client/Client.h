@@ -58,7 +58,7 @@ public:
 	to create the socket.  \p screen is	the local screen.
 	*/
 	Client(IEventQueue* events,
-							const String& name, const NetworkAddress& address,
+							const String& name, const BaseAddress & address,
 							ISocketFactory* socketFactory,
 							IStreamFilterFactory* streamFilterFactory,
 							synergy::Screen* screen,
@@ -135,7 +135,7 @@ public:
 	Returns the address of the server the client is connected (or wants
 	to connect) to.
 	*/
-	NetworkAddress		getServerAddress() const;
+    const BaseAddress &	getServerAddress() const;
 	
 	//! Return true if recieved file size is valid
 	bool				isReceivedFileSizeValid();
@@ -208,7 +208,7 @@ public:
 
 private:
 	String					m_name;
-	NetworkAddress			m_serverAddress;
+	BaseAddress *			m_serverAddress;
 	ISocketFactory*			m_socketFactory;
 	IStreamFilterFactory*	m_streamFilterFactory;
 	synergy::Screen*		m_screen;

@@ -21,6 +21,7 @@
 #include "common/IInterface.h"
 #include "base/Event.h"
 #include "base/EventTypes.h"
+#include "BaseAddress.h"
 
 class NetworkAddress;
 
@@ -38,7 +39,7 @@ public:
 	/*!
 	Binds the socket to a particular address.
 	*/
-	virtual void		bind(const NetworkAddress&) = 0;
+	virtual void		bind(const BaseAddress&) = 0;
 
 	//! Close socket
 	/*!

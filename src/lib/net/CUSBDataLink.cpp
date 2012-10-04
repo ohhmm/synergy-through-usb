@@ -19,14 +19,17 @@
 #include "arch/Arch.h"
 #include "arch/XArch.h"
 #include "CUSBDataLink.h"
+#include "CUSBAddress.h"
 
 //
 // CUSBDataLink
 //
 
-CUSBDataLink::CUSBDataLink(IEventQueue* events)
-: base_t(events)
-, m_device(NULL)
+CUSBDataLink::CUSBDataLink(IEventQueue* events) :
+	base_t(events),
+	m_device(NULL),
+	m_input(m_input1),
+	m_inputPos(0)
 {
 	memset(&m_config, 0, sizeof(m_config));
 }
@@ -41,8 +44,18 @@ CUSBDataLink::~CUSBDataLink()
 //
 
 void
-CUSBDataLink::connect(const NetworkAddress& addr)
+CUSBDataLink::connect(const BaseAddress & addr)
 {
+	assert(addr.getAddressType() == BaseAddress::USB);
+	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+
+	// TODO: USB : fill m_config from addr
+	m_config.vid = 0x0402;
+	m_config.pid = 0x5632;
+	m_config.ifid = 0;
+	m_config.bulkin = 0x81;
+	m_config.bulkout = 0x02;
+
 	m_device = ARCH->usbOpenDevice(m_config.vid, m_config.pid, m_config.ifid);
 }
 
@@ -51,7 +64,7 @@ CUSBDataLink::connect(const NetworkAddress& addr)
 //
 
 void
-CUSBDataLink::bind(const NetworkAddress& addr)
+CUSBDataLink::bind(const BaseAddress & addr)
 {
 	// not required
 }
@@ -59,6 +72,8 @@ CUSBDataLink::bind(const NetworkAddress& addr)
 void
 CUSBDataLink::close()
 {
+	m_inputPos = 0;
+
 	if (m_device)
 	{
 		ARCH->usbCloseDevice(m_device, m_config.ifid);
@@ -76,24 +91,84 @@ CUSBDataLink::getEventTarget() const
 // IStream overrides
 //
 
-// TODO : use timeout or maybe use async methods?
+bool
+CUSBDataLink::isReady() const
+{
+	fetchReceivedData();
+	return (m_inputPos > 0);
+}
+
+UInt32
+CUSBDataLink::getSize() const
+{
+	fetchReceivedData();
+	return m_inputPos;
+}
+
+void
+CUSBDataLink::fetchReceivedData() const
+{
+	if (m_inputPos < USB_BUF_LEN)
+	{
+		// input buffer empty space
+		unsigned int n = USB_BUF_LEN - m_inputPos;
+
+		// using small timeout to fetch already received data
+		unsigned int transferred = ARCH->usbTryBulkTransfer(m_device, false, m_config.bulkin, m_input + m_inputPos, n, 1);
+		m_inputPos += transferred;
+	}
+}
 
 UInt32
 CUSBDataLink::read(void* buffer, UInt32 n)
 {
-	return ARCH->usbBulkTransfer(m_device, false, m_config.bulkin, (unsigned char*)buffer, n, 0);
+	unsigned char* dst = (unsigned char*)buffer;
+	unsigned int bufferLen = n;
+
+	if (m_inputPos > 0) // some data already available in local buffer
+	{
+		unsigned char* src = m_input; // save pointer to input buffer because it may be changed
+		unsigned int readLen = m_inputPos;
+
+		if (readLen > bufferLen) // buffer can't fit all available data
+		{
+			readLen = bufferLen; // clamp to max size
+
+			// get pointer to new buffer where to store remaining data
+			if (m_input == m_input1)
+			{
+				m_input = m_input2;
+			}
+			else
+			{
+				m_input = m_input1;
+			}
+
+			// copy remaining data
+			memcpy(m_input, src + readLen, m_inputPos - readLen);
+		}
+
+		memcpy(dst, src, readLen);
+		dst += readLen;
+		bufferLen -= readLen;
+		m_inputPos -= readLen;
+	}
+
+	// blocking
+	return ARCH->usbBulkTransfer(m_device, false, m_config.bulkin, dst, bufferLen, 0);
 }
 
 void
 CUSBDataLink::write(const void* buffer, UInt32 n)
 {
-	ARCH->usbBulkTransfer(m_device, true, m_config.bulkin, (unsigned char*)buffer, n, 0);
+	// blocking
+	ARCH->usbBulkTransfer(m_device, true, m_config.bulkout, (unsigned char*)buffer, n, 0);
 }
 
 void
 CUSBDataLink::flush()
 {
-	// TODO : USB
+	// not required?
 }
 
 void
@@ -106,20 +181,6 @@ void
 CUSBDataLink::shutdownOutput()
 {
 	// not required?
-}
-
-bool
-CUSBDataLink::isReady() const
-{
-	// TODO : USB
-	return false;
-}
-
-UInt32
-CUSBDataLink::getSize() const
-{
-	// TODO : USB
-	return 0;
 }
 
 //

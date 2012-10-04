@@ -16,48 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CUSBDataLinkListener.h"
-#include "CUSBAddress.h"
+#include "BaseAddress.h"
 
 //
-// CUSBDataLinkListener
+// BaseAddress
 //
 
-CUSBDataLinkListener::CUSBDataLinkListener()
+BaseAddress::~BaseAddress()
 {
-
-}
-
-CUSBDataLinkListener::~CUSBDataLinkListener()
-{
-
-}
-
-void
-CUSBDataLinkListener::bind(const BaseAddress & addr)
-{
-	assert(addr.getAddressType() == BaseAddress::USB);
-	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
-
-	// TODO : USB
-}
-
-void
-CUSBDataLinkListener::close()
-{
-	// TODO : USB
-}
-
-void*
-CUSBDataLinkListener::getEventTarget() const
-{
-	// TODO : USB
-	return NULL;
-}
-
-IDataSocket*
-CUSBDataLinkListener::accept()
-{
-	// TODO : USB
-	return NULL;
 }

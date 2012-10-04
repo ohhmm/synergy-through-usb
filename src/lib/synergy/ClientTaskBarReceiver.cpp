@@ -55,7 +55,7 @@ ClientTaskBarReceiver::updateStatus(Client* client, const String& errorMsg)
 			}
 		}
 		else {
-			m_server = client->getServerAddress().getHostname();
+			m_server = client->getServerAddress().getName();
 
 			if (client->isConnected()) {
 				m_state = kConnected;

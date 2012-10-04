@@ -21,12 +21,13 @@
 #include "base/String.h"
 #include "base/EventTypes.h"
 #include "arch/IArchNetwork.h"
+#include "BaseAddress.h"
 
 //! Network address type
 /*!
 This class represents a network address.
 */
-class NetworkAddress {
+class NetworkAddress : public BaseAddress {
 public:
 	/*!
 	Constructs the invalid address
@@ -56,6 +57,8 @@ public:
 	~NetworkAddress();
 
 	NetworkAddress&	operator=(const NetworkAddress&);
+
+	NetworkAddress* 		clone() const;
 
 	//! @name manipulators
 	//@{
@@ -109,7 +112,9 @@ public:
 	/*!
 	Returns the hostname passed to the c'tor sans any port suffix.
 	*/
-	String				getHostname() const;
+	String				getName() const;
+
+	AddressType 		getAddressType() const;
 
 	//@}
 

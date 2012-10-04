@@ -16,48 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CUSBDataLinkListener.h"
-#include "CUSBAddress.h"
+#pragma once
 
-//
-// CUSBDataLinkListener
-//
+#include "base/String.h"
 
-CUSBDataLinkListener::CUSBDataLinkListener()
-{
+//! Generic address type
+/*!
+This class represents transport address.
+*/
+class BaseAddress {
 
-}
+public:
 
-CUSBDataLinkListener::~CUSBDataLinkListener()
-{
+	enum AddressType { Network, USB, Firewire };
 
-}
+	virtual ~BaseAddress();
 
-void
-CUSBDataLinkListener::bind(const BaseAddress & addr)
-{
-	assert(addr.getAddressType() == BaseAddress::USB);
-	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+	//! Check address validity
+	/*!
+	Returns true if this is not the invalid address.
+	*/
+	virtual bool			isValid() const = 0;
 
-	// TODO : USB
-}
+	virtual AddressType 	getAddressType() const = 0;
 
-void
-CUSBDataLinkListener::close()
-{
-	// TODO : USB
-}
+	virtual String			getName() const = 0;
 
-void*
-CUSBDataLinkListener::getEventTarget() const
-{
-	// TODO : USB
-	return NULL;
-}
-
-IDataSocket*
-CUSBDataLinkListener::accept()
-{
-	// TODO : USB
-	return NULL;
-}
+	virtual BaseAddress * 	clone() const = 0;
+};

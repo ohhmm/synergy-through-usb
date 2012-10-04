@@ -77,8 +77,8 @@ private:
 	typedef std::set<ClientProxyUnknown*> NewClients;
 	typedef std::deque<ClientProxy*> WaitingClients;
 
-	IListenSocket*		m_listen;
-	ISocketFactory*		m_socketFactory;
+	IListenSocket*			m_listen;
+	ISocketFactory*		m_transportFactory;
 	IStreamFilterFactory*	m_streamFilterFactory;
 	NewClients			m_newClients;
 	WaitingClients		m_waitingClients;

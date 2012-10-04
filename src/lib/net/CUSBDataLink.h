@@ -29,10 +29,10 @@ public:
 	~CUSBDataLink();
 
 	// IDataTransfer overrides
-	virtual void		connect(const NetworkAddress&);
+	virtual void		connect(const BaseAddress &);
 
 	// ISocket overrides
-	virtual void		bind(const NetworkAddress&);
+	virtual void		bind(const BaseAddress &);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 
@@ -47,10 +47,17 @@ public:
 
 private:
 	void				init();
+	void				fetchReceivedData() const;
 
 private:
 	USBDeviceHandle m_device;
 	USBDataLinkConfig m_config;
+
+	enum {USB_BUF_LEN = 4096};
+	unsigned char m_input1[USB_BUF_LEN];
+	unsigned char m_input2[USB_BUF_LEN];
+	mutable unsigned char* m_input;
+	mutable unsigned int m_inputPos; // where to write next chunk of data from system buffer
 };
 
 #endif
