@@ -141,6 +141,8 @@ XARCH_SUBCLASS(XArchNetworkNameUnavailable, XArchNetworkName);
 //! The named host is known but no supported address
 XARCH_SUBCLASS(XArchNetworkNameUnsupported, XArchNetworkName);
 
+XARCH_SUBCLASS(XArchUsbTransferFailure, XArchNetwork);
+
 //! Generic daemon exception
 /*!
 Exceptions derived from this class are used by the daemon
