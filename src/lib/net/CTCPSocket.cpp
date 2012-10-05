@@ -73,10 +73,11 @@ CTCPSocket::~CTCPSocket()
 }
 
 void
-CTCPSocket::bind(const CNetworkAddress& addr)
+CTCPSocket::bind(const CBaseAddress& addr)
 {
 	try {
-		ARCH->bindSocket(m_socket, addr.getAddress());
+		assert(addr.getAddressType() == CBaseAddress::Network);
+		ARCH->bindSocket(m_socket, reinterpret_cast<const CNetworkAddress&>(addr).getAddress());
 	}
 	catch (XArchNetworkAddressInUse& e) {
 		throw XSocketAddressInUse(e.what());
@@ -253,7 +254,7 @@ CTCPSocket::getSize() const
 }
 
 void
-CTCPSocket::connect(const CNetworkAddress& addr)
+CTCPSocket::connect(const CBaseAddress& addr)
 {
 	{
 		CLock lock(&m_mutex);
@@ -265,7 +266,9 @@ CTCPSocket::connect(const CNetworkAddress& addr)
 		}
 
 		try {
-			if (ARCH->connectSocket(m_socket, addr.getAddress())) {
+			assert(addr.getAddressType() == CBaseAddress::Network);
+			if (ARCH->connectSocket(m_socket,
+					reinterpret_cast<const CNetworkAddress&>(addr).getAddress())) {
 				sendEvent(getConnectedEvent());
 				onConnected();
 			}

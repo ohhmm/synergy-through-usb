@@ -35,7 +35,7 @@ public:
 	~CTCPListenSocket();
 
 	// ISocket overrides
-	virtual void		bind(const CNetworkAddress&);
+	virtual void		bind(const CBaseAddress&);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 

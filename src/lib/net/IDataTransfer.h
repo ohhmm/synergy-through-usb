@@ -46,7 +46,7 @@ public:
 	event when it fails.  The stream acts as if shutdown for input and
 	output until the stream connects.
 	*/
-	virtual void		connect(const CNetworkAddress&) = 0;
+	virtual void		connect(const CBaseAddress&) = 0;
 
 	//@}
 	//! @name accessors
@@ -74,7 +74,7 @@ public:
 	// in VC++6.  it claims the methods are unused locals and warns
 	// that it's removing them.  it's presumably tickled by inheriting
 	// methods with identical signatures from both superclasses.
-	virtual void		bind(const CNetworkAddress&) = 0;
+	virtual void		bind(const CBaseAddress&) = 0;
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 

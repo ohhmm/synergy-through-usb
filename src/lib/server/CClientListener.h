@@ -28,7 +28,7 @@ class CClientProxy;
 class CClientProxyUnknown;
 class CNetworkAddress;
 class IListenSocket;
-class ISocketFactory;
+class ITransportFactory;
 class IStreamFilterFactory;
 class CServer;
 
@@ -36,7 +36,7 @@ class CClientListener {
 public:
 	// The factories are adopted.
 	CClientListener(const CNetworkAddress&,
-							ISocketFactory*, IStreamFilterFactory*);
+							ITransportFactory*, IStreamFilterFactory*);
 	~CClientListener();
 
 	//! @name manipulators
@@ -77,7 +77,7 @@ private:
 	typedef std::deque<CClientProxy*> CWaitingClients;
 
 	IListenSocket*			m_listen;
-	ISocketFactory*			m_socketFactory;
+	ITransportFactory*		m_transportFactory;
 	IStreamFilterFactory*	m_streamFilterFactory;
 	CNewClients				m_newClients;
 	CWaitingClients			m_waitingClients;

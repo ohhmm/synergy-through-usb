@@ -16,27 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUSBDataLinkListener_H
-#define CUSBDataLinkListener_H
+#ifndef CBASEADDRESS_H
+#define CBASEADDRESS_H
 
-#include "IListenSocket.h"
+#include "CString.h"
 
-//! USB data link cable listen
+//! Generic address type
 /*!
- Data link connection listener class.
+This class represents transport address.
 */
-class CUSBDataLinkListener : public IListenSocket {
+class CBaseAddress {
+
 public:
-	CUSBDataLinkListener();
-	~CUSBDataLinkListener();
 
-	// ISocket overrides
-	virtual void		bind(const CBaseAddress&);
-	virtual void		close();
-	virtual void*		getEventTarget() const;
+	enum AddressType { Network, USB, Firewire };
 
-	// IListenSocket overrides
-	virtual IDataTransfer*	accept();
+	virtual ~CBaseAddress();
+
+	//! Check address validity
+	/*!
+	Returns true if this is not the invalid address.
+	*/
+	virtual bool			isValid() const = 0;
+
+	virtual AddressType 	getAddressType() const = 0;
+
+	virtual CString			getName() const = 0;
+
+	virtual CBaseAddress* 	clone() const = 0;
 };
 
 #endif

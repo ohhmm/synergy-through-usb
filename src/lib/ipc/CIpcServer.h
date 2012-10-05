@@ -76,7 +76,7 @@ private:
 	typedef std::list<CIpcClientProxy*> CClientList;
 
 	CTCPListenSocket	m_socket;
-	CNetworkAddress		m_address;
+	CNetworkAddress 	m_address;
 	CClientList			m_clients;
 	CArchMutex			m_clientsMutex;
 	

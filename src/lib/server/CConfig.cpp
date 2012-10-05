@@ -1848,7 +1848,7 @@ operator<<(std::ostream& s, const CConfig& config)
 	}
 	if (config.m_synergyAddress.isValid()) {
 		s << "\taddress = " <<
-			config.m_synergyAddress.getHostname().c_str() << std::endl;
+			config.m_synergyAddress.getName().c_str() << std::endl;
 	}
 	s << config.m_inputFilter.format("\t");
 	s << "end" << std::endl;

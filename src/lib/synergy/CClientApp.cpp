@@ -393,7 +393,7 @@ CClientApp::handleClientDisconnected(const CEvent&, void*)
 
 
 CClient*
-CClientApp::openClient(const CString& name, const CNetworkAddress& address, CScreen* screen)
+CClientApp::openClient(const CString& name, const CBaseAddress& address, CScreen* screen)
 {
 	CClient* client = new CClient(
 		*EVENTQUEUE, name, address, new CTCPSocketFactory, NULL, screen);

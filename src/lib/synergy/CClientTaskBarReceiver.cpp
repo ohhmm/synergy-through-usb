@@ -54,7 +54,7 @@ CClientTaskBarReceiver::updateStatus(CClient* client, const CString& errorMsg)
 			}
 		}
 		else {
-			m_server = client->getServerAddress().getHostname();
+			m_server = client->getServerAddress().getName();
 
 			if (client->isConnected()) {
 				m_state = kConnected;

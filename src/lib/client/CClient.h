@@ -28,7 +28,7 @@ class CEventQueueTimer;
 class CScreen;
 class CServerProxy;
 class IDataTransfer;
-class ISocketFactory;
+class ITransportFactory;
 namespace synergy { class IStream; }
 class IStreamFilterFactory;
 class IEventQueue;
@@ -56,8 +56,8 @@ public:
 	to create the socket.  \p screen is	the local screen.
 	*/
 	CClient(IEventQueue& eventQueue,
-							const CString& name, const CNetworkAddress& address,
-							ISocketFactory* socketFactory,
+							const CString& name, const CBaseAddress& address,
+							ITransportFactory* transportFactory,
 							IStreamFilterFactory* streamFilterFactory,
 							CScreen* screen);
 	~CClient();
@@ -106,7 +106,7 @@ public:
 	Returns the address of the server the client is connected (or wants
 	to connect) to.
 	*/
-	CNetworkAddress		getServerAddress() const;
+	const CBaseAddress& getServerAddress() const;
 
 	//! Get connected event type
 	/*!
@@ -192,8 +192,8 @@ private:
 	
 private:
 	CString					m_name;
-	CNetworkAddress			m_serverAddress;
-	ISocketFactory*			m_socketFactory;
+	CBaseAddress*			m_serverAddress;
+	ITransportFactory*		m_transportFactory;
 	IStreamFilterFactory*	m_streamFilterFactory;
 	CScreen*				m_screen;
 	synergy::IStream*		m_stream;

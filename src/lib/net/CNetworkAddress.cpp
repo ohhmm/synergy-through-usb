@@ -130,6 +130,12 @@ CNetworkAddress::operator=(const CNetworkAddress& addr)
 	return *this;
 }
 
+CNetworkAddress*
+CNetworkAddress::clone() const
+{
+	return new CNetworkAddress(*this);
+}
+
 void
 CNetworkAddress::resolve()
 {
@@ -197,9 +203,14 @@ CNetworkAddress::getPort() const
 }
 
 CString
-CNetworkAddress::getHostname() const
+CNetworkAddress::getName() const
 {
 	return m_hostname;
+}
+
+CBaseAddress::AddressType CNetworkAddress::getAddressType() const
+{
+	return Network;
 }
 
 void

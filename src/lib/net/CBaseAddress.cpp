@@ -16,31 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ISOCKETFACTORY_H
-#define ISOCKETFACTORY_H
+#include "CBaseAddress.h"
 
-#include "IInterface.h"
+//
+// CBaseAddress
+//
 
-class IDataTransfer;
-class IListenSocket;
-
-//! Socket factory
-/*!
-This interface defines the methods common to all factories used to
-create sockets.
-*/
-class ISocketFactory : public IInterface {
-public:
-	//! @name accessors
-	//@{
-
-	//! Create data socket
-	virtual IDataTransfer*	create() const = 0;
-
-	//! Create listen socket
-	virtual IListenSocket*	createListen() const = 0;
-
-	//@}
-};
-
-#endif
+CBaseAddress::~CBaseAddress()
+{
+}

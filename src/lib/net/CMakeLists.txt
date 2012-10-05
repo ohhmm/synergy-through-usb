@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set(inc
+	CBaseAddress.h
 	CNetworkAddress.h
+	CUSBAddress.h
 	CSocketMultiplexer.h
 	CTCPListenSocket.h
 	CTCPSocket.h
@@ -25,14 +27,16 @@ set(inc
 	IDataTransfer.h
 	IListenSocket.h
 	ISocket.h
-	ISocketFactory.h
+	ITransportFactory.h
 	ISocketMultiplexerJob.h
 	TSocketMultiplexerMethodJob.h
 	XSocket.h
 )
 
 set(src
+	CBaseAddress.cpp
 	CNetworkAddress.cpp
+	CUSBAddress.cpp
 	CSocketMultiplexer.cpp
 	CTCPListenSocket.cpp
 	CTCPSocket.cpp

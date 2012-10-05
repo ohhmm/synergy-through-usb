@@ -21,6 +21,7 @@
 
 #include "IInterface.h"
 #include "CEvent.h"
+#include "CBaseAddress.h"
 
 class CNetworkAddress;
 
@@ -38,7 +39,7 @@ public:
 	/*!
 	Binds the socket to a particular address.
 	*/
-	virtual void		bind(const CNetworkAddress&) = 0;
+	virtual void		bind(const CBaseAddress&) = 0;
 
 	//! Close socket
 	/*!

@@ -59,12 +59,14 @@ CTCPListenSocket::~CTCPListenSocket()
 }
 
 void
-CTCPListenSocket::bind(const CNetworkAddress& addr)
+CTCPListenSocket::bind(const CBaseAddress& addr)
 {
 	try {
 		CLock lock(m_mutex);
 		ARCH->setReuseAddrOnSocket(m_socket, true);
-		ARCH->bindSocket(m_socket, addr.getAddress());
+		assert(addr.getAddressType() == CBaseAddress::Network);
+		ARCH->bindSocket(m_socket,
+				reinterpret_cast<const CNetworkAddress&>(addr).getAddress());
 		ARCH->listenOnSocket(m_socket);
 		CSocketMultiplexer::getInstance()->addSocket(this,
 							new TSocketMultiplexerMethodJob<CTCPListenSocket>(

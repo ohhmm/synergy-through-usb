@@ -19,15 +19,15 @@
 #ifndef CTCPSOCKETFACTORY_H
 #define CTCPSOCKETFACTORY_H
 
-#include "ISocketFactory.h"
+#include "ITransportFactory.h"
 
 //! Socket factory for TCP sockets
-class CTCPSocketFactory : public ISocketFactory {
+class CTCPSocketFactory : public ITransportFactory {
 public:
 	CTCPSocketFactory();
 	virtual ~CTCPSocketFactory();
 
-	// ISocketFactory overrides
+	// ITransportFactory overrides
 	virtual IDataTransfer*	create() const;
 	virtual IListenSocket*	createListen() const;
 };

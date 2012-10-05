@@ -23,7 +23,7 @@
 #include "IStreamFilterFactory.h"
 #include "IDataTransfer.h"
 #include "IListenSocket.h"
-#include "ISocketFactory.h"
+#include "ITransportFactory.h"
 #include "XSocket.h"
 #include "CLog.h"
 #include "IEventQueue.h"
@@ -36,17 +36,17 @@
 CEvent::Type			CClientListener::s_connectedEvent = CEvent::kUnknown;
 
 CClientListener::CClientListener(const CNetworkAddress& address,
-				ISocketFactory* socketFactory,
+				ITransportFactory* transportFactory,
 				IStreamFilterFactory* streamFilterFactory) :
-	m_socketFactory(socketFactory),
+	m_transportFactory(transportFactory),
 	m_streamFilterFactory(streamFilterFactory),
 	m_server(NULL)
 {
-	assert(m_socketFactory != NULL);
+	assert(m_transportFactory != NULL);
 
 	try {
 		// create listen socket
-		m_listen = m_socketFactory->createListen();
+		m_listen = m_transportFactory->createListen();
 
 		// bind listen address
 		LOG((CLOG_DEBUG1 "binding listen socket"));
@@ -54,13 +54,13 @@ CClientListener::CClientListener(const CNetworkAddress& address,
 	}
 	catch (XSocketAddressInUse&) {
 		delete m_listen;
-		delete m_socketFactory;
+		delete m_transportFactory;
 		delete m_streamFilterFactory;
 		throw;
 	}
 	catch (XBase&) {
 		delete m_listen;
-		delete m_socketFactory;
+		delete m_transportFactory;
 		delete m_streamFilterFactory;
 		throw;
 	}
@@ -98,7 +98,7 @@ CClientListener::~CClientListener()
 
 	EVENTQUEUE->removeHandler(m_listen->getConnectingEvent(), m_listen);
 	delete m_listen;
-	delete m_socketFactory;
+	delete m_transportFactory;
 	delete m_streamFilterFactory;
 }
 

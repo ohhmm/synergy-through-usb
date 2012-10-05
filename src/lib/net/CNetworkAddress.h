@@ -22,12 +22,13 @@
 #include "CString.h"
 #include "BasicTypes.h"
 #include "IArchNetwork.h"
+#include "CBaseAddress.h"
 
 //! Network address type
 /*!
 This class represents a network address.
 */
-class CNetworkAddress {
+class CNetworkAddress : public CBaseAddress{
 public:
 	/*!
 	Constructs the invalid address
@@ -57,6 +58,8 @@ public:
 	~CNetworkAddress();
 
 	CNetworkAddress&	operator=(const CNetworkAddress&);
+
+	CNetworkAddress* 		clone() const;
 
 	//! @name manipulators
 	//@{
@@ -110,7 +113,9 @@ public:
 	/*!
 	Returns the hostname passed to the c'tor sans any port suffix.
 	*/
-	CString				getHostname() const;
+	CString				getName() const;
+
+	AddressType 		getAddressType() const;
 
 	//@}
 

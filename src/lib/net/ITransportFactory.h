@@ -16,27 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CUSBDataLinkListener_H
-#define CUSBDataLinkListener_H
+#ifndef ITRANSPORTFACTORY_H
+#define ITRANSPORTFACTORY_H
 
-#include "IListenSocket.h"
+#include "IInterface.h"
 
-//! USB data link cable listen
+class IDataTransfer;
+class IListenSocket;
+
+//! Socket factory
 /*!
- Data link connection listener class.
+This interface defines the methods common to all factories used to
+create sockets.
 */
-class CUSBDataLinkListener : public IListenSocket {
+class ITransportFactory : public IInterface {
 public:
-	CUSBDataLinkListener();
-	~CUSBDataLinkListener();
+	//! @name accessors
+	//@{
 
-	// ISocket overrides
-	virtual void		bind(const CBaseAddress&);
-	virtual void		close();
-	virtual void*		getEventTarget() const;
+	//! Create data socket
+	virtual IDataTransfer*	create() const = 0;
 
-	// IListenSocket overrides
-	virtual IDataTransfer*	accept();
+	//! Create listen socket
+	virtual IListenSocket*	createListen() const = 0;
+
+	//@}
 };
 
 #endif

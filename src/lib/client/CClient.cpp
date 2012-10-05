@@ -25,7 +25,7 @@
 #include "ProtocolTypes.h"
 #include "XSynergy.h"
 #include "IDataTransfer.h"
-#include "ISocketFactory.h"
+#include "ITransportFactory.h"
 #include "IStreamFilterFactory.h"
 #include "CLog.h"
 #include "IEventQueue.h"
@@ -49,13 +49,13 @@ CClient::CClient(IEventQueue& eventQueue) :
 }
 
 CClient::CClient(IEventQueue& eventQueue,
-				const CString& name, const CNetworkAddress& address,
-				ISocketFactory* socketFactory,
+				const CString& name, const CBaseAddress& address,
+				ITransportFactory* transportFactory,
 				IStreamFilterFactory* streamFilterFactory,
 				CScreen* screen) :
 	m_name(name),
-	m_serverAddress(address),
-	m_socketFactory(socketFactory),
+	m_serverAddress(address.clone()),
+	m_transportFactory(transportFactory),
 	m_streamFilterFactory(streamFilterFactory),
 	m_screen(screen),
 	m_stream(NULL),
@@ -68,7 +68,7 @@ CClient::CClient(IEventQueue& eventQueue,
 	m_eventQueue(eventQueue),
 	m_mock(false)
 {
-	assert(m_socketFactory != NULL);
+	assert(m_transportFactory != NULL);
 	assert(m_screen        != NULL);
 
 	// register suspend/resume event handlers
@@ -105,8 +105,10 @@ CClient::~CClient()
 	cleanupScreen();
 	cleanupConnecting();
 	cleanupConnection();
-	delete m_socketFactory;
+	delete m_transportFactory;
 	delete m_streamFilterFactory;
+	if(m_serverAddress)
+		delete m_serverAddress;
 }
 
 void
@@ -121,24 +123,27 @@ CClient::connect()
 	}
 
 	try {
-		// resolve the server hostname.  do this every time we connect
-		// in case we couldn't resolve the address earlier or the address
-		// has changed (which can happen frequently if this is a laptop
-		// being shuttled between various networks).  patch by Brent
-		// Priddy.
-		m_serverAddress.resolve();
-		
-		// m_serverAddress will be null if the hostname address is not reolved
-		if (m_serverAddress.getAddress() != NULL) {
-		  // to help users troubleshoot, show server host name (issue: 60)
-		  LOG((CLOG_NOTE "connecting to '%s': %s:%i", 
-		  m_serverAddress.getHostname().c_str(),
-		  ARCH->addrToString(m_serverAddress.getAddress()).c_str(),
-		  m_serverAddress.getPort()));
-		}
 
+		if(m_serverAddress->getAddressType() == CBaseAddress::Network) {
+			// resolve the server hostname.  do this every time we connect
+			// in case we couldn't resolve the address earlier or the address
+			// has changed (which can happen frequently if this is a laptop
+			// being shuttled between various networks).  patch by Brent
+			// Priddy.
+			reinterpret_cast<CNetworkAddress*>(m_serverAddress)->resolve();
+
+			// m_serverAddress will be null if the hostname address is not resolved
+			if (reinterpret_cast<CNetworkAddress*>(m_serverAddress)->getAddress() != NULL) {
+				// to help users troubleshoot, show server host name (issue: 60)
+				LOG((CLOG_NOTE "connecting to '%s': %s:%i",
+						reinterpret_cast<CNetworkAddress*>(m_serverAddress)->getName().c_str(),
+					ARCH->addrToString(reinterpret_cast<CNetworkAddress*>(m_serverAddress)->getAddress()).c_str(),
+					reinterpret_cast<CNetworkAddress*>(m_serverAddress)->getPort()));
+			}
+		}
+		
 		// create the socket
-		IDataTransfer* socket = m_socketFactory->create();
+		IDataTransfer* socket = m_transportFactory->create();
 
 		// filter socket messages, including a packetizing filter
 		m_stream = socket;
@@ -151,7 +156,7 @@ CClient::connect()
 		LOG((CLOG_DEBUG1 "connecting to server"));
 		setupConnecting();
 		setupTimer();
-		socket->connect(m_serverAddress);
+		socket->connect(static_cast<CNetworkAddress&>(*m_serverAddress));
 	}
 	catch (XBase& e) {
 		cleanupTimer();
@@ -200,10 +205,10 @@ CClient::isConnecting() const
 	return (m_timer != NULL);
 }
 
-CNetworkAddress
+const CBaseAddress&
 CClient::getServerAddress() const
 {
-	return m_serverAddress;
+	return *m_serverAddress;
 }
 
 CEvent::Type

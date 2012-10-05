@@ -17,7 +17,7 @@
  */
 
 #include "CUSBDataLinkListener.h"
-#include "CNetworkAddress.h"
+#include "CUSBAddress.h"
 
 //
 // CUSBDataLinkListener
@@ -34,8 +34,11 @@ CUSBDataLinkListener::~CUSBDataLinkListener()
 }
 
 void
-CUSBDataLinkListener::bind(const CNetworkAddress& addr)
+CUSBDataLinkListener::bind(const CBaseAddress& addr)
 {
+	assert(addr.getAddressType() == CBaseAddress::USB);
+	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+
 	// TODO : USB
 }
 
