@@ -2,7 +2,8 @@
 #include "CUSBDataLink.h"
 #include "CUSBDataLinkListener.h"
 
-CUSBDataLinkFactory::CUSBDataLinkFactory(void)
+CUSBDataLinkFactory::CUSBDataLinkFactory(IEventQueue* events)
+: m_events(events)
 {
 }
 
@@ -12,12 +13,12 @@ CUSBDataLinkFactory::~CUSBDataLinkFactory(void)
 
 IDataTransfer* CUSBDataLinkFactory::create() const
 {
-	return new CUSBDataLink;
+	return new CUSBDataLink(m_events);
 }
 
 IListenSocket* CUSBDataLinkFactory::createListen() const
 {
-	return new CUSBDataLinkListener;
+	return new CUSBDataLinkListener();
 }
 
 

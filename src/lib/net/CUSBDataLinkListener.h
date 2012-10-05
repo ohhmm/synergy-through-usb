@@ -19,10 +19,10 @@
 #ifndef CUSBDataLinkListener_H
 #define CUSBDataLinkListener_H
 
-#include "IArchUsbDataLink.h"
+#include "arch/IArchUsbDataLink.h"
 #include "IListenSocket.h"
-#include "CLock.h"
-#include "CThread.h"
+#include "mt/Lock.h"
+#include "mt/Thread.h"
 #include <vector>
 
 //! USB data link cable listen
@@ -48,7 +48,7 @@ private:
 	typedef std::vector<USBDeviceHandle> CUSBLinks;
 
 	CUSBLinks			m_usbLinks;
-	CMutex*				m_mutex;
+	Mutex*				m_mutex;
 };
 
 #endif
