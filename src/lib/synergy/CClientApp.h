@@ -20,6 +20,7 @@
 
 #include "CApp.h"
 #include "CArgsBase.h"
+#include "CUSBAddress.h"
 
 class CScreen;
 class CEvent;
@@ -36,7 +37,8 @@ public:
 
 	public:
 		int m_yscroll;
-		CNetworkAddress* m_serverAddress;
+		CBaseAddress* m_serverAddress;
+		//CAddress* m_serverAddress;
 	};
 
 	CClientApp(CreateTaskBarReceiverFunc createTaskBarReceiver);

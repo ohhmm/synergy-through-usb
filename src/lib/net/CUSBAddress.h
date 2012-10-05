@@ -29,7 +29,7 @@ public:
 	*/
 	CUSBAddress(const CString& devicepath);
 
-public:
+	//!Copy constructor
 	CUSBAddress(const CUSBAddress&);
 
 	~CUSBAddress();
@@ -85,8 +85,9 @@ public:
 	Product ID, in endpoint number, out endpoint number, bus number, 
 	device number (nnDeviceOnBus)
 	nnBus, nnDeviceOnBus could be entered here optionally
-	If device path is invalid function will return false and
-	
+	If device path is invalid function will return false
+	Path has to look similar to example: USB\VID_0402&PID_5632,81,02
+	(you can get it at "device properties"->"property page"->"Details", "Property"->"Hardware Ids in Windows)
 	*/
 	bool setUSBHostName(const CString& name);
 

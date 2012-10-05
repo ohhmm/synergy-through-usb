@@ -139,8 +139,19 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 
 	// save server address
 	try {
-		*args().m_serverAddress = CNetworkAddress(argv[i], kDefaultPort);
-		args().m_serverAddress->resolve();
+		// detect USB address first
+		CUSBAddress detect;
+		if( detect.setUSBHostName(argv[i]) )
+		{
+			args().m_serverAddress = new CUSBAddress(detect);
+		}
+		else
+		{
+			args().m_serverAddress = new CNetworkAddress;
+			CNetworkAddress detect(argv[i], kDefaultPort);
+			detect.resolve();
+			*args().m_serverAddress = detect;
+		}
 	}
 	catch (XSocketAddress& e) {
 		// allow an address that we can't look up if we're restartable.
@@ -598,7 +609,8 @@ int
 CClientApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	args().m_serverAddress = new CNetworkAddress;
+	//args().m_serverAddress = new CNetworkAddress;
+	//args().m_serverUSBAddress = new CUSBAddress;
 	args().m_pname         = ARCH->getBasename(argv[0]);
 
 	// install caller's output filter
