@@ -4,10 +4,10 @@
 
 CUSBAddress::CUSBAddress(void)
 {
-	nVID=0;
-	nPID=0;
-	nBulkIN=0;
-	nBulkOut=0;
+	nVID=0x0402;
+	nPID=0x5632;
+	nBulkIN=0x81;
+	nBulkOut=0x2;
 	nBus=0;
 	nDeviceOnBus=0;
 }
@@ -34,6 +34,11 @@ CUSBAddress::CUSBAddress(const CString& devicepath)
 		nBus=0;
 		nDeviceOnBus=0;
 	}
+}
+
+CUSBAddress::CUSBAddress(const CUSBAddress& devicepath)
+{
+	*this=operator=(devicepath);
 }
 
 CUSBAddress& CUSBAddress::operator=(const CUSBAddress& address)
@@ -138,32 +143,32 @@ CUSBAddress::clone() const
 	return new CUSBAddress(*this);
 }
 
-UInt16 CUSBAddress::GetVID()
+UInt16 CUSBAddress::GetVID() const
 {
 	return nVID;
 }
 
-UInt16 CUSBAddress::GetPID()
+UInt16 CUSBAddress::GetPID() const
 {
 	return nPID;
 }
 
-UInt8 CUSBAddress::GetIDBulkIN()
+UInt8 CUSBAddress::GetIDBulkIN() const
 {
 	return nBulkIN;
 }
 
-UInt8 CUSBAddress::GetIDBulkOut()
+UInt8 CUSBAddress::GetIDBulkOut() const
 {
 	return nBulkOut;
 }
 
-UInt8 CUSBAddress::GetIDBus()
+UInt8 CUSBAddress::GetIDBus() const
 {
 	return nBus;
 }
 
-UInt8 CUSBAddress::GetIDDeviceOnBus()
+UInt8 CUSBAddress::GetIDDeviceOnBus() const
 {
 	return nDeviceOnBus;
 }

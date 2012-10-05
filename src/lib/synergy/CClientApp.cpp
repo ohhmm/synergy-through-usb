@@ -37,6 +37,7 @@
 #include "CEventQueue.h"
 #include "CThread.h"
 #include "TMethodJob.h"
+#include "CUSBDataLinkFactory.h"
 
 #if SYSAPI_WIN32
 #include "CArchMiscWindows.h"
@@ -395,8 +396,20 @@ CClientApp::handleClientDisconnected(const CEvent&, void*)
 CClient*
 CClientApp::openClient(const CString& name, const CBaseAddress& address, CScreen* screen)
 {
-	CClient* client = new CClient(
-		*EVENTQUEUE, name, address, new CTCPSocketFactory, NULL, screen);
+	CClient* client;
+	switch( address.getAddressType() )
+	{
+	case CBaseAddress::Network:
+		client = new CClient(*EVENTQUEUE, name, address, new CTCPSocketFactory, NULL, screen);
+		break;
+	case CBaseAddress::USB:
+		client = new CClient(*EVENTQUEUE, name, address, new CUSBDataLinkFactory, NULL, screen);
+		break;
+	default:
+		//unknown interface
+		break;
+	}
+
 
 	try {
 		EVENTQUEUE->adoptHandler(
