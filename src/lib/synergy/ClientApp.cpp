@@ -26,6 +26,7 @@
 #include "synergy/ClientArgs.h"
 #include "net/NetworkAddress.h"
 #include "net/TCPSocketFactory.h"
+#include "net/CUSBDataLinkFactory.h"
 #include "net/SocketMultiplexer.h"
 #include "net/XSocket.h"
 #include "mt/Thread.h"
@@ -336,15 +337,35 @@ Client*
 ClientApp::openClient(const String& name, const BaseAddress & address,
 				synergy::Screen* screen, const CryptoOptions& crypto)
 {
-	Client* client = new Client(
-		m_events,
-		name,
-		address,
-		new CTCPSocketFactory(m_events, getSocketMultiplexer()),
-		NULL,
-		screen,
-		crypto,
-		args().m_enableDragDrop);
+	Client* client;
+	switch( address.getAddressType() )
+	{
+	case BaseAddress::Network:
+			client = new Client(
+			m_events,
+			name,
+			address,
+			new CTCPSocketFactory(m_events, getSocketMultiplexer()),
+			NULL,
+			screen,
+			crypto,
+			args().m_enableDragDrop);
+		break;
+	case BaseAddress::USB:
+		client = new Client(
+			m_events,
+			name,
+			address,
+			new CUSBDataLinkFactory(m_events),
+			NULL,
+			screen,
+			crypto,
+			args().m_enableDragDrop);
+		break;
+	default:
+		//unknown interface
+		break;
+	}
 
 	try {
 		m_events->adoptHandler(
