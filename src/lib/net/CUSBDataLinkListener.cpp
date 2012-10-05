@@ -18,6 +18,9 @@
 
 #include "CUSBDataLinkListener.h"
 #include "CUSBAddress.h"
+#include "arch/Arch.h"
+#include "arch/IArchUsbDataLink.h"
+#include "mt/Mutex.h"
 
 //
 // CUSBDataLinkListener
@@ -25,34 +28,68 @@
 
 CUSBDataLinkListener::CUSBDataLinkListener()
 {
-
+	m_mutex = new Mutex;
 }
 
 CUSBDataLinkListener::~CUSBDataLinkListener()
 {
-
+	close();
+	delete m_mutex;
 }
 
 void
 CUSBDataLinkListener::bind(const BaseAddress & addr)
 {
-	assert(addr.getAddressType() == BaseAddress::USB);
-	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+//	assert(addr.getAddressType() == BaseAddress::USB);
+//	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
 
-	// TODO : USB
+	USBDeviceEnumerator *list;
+	USBDeviceEnumerator iter;
+
+	size_t i = 0;
+
+	const unsigned int idVendor = 0x0402;
+	const unsigned int idProduct = 0x5632;
+
+	ARCH->usbGetDeviceList(&list);
+	try
+	{
+		while ((iter = list[i++]) != NULL) 
+		{
+			USBDeviceInfo info;
+			
+			ARCH->usbGetDeviceInfo(iter, info);
+
+			if (info.idVendor == idVendor &&
+				info.idProduct == idProduct)
+			{
+				m_usbLinks.push_back(ARCH->usbOpenDevice(iter, 0));
+			}
+		}
+	}
+	catch(...)
+	{
+		ARCH->usbFreeDeviceList(list);
+		throw;
+	}
+
+	ARCH->usbFreeDeviceList(list);
 }
 
 void
 CUSBDataLinkListener::close()
 {
-	// TODO : USB
+	for (CUSBLinks::iterator i=m_usbLinks.begin(); i!=m_usbLinks.end(); ++i)
+	{
+		ARCH->usbCloseDevice(*i, 0);
+	}
+	m_usbLinks.clear();
 }
 
 void*
 CUSBDataLinkListener::getEventTarget() const
 {
-	// TODO : USB
-	return NULL;
+	return const_cast<void*>(reinterpret_cast<const void*>(this));
 }
 
 IDataSocket*

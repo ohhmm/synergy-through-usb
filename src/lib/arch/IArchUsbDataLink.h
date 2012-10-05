@@ -22,16 +22,24 @@
 #include "common/IInterface.h"
 
 typedef struct libusb_context* USBContextHandle;
+typedef struct libusb_device* USBDeviceEnumerator;
 typedef struct libusb_device_handle* USBDeviceHandle;
 
-struct USBDataLinkConfig
+struct USBDeviceInfo
 {
-	int vid;
-	int pid;
+	unsigned short idVendor;
+	unsigned short idProduct;
+	unsigned char busNumber;
+	unsigned char devAddress;
+};
+
+struct USBDataLinkConfig: USBDeviceInfo
+{
 	int ifid;
 	int bulkin;
 	int bulkout;
 };
+
 
 //! Interface for architecture dependent USB
 /*!
@@ -46,7 +54,13 @@ public:
 	virtual void usbShut() = 0;
 	virtual USBContextHandle usbGetContext() = 0;
 
-	virtual USBDeviceHandle usbOpenDevice(int vid, int pid, int ifid) = 0;
+	// returns null-terminated list of usb devices
+	virtual void usbGetDeviceList(USBDeviceEnumerator **list) = 0;
+	virtual void usbFreeDeviceList(USBDeviceEnumerator *list) = 0;
+	virtual void usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBDeviceInfo &info) = 0;
+
+	virtual USBDeviceHandle usbOpenDevice(USBDeviceEnumerator devEnum, int ifid) = 0;
+	virtual USBDeviceHandle usbOpenDevice(struct USBDeviceInfo &devInfo, int ifid) = 0;
 	virtual void usbCloseDevice(USBDeviceHandle dev, int ifid) = 0;
 	virtual int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
 	virtual int usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
