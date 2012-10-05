@@ -46,15 +46,15 @@ void
 CUSBDataLink::connect(const CBaseAddress& addr)
 {
 	assert(addr.getAddressType() == CBaseAddress::USB);
-	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+	const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
 
 	// TODO: USB : fill m_config from addr
 	
-	m_config.idVendor = 0x0402;
-	m_config.idProduct = 0x5632;
+	m_config.idVendor = usbAddress.GetPID();
+	m_config.idProduct = usbAddress.GetVID();
 	m_config.ifid = 0;
-	m_config.bulkin = 0x81;
-	m_config.bulkout = 0x02;
+	m_config.bulkin = usbAddress.GetIDBulkIN();
+	m_config.bulkout = usbAddress.GetIDBulkOut();
 	
 
 	m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);

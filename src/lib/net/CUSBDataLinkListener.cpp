@@ -37,9 +37,15 @@ void
 CUSBDataLinkListener::bind(const CBaseAddress& addr)
 {
 	assert(addr.getAddressType() == CBaseAddress::USB);
-	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+	const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
 
 	// TODO : USB
+	m_config.idVendor = usbAddress.GetPID();
+	m_config.idProduct = usbAddress.GetVID();
+	m_config.ifid = 0;
+	m_config.bulkin = usbAddress.GetIDBulkIN();
+	m_config.bulkout = usbAddress.GetIDBulkOut();
+
 }
 
 void
