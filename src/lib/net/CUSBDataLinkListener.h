@@ -19,7 +19,11 @@
 #ifndef CUSBDataLinkListener_H
 #define CUSBDataLinkListener_H
 
+#include "IArchUsbDataLink.h"
 #include "IListenSocket.h"
+#include "CLock.h"
+#include "CThread.h"
+#include <vector>
 
 //! USB data link cable listen
 /*!
@@ -37,6 +41,14 @@ public:
 
 	// IListenSocket overrides
 	virtual IDataTransfer*	accept();
+
+private:
+	void				serviceThread(void*);
+
+	typedef std::vector<USBDeviceHandle> CUSBLinks;
+
+	CUSBLinks			m_usbLinks;
+	CMutex*				m_mutex;
 };
 
 #endif

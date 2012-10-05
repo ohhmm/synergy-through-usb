@@ -38,7 +38,12 @@ public:
 	void usbShut();
 	USBContextHandle usbGetContext();
 
-	USBDeviceHandle usbOpenDevice(int vid, int pid, int ifid);
+	void usbGetDeviceList(USBDeviceEnumerator **list);
+	void usbFreeDeviceList(USBDeviceEnumerator *list);
+	void usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBDeviceInfo &info);
+	
+	USBDeviceHandle usbOpenDevice(USBDeviceEnumerator devEnum, int ifid);
+	USBDeviceHandle usbOpenDevice(struct USBDeviceInfo &devInfo, int ifid);
 	void usbCloseDevice(USBDeviceHandle dev, int ifid);
 	int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
 	int usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
