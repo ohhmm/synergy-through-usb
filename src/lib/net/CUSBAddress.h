@@ -65,17 +65,17 @@ public:
 	virtual CUSBAddress* 	clone() const;
 
 	//! Return Vendor ID
-	UInt16 GetVID();
+	UInt16 GetVID() const;
 	//! Return Product ID
-	UInt16 GetPID();
+	UInt16 GetPID() const;
 	//! Return Bilk In ID
-	UInt8 GetIDBulkIN();
+	UInt8 GetIDBulkIN() const;
 	//! Return Bulk Out ID
-	UInt8 GetIDBulkOut();
+	UInt8 GetIDBulkOut() const;
 	//! Return Bus ID
-	UInt8 GetIDBus();
+	UInt8 GetIDBus() const;
 	//! Return Device ID on USB Bus
-	UInt8 GetIDDeviceOnBus();
+	UInt8 GetIDDeviceOnBus() const;
 	/*! Return string contains hexadecimal Vendor ID, Product ID, in endpoint 
 	number, out endpoint number, bus number, device number, divided by spaces
 	*/
