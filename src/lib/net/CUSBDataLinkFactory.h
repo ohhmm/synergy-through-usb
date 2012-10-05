@@ -1,8 +1,8 @@
 #pragma once
-#include "isocketfactory.h"
+#include "ITransportFactory.h"
 
 //! Factory for USB data link
-class CUSBDataLinkFactory : public ISocketFactory
+class CUSBDataLinkFactory : public ITransportFactory
 {
 public:
 	CUSBDataLinkFactory(void);
