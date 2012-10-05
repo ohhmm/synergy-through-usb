@@ -50,13 +50,15 @@ CUSBDataLink::connect(const BaseAddress & addr)
 	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
 
 	// TODO: USB : fill m_config from addr
-	m_config.vid = 0x0402;
-	m_config.pid = 0x5632;
+	
+	m_config.idVendor = 0x0402;
+	m_config.idProduct = 0x5632;
 	m_config.ifid = 0;
 	m_config.bulkin = 0x81;
 	m_config.bulkout = 0x02;
+	
 
-	m_device = ARCH->usbOpenDevice(m_config.vid, m_config.pid, m_config.ifid);
+	m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);
 }
 
 //
