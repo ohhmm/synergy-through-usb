@@ -19,6 +19,7 @@
 #pragma once
 
 #include "synergy/App.h"
+#include "net/CUSBAddress.h"
 
 namespace synergy { class Screen; }
 class Event;
@@ -80,5 +81,5 @@ public:
 private:
 	Client*			m_client;
 	synergy::Screen*m_clientScreen;
-	NetworkAddress*	m_serverAddress;
+    BaseAddress*	m_serverAddress;
 };

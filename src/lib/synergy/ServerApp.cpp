@@ -93,9 +93,16 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 	else {
 		if (!args().m_synergyAddress.empty()) {
 			try {
-				*m_synergyAddress = NetworkAddress(args().m_synergyAddress, 
-					kDefaultPort);
-				m_synergyAddress->resolve();
+				if( m_synergyUSBAddress.setUSBHostName(args().m_synergyAddress) )
+				{
+					m_synergyAddress = &m_synergyUSBAddress;
+				}
+				else
+				{
+					m_synergyNetAddress = NetworkAddress(args().m_synergyAddress, kDefaultPort);
+					m_synergyNetAddress.resolve();
+					m_synergyAddress = &m_synergyNetAddress;
+				}
 			}
 			catch (XSocketAddress& e) {
 				LOG((CLOG_PRINT "%s: %s" BYE,
@@ -628,12 +635,12 @@ ServerApp::handleResume(const Event&, void*)
 }
 
 ClientListener*
-ServerApp::openClientListener(const NetworkAddress& address)
+ServerApp::openClientListener(const BaseAddress& address)
 {
 	ClientListener* listen;
 	switch( address.getAddressType() )
 	{
-	case NetworkAddress::Network:
+	case BaseAddress::Network:
 		listen = new ClientListener(
 			address,
 			new CTCPSocketFactory(m_events, getSocketMultiplexer()),
@@ -641,7 +648,7 @@ ServerApp::openClientListener(const NetworkAddress& address)
 			args().m_crypto,
 			m_events);
 		break;
-	case NetworkAddress::USB:
+	case BaseAddress::USB:
 		listen = new ClientListener(
 			address,
 			new CUSBDataLinkFactory(m_events),

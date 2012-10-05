@@ -37,7 +37,7 @@ class IEventQueue;
 class ClientListener {
 public:
 	// The factories are adopted.
-	ClientListener(const NetworkAddress&,
+	ClientListener(const BaseAddress&,
 							ISocketFactory*,
 							IStreamFilterFactory*,
 							const CryptoOptions& crypto,
