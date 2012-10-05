@@ -1,6 +1,13 @@
 #include "CUSBAddress.h"
 #include <cstdlib>
 
+const char * USBsavefmt = "USB\\VID_%#4x&PID%#4x,%#2x,%#2x,%#2x,%#2x";
+const char * USBfirstID = "USB\\VID_";
+const char * USBsecondID = "&PID_";
+const char USBprmdivider = ',';
+const int USBparametercount = 6;
+const int USBmandatoryparametercount = 4;
+
 CUSBAddress::CUSBAddress(void)
 {
 	nVID=0x0402;
@@ -54,22 +61,22 @@ CUSBAddress& CUSBAddress::operator=(const CUSBAddress& address)
 bool CUSBAddress::operator==(const CUSBAddress& address) const
 {
 	bool res;
-	res = (nVID==address.nVID);
-	res = res&&(nPID==address.nPID);
-	res = res&&(nBulkIN==address.nBulkIN);
-	res = res&&(nBulkOut==address.nBulkOut);
-	res = res&&(nBus==address.nBus);
-	res = res&&(nDeviceOnBus==address.nDeviceOnBus);
+	res = (nVID == address.nVID);
+	res = res && (nPID == address.nPID);
+	res = res && (nBulkIN == address.nBulkIN);
+	res = res && (nBulkOut == address.nBulkOut);
+	res = res && (nBus == address.nBus);
+	res = res && (nDeviceOnBus == address.nDeviceOnBus);
 	return res;
 }
 
 bool CUSBAddress::isValid() const
 {
 	bool res;
-	res = (nVID!=0);
-	res = res&&(nPID!=0);
-	res = res&&(nBulkIN!=0);
-	res = res&&(nBulkOut!=0);
+	res = (nVID != 0);
+	res = res && (nPID != 0);
+	res = res && (nBulkIN != 0);
+	res = res && (nBulkOut != 0);
 	return res;
 }
 
@@ -84,30 +91,42 @@ CUSBAddress::~CUSBAddress(void)
 
 String CUSBAddress::getUSBHostname() const
 {
-    return synergy::string::sprintf("%#4x,%#4x,%#2x,%#2x,%#2x,%#2x", nVID, nPID, nBulkIN, nBulkOut, nBus, nDeviceOnBus);
+    return synergy::string::sprintf(USBsavefmt, nVID, nPID, nBulkIN, nBulkOut, nBus, nDeviceOnBus);
 }
 
 bool CUSBAddress::setUSBHostName(const String& name)
 {
-	long value[6];
+	long value[USBparametercount];
 	char * end;
 	int index;
 	bool res = false;
 	String::size_type i=0;
+	int j;
+	for( j=0; j<sizeof(value)/sizeof(value[0]); j++ )
+		value[j] = 0;
 	index = 0;
-
-	if( i > name.size() )
+	if( ( i = name.find(USBfirstID, i) ) != String::npos )
 	{
+		i += strlen(USBfirstID);
 		value[index++] = strtol(&name[i], &end, 16);
-		while( ( i = name.find(',', i+1) ) != String::npos )
+		if( ( i = name.find(USBsecondID, i) ) != String::npos )
 		{
-			if( index >= sizeof(value)/sizeof(value[0]) && i+1 >= name.size() )
-				break;
-			value[index++] = strtol(&name[i+1], &end, 16);
+			i += strlen(USBsecondID);
+			value[index++] = strtol(&name[i], &end, 16);
+			i += static_cast<int>(end - &name[i]);
 		}
-	
+		if( i < name.size() )
+		{
+			while( ( i = name.find(USBprmdivider, i) ) != String::npos )
+			{
+				i++;
+				if( index >= sizeof(value)/sizeof(value[0]) && i >= name.size() )
+					break;
+				value[index++] = strtol(&name[i], &end, 16);
+			}
+		}
 	}
-	if( index >= 4 )
+	if( index >= USBmandatoryparametercount )
 	{
 		res = true;
 	}

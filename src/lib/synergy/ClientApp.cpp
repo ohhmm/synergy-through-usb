@@ -88,8 +88,17 @@ ClientApp::parseArgs(int argc, const char* const* argv)
 		// save server address
 		if (!args().m_synergyAddress.empty()) {
 			try {
-				*m_serverAddress = NetworkAddress(args().m_synergyAddress, kDefaultPort);
-				m_serverAddress->resolve();
+				// detect USB address first
+				CUSBAddress detect;
+				if( detect.setUSBHostName(args().m_synergyAddress) )
+				{
+					m_serverAddress = new CUSBAddress(detect);
+				}
+				else
+				{
+					m_serverAddress = new NetworkAddress(args().m_synergyAddress, kDefaultPort);
+					static_cast<NetworkAddress*>(m_serverAddress)->resolve();
+				}
 			}
 			catch (XSocketAddress& e) {
 				// allow an address that we can't look up if we're restartable.
@@ -553,7 +562,6 @@ int
 ClientApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	m_serverAddress = new NetworkAddress;
 	args().m_pname         = ARCH->getBasename(argv[0]);
 
 	// install caller's output filter
@@ -576,7 +584,7 @@ ClientApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc
 		}
 
 		delete m_serverAddress;
-
+		m_serverAddress = NULL;
 		throw;
 	}
 
