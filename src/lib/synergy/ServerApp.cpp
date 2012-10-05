@@ -29,6 +29,7 @@
 #include "synergy/ServerArgs.h"
 #include "net/SocketMultiplexer.h"
 #include "net/TCPSocketFactory.h"
+#include "net/CUSBDataLinkFactory.h"
 #include "net/XSocket.h"
 #include "arch/Arch.h"
 #include "base/EventQueue.h"
@@ -629,13 +630,29 @@ ServerApp::handleResume(const Event&, void*)
 ClientListener*
 ServerApp::openClientListener(const NetworkAddress& address)
 {
-	ClientListener* listen = new ClientListener(
-		address,
-		new CTCPSocketFactory(m_events, getSocketMultiplexer()),
-		NULL,
-		args().m_crypto,
-		m_events);
-	
+	ClientListener* listen;
+	switch( address.getAddressType() )
+	{
+	case NetworkAddress::Network:
+		listen = new ClientListener(
+			address,
+			new CTCPSocketFactory(m_events, getSocketMultiplexer()),
+			NULL,
+			args().m_crypto,
+			m_events);
+		break;
+	case NetworkAddress::USB:
+		listen = new ClientListener(
+			address,
+			new CUSBDataLinkFactory(m_events),
+			NULL,
+			args().m_crypto,
+			m_events);
+		break;
+	default:
+		//unknown interface
+		break;
+	}
 	m_events->adoptHandler(
 		m_events->forClientListener().connected(), listen,
 		new TMethodEventJob<ServerApp>(
