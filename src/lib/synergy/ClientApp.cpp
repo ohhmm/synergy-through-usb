@@ -333,7 +333,7 @@ ClientApp::handleClientDisconnected(const Event&, void*)
 
 
 Client*
-ClientApp::openClient(const String& name, const NetworkAddress& address,
+ClientApp::openClient(const String& name, const BaseAddress & address,
 				synergy::Screen* screen, const CryptoOptions& crypto)
 {
 	Client* client = new Client(

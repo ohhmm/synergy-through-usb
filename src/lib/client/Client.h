@@ -31,7 +31,7 @@ class EventQueueTimer;
 namespace synergy { class Screen; }
 class ServerProxy;
 class IDataTransfer;
-class ISocketFactory;
+class ITransportFactory;
 namespace synergy { class IStream; }
 class IStreamFilterFactory;
 class IEventQueue;
@@ -58,8 +58,8 @@ public:
 	to create the socket.  \p screen is	the local screen.
 	*/
 	Client(IEventQueue* events,
-							const String& name, const NetworkAddress& address,
-							ISocketFactory* socketFactory,
+							const String& name, const BaseAddress & address,
+							ITransportFactory* transportFactory,
 							IStreamFilterFactory* streamFilterFactory,
 							synergy::Screen* screen,
 							const CryptoOptions& crypto,
@@ -135,7 +135,7 @@ public:
 	Returns the address of the server the client is connected (or wants
 	to connect) to.
 	*/
-	NetworkAddress		getServerAddress() const;
+    const BaseAddress &	getServerAddress() const;
 	
 	//! Return true if recieved file size is valid
 	bool				isReceivedFileSizeValid();
@@ -208,8 +208,8 @@ public:
 
 private:
 	String					m_name;
-	NetworkAddress			m_serverAddress;
-	ISocketFactory*			m_socketFactory;
+	BaseAddress *			m_serverAddress;
+	ITransportFactory*		m_transportFactory;
 	IStreamFilterFactory*	m_streamFilterFactory;
 	synergy::Screen*		m_screen;
 	synergy::IStream*		m_stream;

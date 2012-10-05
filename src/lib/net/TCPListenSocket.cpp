@@ -62,12 +62,14 @@ TCPListenSocket::~TCPListenSocket()
 }
 
 void
-TCPListenSocket::bind(const NetworkAddress& addr)
+TCPListenSocket::bind(const BaseAddress & addr)
 {
 	try {
 		Lock lock(m_mutex);
 		ARCH->setReuseAddrOnSocket(m_socket, true);
-		ARCH->bindSocket(m_socket, addr.getAddress());
+		assert(addr.getAddressType() == BaseAddress::Network);
+		ARCH->bindSocket(m_socket,
+				reinterpret_cast<const NetworkAddress&>(addr).getAddress());
 		ARCH->listenOnSocket(m_socket);
 		m_socketMultiplexer->addSocket(this,
 							new TSocketMultiplexerMethodJob<TCPListenSocket>(

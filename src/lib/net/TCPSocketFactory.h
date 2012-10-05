@@ -18,18 +18,18 @@
 
 #pragma once
 
-#include "net/ISocketFactory.h"
+#include "net/ITransportFactory.h"
 
 class IEventQueue;
 class SocketMultiplexer;
 
 //! Socket factory for TCP sockets
-class CTCPSocketFactory : public ISocketFactory {
+class CTCPSocketFactory : public ITransportFactory {
 public:
 	CTCPSocketFactory(IEventQueue* events, SocketMultiplexer* socketMultiplexer);
 	virtual ~CTCPSocketFactory();
 
-	// ISocketFactory overrides
+	// ITransportFactory overrides
 	virtual IDataTransfer*	create() const;
 	virtual IListenSocket*	createListen() const;
 

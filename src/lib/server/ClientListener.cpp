@@ -23,7 +23,7 @@
 #include "synergy/PacketStreamFilter.h"
 #include "net/IDataTransfer.h"
 #include "net/IListenSocket.h"
-#include "net/ISocketFactory.h"
+#include "net/ITransportFactory.h"
 #include "net/XSocket.h"
 #include "io/CryptoStream.h"
 #include "io/CryptoOptions.h"
@@ -37,21 +37,21 @@
 //
 
 ClientListener::ClientListener(const NetworkAddress& address,
-				ISocketFactory* socketFactory,
+				ITransportFactory* transportFactory,
 				IStreamFilterFactory* streamFilterFactory,
 				const CryptoOptions& crypto,
 				IEventQueue* events) :
-	m_socketFactory(socketFactory),
+	m_transportFactory(transportFactory),
 	m_streamFilterFactory(streamFilterFactory),
 	m_server(NULL),
 	m_crypto(crypto),
 	m_events(events)
 {
-	assert(m_socketFactory != NULL);
+	assert(m_transportFactory != NULL);
 
 	try {
 		// create listen socket
-		m_listen = m_socketFactory->createListen();
+		m_listen = m_transportFactory->createListen();
 
 		// bind listen address
 		LOG((CLOG_DEBUG1 "binding listen socket"));
@@ -59,13 +59,13 @@ ClientListener::ClientListener(const NetworkAddress& address,
 	}
 	catch (XSocketAddressInUse&) {
 		delete m_listen;
-		delete m_socketFactory;
+		delete m_transportFactory;
 		delete m_streamFilterFactory;
 		throw;
 	}
 	catch (XBase&) {
 		delete m_listen;
-		delete m_socketFactory;
+		delete m_transportFactory;
 		delete m_streamFilterFactory;
 		throw;
 	}
@@ -103,7 +103,7 @@ ClientListener::~ClientListener()
 
 	m_events->removeHandler(m_events->forIListenSocket().connecting(), m_listen);
 	delete m_listen;
-	delete m_socketFactory;
+	delete m_transportFactory;
 	delete m_streamFilterFactory;
 }
 

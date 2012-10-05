@@ -132,6 +132,12 @@ NetworkAddress::operator=(const NetworkAddress& addr)
 	return *this;
 }
 
+NetworkAddress*
+NetworkAddress::clone() const
+{
+	return new NetworkAddress(*this);
+}
+
 void
 NetworkAddress::resolve()
 {
@@ -199,9 +205,14 @@ NetworkAddress::getPort() const
 }
 
 String
-NetworkAddress::getHostname() const
+NetworkAddress::getName() const
 {
 	return m_hostname;
+}
+
+BaseAddress::AddressType NetworkAddress::getAddressType() const
+{
+	return Network;
 }
 
 void

@@ -28,7 +28,7 @@ class IListenSocket;
 This interface defines the methods common to all factories used to
 create sockets.
 */
-class ISocketFactory : public IInterface {
+class ITransportFactory : public IInterface {
 public:
 	//! @name accessors
 	//@{

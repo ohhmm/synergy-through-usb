@@ -29,7 +29,7 @@ class ClientProxy;
 class ClientProxyUnknown;
 class NetworkAddress;
 class IListenSocket;
-class ISocketFactory;
+class ITransportFactory;
 class IStreamFilterFactory;
 class Server;
 class IEventQueue;
@@ -38,7 +38,7 @@ class ClientListener {
 public:
 	// The factories are adopted.
 	ClientListener(const NetworkAddress&,
-							ISocketFactory*,
+							ITransportFactory*,
 							IStreamFilterFactory*,
 							const CryptoOptions& crypto,
 							IEventQueue* events);
@@ -77,8 +77,8 @@ private:
 	typedef std::set<ClientProxyUnknown*> NewClients;
 	typedef std::deque<ClientProxy*> WaitingClients;
 
-	IListenSocket*		m_listen;
-	ISocketFactory*		m_socketFactory;
+	IListenSocket*			m_listen;
+	ITransportFactory*		m_transportFactory;
 	IStreamFilterFactory*	m_streamFilterFactory;
 	NewClients			m_newClients;
 	WaitingClients		m_waitingClients;

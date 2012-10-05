@@ -29,10 +29,10 @@ public:
 	~CUSBDataLink();
 
 	// IDataTransfer overrides
-	virtual void		connect(const NetworkAddress&);
+	virtual void		connect(const BaseAddress &);
 
 	// ISocket overrides
-	virtual void		bind(const NetworkAddress&);
+	virtual void		bind(const BaseAddress &);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 

@@ -32,7 +32,7 @@
 #include "io/IStreamFilterFactory.h"
 #include "io/CryptoStream.h"
 #include "net/IDataTransfer.h"
-#include "net/ISocketFactory.h"
+#include "net/ITransportFactory.h"
 #include "arch/Arch.h"
 #include "base/Log.h"
 #include "base/IEventQueue.h"
@@ -51,16 +51,16 @@
 
 Client::Client(
 		IEventQueue* events,
-		const String& name, const NetworkAddress& address,
-		ISocketFactory* socketFactory,
+		const String& name, const BaseAddress & address,
+		ITransportFactory* transportFactory,
 		IStreamFilterFactory* streamFilterFactory,
 		synergy::Screen* screen,
 		const CryptoOptions& crypto,
 		bool enableDragDrop) :
 	m_mock(false),
 	m_name(name),
-	m_serverAddress(address),
-	m_socketFactory(socketFactory),
+	m_serverAddress(address.clone()),
+	m_transportFactory(transportFactory),
 	m_streamFilterFactory(streamFilterFactory),
 	m_screen(screen),
 	m_stream(NULL),
@@ -77,7 +77,7 @@ Client::Client(
 	m_writeToDropDirThread(NULL),
 	m_enableDragDrop(enableDragDrop)
 {
-	assert(m_socketFactory != NULL);
+	assert(m_transportFactory != NULL);
 	assert(m_screen        != NULL);
 
 	// register suspend/resume event handlers
@@ -117,8 +117,10 @@ Client::~Client()
 	cleanupScreen();
 	cleanupConnecting();
 	cleanupConnection();
-	delete m_socketFactory;
+	delete m_transportFactory;
 	delete m_streamFilterFactory;
+	if(m_serverAddress)
+		delete m_serverAddress;
 }
 
 void
@@ -133,24 +135,26 @@ Client::connect()
 	}
 
 	try {
-		// resolve the server hostname.  do this every time we connect
-		// in case we couldn't resolve the address earlier or the address
-		// has changed (which can happen frequently if this is a laptop
-		// being shuttled between various networks).  patch by Brent
-		// Priddy.
-		m_serverAddress.resolve();
-		
-		// m_serverAddress will be null if the hostname address is not reolved
-		if (m_serverAddress.getAddress() != NULL) {
-		  // to help users troubleshoot, show server host name (issue: 60)
-		  LOG((CLOG_NOTE "connecting to '%s': %s:%i", 
-		  m_serverAddress.getHostname().c_str(),
-		  ARCH->addrToString(m_serverAddress.getAddress()).c_str(),
-		  m_serverAddress.getPort()));
+		if(m_serverAddress->getAddressType() == BaseAddress::Network) {
+			// resolve the server hostname.  do this every time we connect
+			// in case we couldn't resolve the address earlier or the address
+			// has changed (which can happen frequently if this is a laptop
+			// being shuttled between various networks).  patch by Brent
+			// Priddy.
+			reinterpret_cast<NetworkAddress*>(m_serverAddress)->resolve();
+	
+			// m_serverAddress will be null if the hostname address is not resolved
+			if (reinterpret_cast<NetworkAddress*>(m_serverAddress)->getAddress() != NULL) {
+				// to help users troubleshoot, show server host name (issue: 60)
+				LOG((CLOG_NOTE "connecting to '%s': %s:%i", 
+						reinterpret_cast<NetworkAddress*>(m_serverAddress)->getName().c_str(),
+					ARCH->addrToString(reinterpret_cast<NetworkAddress*>(m_serverAddress)->getAddress()).c_str(),
+					reinterpret_cast<NetworkAddress*>(m_serverAddress)->getPort()));
+			}
 		}
 
 		// create the socket
-		IDataTransfer* socket = m_socketFactory->create();
+		IDataTransfer* socket = m_transportFactory->create();
 
 		// filter socket messages, including a packetizing filter
 		m_stream = socket;
@@ -169,7 +173,7 @@ Client::connect()
 		LOG((CLOG_DEBUG1 "connecting to server"));
 		setupConnecting();
 		setupTimer();
-		socket->connect(m_serverAddress);
+		socket->connect(static_cast<NetworkAddress&>(*m_serverAddress));
 	}
 	catch (XBase& e) {
 		cleanupTimer();
@@ -226,10 +230,10 @@ Client::isConnecting() const
 	return (m_timer != NULL);
 }
 
-NetworkAddress
+const BaseAddress &
 Client::getServerAddress() const
 {
-	return m_serverAddress;
+	return *m_serverAddress;
 }
 
 void*

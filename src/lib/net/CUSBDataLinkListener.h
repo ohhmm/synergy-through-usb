@@ -31,7 +31,7 @@ public:
 	~CUSBDataLinkListener();
 
 	// ISocket overrides
-	virtual void		bind(const NetworkAddress&);
+	virtual void		bind(const BaseAddress &);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 

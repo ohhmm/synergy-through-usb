@@ -65,7 +65,7 @@ public:
 	void handleClientConnected(const Event&, void*);
 	void handleClientFailed(const Event& e, void*);
 	void handleClientDisconnected(const Event&, void*);
-	Client* openClient(const String& name, const NetworkAddress& address, 
+	Client* openClient(const String& name, const BaseAddress & address,
 				synergy::Screen* screen, const CryptoOptions& crypto);
 	void closeClient(Client* client);
 	bool startClient();

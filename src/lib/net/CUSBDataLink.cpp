@@ -19,6 +19,7 @@
 #include "arch/Arch.h"
 #include "arch/XArch.h"
 #include "CUSBDataLink.h"
+#include "CUSBAddress.h"
 
 //
 // CUSBDataLink
@@ -43,8 +44,11 @@ CUSBDataLink::~CUSBDataLink()
 //
 
 void
-CUSBDataLink::connect(const NetworkAddress& addr)
+CUSBDataLink::connect(const BaseAddress & addr)
 {
+	assert(addr.getAddressType() == BaseAddress::USB);
+	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+
 	// TODO: USB : fill m_config from addr
 	m_config.vid = 0x0402;
 	m_config.pid = 0x5632;
@@ -60,7 +64,7 @@ CUSBDataLink::connect(const NetworkAddress& addr)
 //
 
 void
-CUSBDataLink::bind(const NetworkAddress& addr)
+CUSBDataLink::bind(const BaseAddress & addr)
 {
 	// not required
 }
