@@ -52,7 +52,9 @@ public:
 
 	public:
 		CString	m_configFile;
-		CNetworkAddress* m_synergyAddress;
+		CUSBAddress m_synergyUSBAddress;
+		CNetworkAddress m_synergyNetAddress;
+		CBaseAddress* m_synergyAddress;
 		CConfig* m_config;
 	};
 
@@ -101,7 +103,7 @@ public:
 	void handleScreenError(const CEvent&, void*);
 	void handleSuspend(const CEvent&, void*);
 	void handleResume(const CEvent&, void*);
-	CClientListener* openClientListener(const CNetworkAddress& address);
+	CClientListener* openClientListener(const CBaseAddress& address);
 	CServer* openServer(const CConfig& config, CPrimaryClient* primaryClient);
 	void handleNoClients(const CEvent&, void*);
 	bool startServer();

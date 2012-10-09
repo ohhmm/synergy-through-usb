@@ -95,10 +95,18 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 
 	else if (isArg(i, argc, argv, "-a", "--address", 1)) {
 		// save listen address
+
 		try {
-			*args().m_synergyAddress = CNetworkAddress(argv[i + 1],
-				kDefaultPort);
-			args().m_synergyAddress->resolve();
+			if( args().m_synergyUSBAddress.setUSBHostName(argv[i]) )
+			{
+				args().m_synergyAddress = &args().m_synergyUSBAddress;
+			}
+			else
+			{
+				args().m_synergyNetAddress = CNetworkAddress(argv[i + 1], kDefaultPort);
+				args().m_synergyNetAddress.resolve();
+				args().m_synergyAddress = &args().m_synergyNetAddress;
+			}
 		}
 		catch (XSocketAddress& e) {
 			LOG((CLOG_PRINT "%s: %s" BYE,
@@ -693,7 +701,7 @@ CServerApp::handleResume(const CEvent&, void*)
 }
 
 CClientListener*
-CServerApp::openClientListener(const CNetworkAddress& address)
+CServerApp::openClientListener(const CBaseAddress& address)
 {
 	CClientListener* listen;
 	switch( address.getAddressType() )
@@ -861,7 +869,8 @@ int
 CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	args().m_synergyAddress = new CNetworkAddress;
+	//args().m_synergyAddress = new CNetworkAddress;
+	args().m_synergyAddress = NULL;
 	args().m_config         = new CConfig;
 	args().m_pname          = ARCH->getBasename(argv[0]);
 
@@ -880,7 +889,8 @@ CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFun
 	}
 
 	delete args().m_config;
-	delete args().m_synergyAddress;
+	//delete args().m_synergyAddress;
+	args().m_synergyAddress = NULL;
 	return result;
 }
 
