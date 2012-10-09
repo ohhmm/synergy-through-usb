@@ -1,6 +1,6 @@
 /*
  * synergy -- mouse and keyboard sharing utility
- * Copyright (C) 2012 Synergy Si Ltd.
+ * Copyright (C) 2012 Bolton Software Ltd.
  * Copyright (C) 2002 Chris Schoeneman
  * 
  * This package is free software; you can redistribute it and/or
@@ -16,32 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "ITransportFactory.h"
+#include "net/TCPSocketFactory.h"
+#include "net/CUSBDataLinkFactory.h"
+#include <assert.h>
 
-#include <base/IEventQueue.h>
-#include "common/IInterface.h"
-#include "net/BaseAddress.h"
-
-class IDataTransfer;
-class IListenSocket;
-
-//! Socket factory
-/*!
-This interface defines the methods common to all factories used to
-create sockets.
-*/
-class ITransportFactory : public IInterface {
-public:
-	//! @name accessors
-	//@{
-
-	//! Create data socket
-	virtual IDataTransfer*	create() const = 0;
-
-	//! Create listen socket
-	virtual IListenSocket*	createListen() const = 0;
-
-	//@}
-
-	static ITransportFactory *createFactory(BaseAddress::AddressType addressType, IEventQueue *events, void *param);
-};
+ITransportFactory * ITransportFactory::createFactory(BaseAddress::AddressType addressType, IEventQueue *events, void *param) {
+	ITransportFactory* transportFactory = NULL;
+	switch(addressType)
+	{
+	case BaseAddress::Network:
+		transportFactory = new CTCPSocketFactory(events, static_cast<SocketMultiplexer*>(param));
+		break;
+	case BaseAddress::USB:
+		transportFactory = new CUSBDataLinkFactory(events);
+		break;
+	default:
+		assert(!"Not implemented support of new address type");
+		break;
+    }
+	return transportFactory;
+}

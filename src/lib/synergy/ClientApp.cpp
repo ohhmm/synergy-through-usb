@@ -346,35 +346,17 @@ Client*
 ClientApp::openClient(const String& name, const BaseAddress & address,
 				synergy::Screen* screen, const CryptoOptions& crypto)
 {
-	Client* client;
-	switch( address.getAddressType() )
-	{
-	case BaseAddress::Network:
-			client = new Client(
-			m_events,
-			name,
-			address,
-			new CTCPSocketFactory(m_events, getSocketMultiplexer()),
-			NULL,
-			screen,
-			crypto,
-			args().m_enableDragDrop);
-		break;
-	case BaseAddress::USB:
-		client = new Client(
-			m_events,
-			name,
-			address,
-			new CUSBDataLinkFactory(m_events),
-			NULL,
-			screen,
-			crypto,
-			args().m_enableDragDrop);
-		break;
-	default:
-		//unknown interface
-		break;
-	}
+	ITransportFactory* transportFactory = ITransportFactory::createFactory(address.getAddressType(), NULL, NULL);
+
+	Client* client = new Client(
+		m_events,
+		name,
+		address,
+		transportFactory,
+		NULL,
+		screen,
+		crypto,
+		args().m_enableDragDrop);
 
 	try {
 		m_events->adoptHandler(
@@ -393,6 +375,7 @@ ClientApp::openClient(const String& name, const BaseAddress & address,
 			new TMethodEventJob<ClientApp>(this, &ClientApp::handleClientDisconnected));
 
 	} catch (std::bad_alloc &ba) {
+		delete transportFactory;
 		delete client;
 		throw ba;
 	}
