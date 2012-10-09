@@ -35,7 +35,7 @@
 #include "CFunctionEventJob.h"
 #include "TMethodJob.h"
 #include "CVncClient.h"
-#include "CUSBDataLinkFactory.h"
+#include "ITransportFactory.h"
 
 #if SYSAPI_WIN32
 #include "CArchMiscWindows.h"
@@ -703,22 +703,14 @@ CServerApp::handleResume(const CEvent&, void*)
 CClientListener*
 CServerApp::openClientListener(const CBaseAddress& address)
 {
-	CClientListener* listen;
-	switch( address.getAddressType() )
-	{
-	case CNetworkAddress::Network:
-		listen = new CClientListener(address, new CTCPSocketFactory, NULL);
-		break;
-	case CNetworkAddress::USB:
-		listen = new CClientListener(address, new CUSBDataLinkFactory, NULL);
-		break;
-	default:
-		//unknown interface
-		break;
-	}
+	CClientListener* listen = new CClientListener(address,
+			ITransportFactory::createFactory(address.getAddressType()),
+			NULL);
+
 	EVENTQUEUE->adoptHandler(CClientListener::getConnectedEvent(), listen,
 		new TMethodEventJob<CServerApp>(
 		this, &CServerApp::handleClientConnected, listen));
+
 	return listen;
 }
 

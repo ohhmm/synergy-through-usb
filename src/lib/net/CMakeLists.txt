@@ -43,12 +43,13 @@ set(src
 	CTCPSocket.cpp
 	CUSBDataLink.cpp
 	CUSBDataLinkListener.cpp
+	ITransportFactory.cpp
 	CTCPSocketFactory.cpp
+	CUSBDataLinkFactory.cpp
 	IDataTransfer.cpp
 	IListenSocket.cpp
 	ISocket.cpp
 	XSocket.cpp
-	CUSBDataLinkFactory.cpp
 )
 
 if (WIN32)

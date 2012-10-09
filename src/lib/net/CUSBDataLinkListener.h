@@ -49,7 +49,7 @@ private:
 
 	CUSBLinks			m_usbLinks;
 	CMutex*				m_mutex;
-	USBDataLinkConfig m_config;
+	USBDataLinkConfig 	m_config;
 };
 
 #endif

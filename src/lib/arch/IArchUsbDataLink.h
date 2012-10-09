@@ -54,7 +54,7 @@ public:
 	virtual void usbShut() = 0;
 	virtual USBContextHandle usbGetContext() = 0;
 
-	// returns null-terminated list of usb devices
+	// returns null-terminated list of USB devices
 	virtual void usbGetDeviceList(USBDeviceEnumerator **list) = 0;
 	virtual void usbFreeDeviceList(USBDeviceEnumerator *list) = 0;
 	virtual void usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBDeviceInfo &info) = 0;
