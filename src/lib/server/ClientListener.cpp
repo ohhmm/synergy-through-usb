@@ -36,7 +36,7 @@
 // ClientListener
 //
 
-ClientListener::ClientListener(const NetworkAddress& address,
+ClientListener::ClientListener(const BaseAddress& address,
 				ITransportFactory* transportFactory,
 				IStreamFilterFactory* streamFilterFactory,
 				const CryptoOptions& crypto,

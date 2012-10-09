@@ -23,6 +23,7 @@
 #include "synergy/protocol_types.h"
 #include "synergy/IPlatformScreen.h"
 #include "net/NetworkAddress.h"
+#include "net/CUSBAddress.h"
 #include "base/String.h"
 #include "base/XBase.h"
 #include "common/stdmap.h"
@@ -286,7 +287,7 @@ public:
 	Set the synergy listen addresses.  There is no default address so
 	this must be called to run a server using this configuration.
 	*/
-	void				setSynergyAddress(const NetworkAddress&);
+	void				setSynergyAddress(const BaseAddress&);
 
 	//! Add a screen option
 	/*!
@@ -391,7 +392,10 @@ public:
 	link_const_iterator	endNeighbor(const String&) const;
 
 	//! Get the server address
-	const NetworkAddress&	getSynergyAddress() const;
+	const BaseAddress&	getSynergyAddress() const;
+	
+	//! Compare addresses
+	bool EqualAddress(const Config& x) const;
 
 	//! Get the screen options
 	/*!
@@ -407,6 +411,8 @@ public:
 	This is for backwards compatible support of ScrollLock locking.
 	*/
 	bool					hasLockToScreenAction() const;
+
+	bool				CompareAddress(const Config& x)const;
 
 	//! Compare configurations
 	bool				operator==(const Config&) const;
@@ -468,11 +474,13 @@ private:
 	static String		getOptionValue(OptionID, OptionValue);
 
 private:
-	CellMap			m_map;
-	NameMap			m_nameToCanonicalName;
-	NetworkAddress		m_synergyAddress;
+	CellMap				m_map;
+	NameMap				m_nameToCanonicalName;
+	NetworkAddress		m_synergyNetAddress;
+	CUSBAddress			m_synergyUSBAddress;
+	BaseAddress::AddressType m_synergyAddressType;
 	ScreenOptions		m_globalOptions;
-	InputFilter		m_inputFilter;
+	InputFilter			m_inputFilter;
 	bool				m_hasLockToScreenAction;
 	IEventQueue*		m_events;
 };

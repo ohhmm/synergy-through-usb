@@ -91,7 +91,7 @@ public:
 	void handleScreenError(const Event&, void*);
 	void handleSuspend(const Event&, void*);
 	void handleResume(const Event&, void*);
-	ClientListener* openClientListener(const NetworkAddress& address);
+	ClientListener* openClientListener(const BaseAddress& address);
 	Server* openServer(Config& config, PrimaryClient* primaryClient);
 	void handleNoClients(const Event&, void*);
 	bool startServer();
@@ -111,7 +111,9 @@ public:
 	PrimaryClient*		m_primaryClient;
 	ClientListener*		m_listener;
 	EventQueueTimer*	m_timer;
-	NetworkAddress*		m_synergyAddress;
+	CUSBAddress			m_synergyUSBAddress;
+	NetworkAddress		m_synergyNetAddress;
+	BaseAddress*		m_synergyAddress;
 
 private:
 	void handleScreenSwitched(const Event&, void*  data);

@@ -280,9 +280,18 @@ Config::disconnect(const String& srcName, EDirection srcSide, float position)
 }
 
 void
-Config::setSynergyAddress(const NetworkAddress& addr)
+Config::setSynergyAddress(const BaseAddress& addr)
 {
-	m_synergyAddress = addr;
+	switch( addr.getAddressType() )
+	{
+	case BaseAddress::Network:
+		m_synergyNetAddress = reinterpret_cast<const NetworkAddress& >(addr);
+		break;
+	case BaseAddress::USB:
+		m_synergyUSBAddress = reinterpret_cast<const CUSBAddress& >(addr);
+		break;
+	}
+	m_synergyAddressType = addr.getAddressType();
 }
 
 bool
@@ -528,10 +537,17 @@ Config::endNeighbor(const String& srcName) const
 	return index->second.end();
 }
 
-const NetworkAddress&
+const BaseAddress&
 Config::getSynergyAddress() const
 {
-	return m_synergyAddress;
+	switch( m_synergyAddressType )
+	{
+	case BaseAddress::Network:
+		return m_synergyNetAddress;
+	case BaseAddress::USB:
+		return m_synergyUSBAddress;
+	}
+	return m_synergyNetAddress;
 }
 
 const Config::ScreenOptions*
@@ -560,9 +576,27 @@ Config::hasLockToScreenAction() const
 }
 
 bool
+Config::EqualAddress(const Config& x) const
+{
+	bool res = false;
+	if( m_synergyAddressType== x.m_synergyAddressType){
+		switch( m_synergyAddressType )
+		{
+		case BaseAddress::Network:
+			res = ( m_synergyNetAddress == x.m_synergyNetAddress );
+			break;
+		case BaseAddress::USB:
+			res = ( m_synergyUSBAddress == x.m_synergyUSBAddress );
+		}
+	}
+	return res;
+}
+
+bool
 Config::operator==(const Config& x) const
 {
-	if (m_synergyAddress != x.m_synergyAddress) {
+
+	if ( !EqualAddress(x) ) {
 		return false;
 	}
 	if (m_map.size() != x.m_map.size()) {
@@ -724,8 +758,18 @@ Config::readSectionOptions(ConfigReadContext& s)
 		bool handled = true;
 		if (name == "address") {
 			try {
-				m_synergyAddress = NetworkAddress(value, kDefaultPort);
-				m_synergyAddress.resolve();
+				CUSBAddress detect;
+				if( detect.setUSBHostName(value) )
+				{
+					m_synergyUSBAddress = detect;
+					m_synergyAddressType = m_synergyUSBAddress.getAddressType();
+				}
+				else
+				{
+					m_synergyNetAddress = NetworkAddress(value, kDefaultPort);
+					m_synergyNetAddress.resolve();
+					m_synergyAddressType = m_synergyNetAddress.getAddressType();
+				}
 			}
 			catch (XSocketAddress& e) {
 				throw XConfigRead(s,
@@ -1854,9 +1898,9 @@ operator<<(std::ostream& s, const Config& config)
 			}
 		}
 	}
-	if (config.m_synergyAddress.isValid()) {
+	if (config.getSynergyAddress().isValid()) {
 		s << "\taddress = " <<
-			config.m_synergyAddress.getName().c_str() << std::endl;
+			config.getSynergyAddress().getName().c_str() << std::endl;
 	}
 	s << config.m_inputFilter.format("\t");
 	s << "end" << std::endl;
