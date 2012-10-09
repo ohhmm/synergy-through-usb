@@ -346,7 +346,7 @@ Client*
 ClientApp::openClient(const String& name, const BaseAddress & address,
 				synergy::Screen* screen, const CryptoOptions& crypto)
 {
-	ISocketFactory* transportFactory = ISocketFactory::createFactory(address.getAddressType(), NULL, NULL);
+	ISocketFactory* transportFactory = ISocketFactory::createFactory(address.getAddressType(), m_events, NULL);
 
 	Client* client = new Client(
 		m_events,
