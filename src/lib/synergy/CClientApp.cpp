@@ -147,9 +147,12 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 		}
 		else
 		{
-			args().m_serverAddress = new CNetworkAddress;
+			CNetworkAddress* newobj;
+			newobj = new CNetworkAddress;
 			CNetworkAddress detect(argv[i], kDefaultPort);
 			detect.resolve();
+			args().m_serverAddress = newobj;
+			*newobj = detect;
 		}
 	}
 	catch (XSocketAddress& e) {
