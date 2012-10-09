@@ -150,7 +150,6 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 			args().m_serverAddress = new CNetworkAddress;
 			CNetworkAddress detect(argv[i], kDefaultPort);
 			detect.resolve();
-			*args().m_serverAddress = detect;
 		}
 	}
 	catch (XSocketAddress& e) {
