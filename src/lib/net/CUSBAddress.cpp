@@ -1,12 +1,12 @@
 #include "CUSBAddress.h"
 #include <cstdlib>
 
-const char * USBsavefmt = "USB\\VID_%#4x&PID%#4x,%#2x,%#2x,%#2x,%#2x";
-const char * USBfirstID = "USB\\VID_";
-const char * USBsecondID = "&PID_";
-const char USBprmdivider = ',';
-const int USBparametercount = 6;
-const int USBmandatoryparametercount = 4;
+const char * UsbAddressFormat = "USB\\VID_%#4x&PID%#4x,%#2x,%#2x,%#2x,%#2x";
+const char * UsbFirstID = "USB\\VID_";
+const char * UsbSecondID = "&PID_";
+const char UsbParametersDivider = ',';
+const int UsbParameterCount = 6;
+const int UsbMandatoryParametersCount = 4;
 
 CUSBAddress::CUSBAddress(void)
 {
@@ -29,9 +29,9 @@ CUSBAddress::CUSBAddress(const UInt16 nnVID, const UInt16 nnPID, const UInt8 nnB
 	nDeviceOnBus=nnDeviceOnBus;
 }
 
-CUSBAddress::CUSBAddress(const String& devicepath)
+CUSBAddress::CUSBAddress(const String& devicePath)
 {
-	if( !setUSBHostName(devicepath) )
+	if( !setUSBHostName(devicePath) )
 	{
 		nVID=0;
 		nPID=0;
@@ -42,9 +42,9 @@ CUSBAddress::CUSBAddress(const String& devicepath)
 	}
 }
 
-CUSBAddress::CUSBAddress(const CUSBAddress& devicepath)
+CUSBAddress::CUSBAddress(const CUSBAddress& deviceAddress)
 {
-	*this=operator=(devicepath);
+	*this=operator=(deviceAddress);
 }
 
 CUSBAddress& CUSBAddress::operator=(const CUSBAddress& address)
@@ -91,12 +91,12 @@ CUSBAddress::~CUSBAddress(void)
 
 String CUSBAddress::getUSBHostname() const
 {
-    return synergy::string::sprintf(USBsavefmt, nVID, nPID, nBulkIN, nBulkOut, nBus, nDeviceOnBus);
+	return synergy::string::sprintf(UsbAddressFormat, nVID, nPID, nBulkIN, nBulkOut, nBus, nDeviceOnBus);
 }
 
 bool CUSBAddress::setUSBHostName(const String& name)
 {
-	long value[USBparametercount];
+	long value[UsbParameterCount];
 	char * end;
 	int index;
 	bool res = false;
@@ -105,19 +105,19 @@ bool CUSBAddress::setUSBHostName(const String& name)
 	for( j=0; j<sizeof(value)/sizeof(value[0]); j++ )
 		value[j] = 0;
 	index = 0;
-	if( ( i = name.find(USBfirstID, i) ) != String::npos )
+	if( ( i = name.find(UsbFirstID, i) ) != String::npos )
 	{
-		i += strlen(USBfirstID);
+		i += strlen(UsbFirstID);
 		value[index++] = strtol(&name[i], &end, 16);
-		if( ( i = name.find(USBsecondID, i) ) != String::npos )
+		if( ( i = name.find(UsbSecondID, i) ) != String::npos )
 		{
-			i += strlen(USBsecondID);
+			i += strlen(UsbSecondID);
 			value[index++] = strtol(&name[i], &end, 16);
 			i += static_cast<int>(end - &name[i]);
 		}
 		if( i < name.size() )
 		{
-			while( ( i = name.find(USBprmdivider, i) ) != String::npos )
+			while( ( i = name.find(UsbParametersDivider, i) ) != String::npos )
 			{
 				i++;
 				if( index >= sizeof(value)/sizeof(value[0]) && i >= name.size() )
@@ -126,7 +126,7 @@ bool CUSBAddress::setUSBHostName(const String& name)
 			}
 		}
 	}
-	if( index >= USBmandatoryparametercount )
+	if( index >= UsbMandatoryParametersCount )
 	{
 		res = true;
 	}
