@@ -35,7 +35,7 @@ class CServer;
 class CClientListener {
 public:
 	// The factories are adopted.
-	CClientListener(const CNetworkAddress&,
+	CClientListener(const CBaseAddress&,
 							ITransportFactory*, IStreamFilterFactory*);
 	~CClientListener();
 

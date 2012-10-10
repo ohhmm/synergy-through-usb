@@ -22,6 +22,7 @@
 #include "OptionTypes.h"
 #include "ProtocolTypes.h"
 #include "CNetworkAddress.h"
+#include "CUSBAddress.h"
 #include "CStringUtil.h"
 #include "CInputFilter.h"
 #include "XBase.h"
@@ -281,7 +282,7 @@ public:
 	Set the synergy listen addresses.  There is no default address so
 	this must be called to run a server using this configuration.
 	*/
-	void				setSynergyAddress(const CNetworkAddress&);
+	void				setSynergyAddress(const CBaseAddress&);
 
 	//! Add a screen option
 	/*!
@@ -385,7 +386,10 @@ public:
 	link_const_iterator	endNeighbor(const CString&) const;
 
 	//! Get the server address
-	const CNetworkAddress&	getSynergyAddress() const;
+	const CBaseAddress&	getSynergyAddress() const;
+	
+	//! Compare addresses
+	bool EqualAddress(const CConfig& x) const;
 
 	//! Get the screen options
 	/*!
@@ -401,6 +405,8 @@ public:
 	This is for backwards compatible support of ScrollLock locking.
 	*/
 	bool					hasLockToScreenAction() const;
+
+	bool				CompareAddress(const CConfig& x)const;
 
 	//! Compare configurations
 	bool				operator==(const CConfig&) const;
@@ -464,7 +470,9 @@ private:
 private:
 	CCellMap			m_map;
 	CNameMap			m_nameToCanonicalName;
-	CNetworkAddress		m_synergyAddress;
+	CNetworkAddress		m_synergyNetAddress;
+	CUSBAddress			m_synergyUSBAddress;
+	CBaseAddress::AddressType m_synergyAddressType;
 	CScreenOptions		m_globalOptions;
 	CInputFilter		m_inputFilter;
 	bool				m_hasLockToScreenAction;

@@ -30,14 +30,13 @@
 #include "IArchTaskBarReceiver.h"
 #include "IEventQueue.h"
 #include "TMethodEventJob.h"
-#include "CTCPSocketFactory.h"
+#include "ITransportFactory.h"
 #include "XScreen.h"
 #include "LogOutputters.h"
 #include "CSocketMultiplexer.h"
 #include "CEventQueue.h"
 #include "CThread.h"
 #include "TMethodJob.h"
-#include "CUSBDataLinkFactory.h"
 
 #if SYSAPI_WIN32
 #include "CArchMiscWindows.h"
@@ -147,10 +146,11 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 		}
 		else
 		{
-			args().m_serverAddress = new CNetworkAddress;
+			CNetworkAddress* newobj = new CNetworkAddress;
 			CNetworkAddress detect(argv[i], kDefaultPort);
 			detect.resolve();
-			*args().m_serverAddress = detect;
+			args().m_serverAddress = newobj;
+			*newobj = detect;
 		}
 	}
 	catch (XSocketAddress& e) {
@@ -407,20 +407,8 @@ CClientApp::handleClientDisconnected(const CEvent&, void*)
 CClient*
 CClientApp::openClient(const CString& name, const CBaseAddress& address, CScreen* screen)
 {
-	CClient* client;
-	switch( address.getAddressType() )
-	{
-	case CBaseAddress::Network:
-		client = new CClient(*EVENTQUEUE, name, address, new CTCPSocketFactory, NULL, screen);
-		break;
-	case CBaseAddress::USB:
-		client = new CClient(*EVENTQUEUE, name, address, new CUSBDataLinkFactory, NULL, screen);
-		break;
-	default:
-		//unknown interface
-		break;
-	}
-
+	ITransportFactory* transportFactory = ITransportFactory::createFactory(address.getAddressType());
+	CClient* client = new CClient(*EVENTQUEUE, name, address, transportFactory, NULL, screen);
 
 	try {
 		EVENTQUEUE->adoptHandler(
@@ -439,6 +427,7 @@ CClientApp::openClient(const CString& name, const CBaseAddress& address, CScreen
 			new TMethodEventJob<CClientApp>(this, &CClientApp::handleClientDisconnected));
 
 	} catch (std::bad_alloc &ba) {
+		delete transportFactory;
 		delete client;
 		throw ba;
 	}

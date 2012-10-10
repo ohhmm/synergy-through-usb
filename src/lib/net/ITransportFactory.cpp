@@ -16,34 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ITRANSPORTFACTORY_H
-#define ITRANSPORTFACTORY_H
+#include "ITransportFactory.h"
+#include "CTCPSocketFactory.h"
+#include "CUSBDataLinkFactory.h"
+#include <assert.h>
 
-#include "IInterface.h"
-#include "CBaseAddress.h"
-
-class IDataTransfer;
-class IListenSocket;
-
-//! Socket factory
-/*!
-This interface defines the methods common to all factories used to
-create sockets.
-*/
-class ITransportFactory : public IInterface {
-public:
-	//! @name accessors
-	//@{
-
-	//! Create data socket
-	virtual IDataTransfer*	create() const = 0;
-
-	//! Create listen socket
-	virtual IListenSocket*	createListen() const = 0;
-
-	//@}
-
-	static ITransportFactory* createFactory(CBaseAddress::AddressType);
-};
-
-#endif
+ITransportFactory* ITransportFactory::createFactory(CBaseAddress::AddressType addressType) {
+	ITransportFactory* transportFactory = NULL;
+	switch(addressType)
+	{
+	case CBaseAddress::Network:
+		transportFactory = new CTCPSocketFactory;
+		break;
+	case CBaseAddress::USB:
+		transportFactory = new CUSBDataLinkFactory;
+		break;
+	default:
+		assert(!"Not implemented support of new address type");
+		break;
+	}
+	return transportFactory;
+}

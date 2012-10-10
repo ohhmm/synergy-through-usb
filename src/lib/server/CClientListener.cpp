@@ -35,7 +35,7 @@
 
 CEvent::Type			CClientListener::s_connectedEvent = CEvent::kUnknown;
 
-CClientListener::CClientListener(const CNetworkAddress& address,
+CClientListener::CClientListener(const CBaseAddress& address,
 				ITransportFactory* transportFactory,
 				IStreamFilterFactory* streamFilterFactory) :
 	m_transportFactory(transportFactory),
