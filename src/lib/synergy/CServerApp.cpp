@@ -103,9 +103,9 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 			}
 			else
 			{
-				args().m_synergyNetAddress = CNetworkAddress(argv[i + 1], kDefaultPort);
-				args().m_synergyNetAddress.resolve();
-				args().m_synergyAddress = &args().m_synergyNetAddress;
+				*args().m_synergyNetAddress = CNetworkAddress(argv[i + 1], kDefaultPort);
+				args().m_synergyNetAddress->resolve();
+				args().m_synergyAddress = args().m_synergyNetAddress;
 			}
 		}
 		catch (XSocketAddress& e) {
@@ -861,10 +861,10 @@ int
 CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	//args().m_synergyAddress = new CNetworkAddress;
-	args().m_synergyAddress = NULL;
+	args().m_synergyNetAddress = new CNetworkAddress;
 	args().m_config         = new CConfig;
 	args().m_pname          = ARCH->getBasename(argv[0]);
+	args().m_synergyAddress = NULL;
 
 	// install caller's output filter
 	if (outputter != NULL) {
@@ -881,7 +881,7 @@ CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFun
 	}
 
 	delete args().m_config;
-	//delete args().m_synergyAddress;
+	delete args().m_synergyNetAddress;
 	args().m_synergyAddress = NULL;
 	return result;
 }

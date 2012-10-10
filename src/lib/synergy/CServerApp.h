@@ -53,7 +53,7 @@ public:
 	public:
 		CString	m_configFile;
 		CUSBAddress m_synergyUSBAddress;
-		CNetworkAddress m_synergyNetAddress;
+		CNetworkAddress* m_synergyNetAddress;
 		CBaseAddress* m_synergyAddress;
 		CConfig* m_config;
 	};
