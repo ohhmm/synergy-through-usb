@@ -25,6 +25,8 @@ typedef struct libusb_context* USBContextHandle;
 typedef struct libusb_device* USBDeviceEnumerator;
 typedef struct libusb_device_handle* USBDeviceHandle;
 
+
+
 struct USBDeviceInfo
 {
 	unsigned short idVendor;
@@ -62,8 +64,8 @@ public:
 	virtual USBDeviceHandle usbOpenDevice(USBDeviceEnumerator devEnum, int ifid) = 0;
 	virtual USBDeviceHandle usbOpenDevice(struct USBDeviceInfo &devInfo, int ifid) = 0;
 	virtual void usbCloseDevice(USBDeviceHandle dev, int ifid) = 0;
-	virtual int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
-	virtual int usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout) = 0;
+	virtual int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, char* buf, unsigned int len, unsigned int timeout) = 0;
+	virtual int usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, char* buf, unsigned int len, unsigned int timeout) = 0;
 };
 
 #endif

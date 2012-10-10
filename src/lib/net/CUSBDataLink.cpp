@@ -18,6 +18,7 @@
 
 #include "arch/Arch.h"
 #include "arch/XArch.h"
+#include "mt/Lock.h"
 #include "CUSBDataLink.h"
 #include "CUSBAddress.h"
 
@@ -27,9 +28,18 @@
 
 CUSBDataLink::CUSBDataLink(IEventQueue* events) :
 	base_t(events),
+	m_events(events),
 	m_device(NULL),
-	m_input(m_input1),
-	m_inputPos(0)
+	m_transferRead(NULL),
+	m_transferWrite(NULL),
+	m_mutex(),
+	m_flushed(&m_mutex, true),
+	m_connected(false),
+	m_readable(false),
+	m_writable(false),
+	m_waitAccept(false),
+	m_waitAcceptMutex(),
+	m_accepted(&m_waitAcceptMutex, false)
 {
 	memset(&m_config, 0, sizeof(m_config));
 }
@@ -46,19 +56,21 @@ CUSBDataLink::~CUSBDataLink()
 void
 CUSBDataLink::connect(const BaseAddress & addr)
 {
-	assert(addr.getAddressType() == BaseAddress::USB);
-	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
+	initConnection(addr);
 
-	// TODO: USB : fill m_config from addr
-	
-	m_config.idVendor = usbAddress.GetPID();
-	m_config.idProduct = usbAddress.GetVID();
-	m_config.ifid = 0;
-	m_config.bulkin = usbAddress.GetIDBulkIN();
-	m_config.bulkout = usbAddress.GetIDBulkOut();
-	
+	m_waitAccept = true;
 
-	m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);
+	std::string buf("USB_CONNECT");
+	write(buf.c_str(), buf.size());	
+
+	// wait for connection to be accepted
+	Lock lock(&m_waitAcceptMutex);
+	
+	while (m_accepted == false) {
+		m_accepted.wait();
+	}
+
+	m_connected = true;
 }
 
 //
@@ -68,14 +80,32 @@ CUSBDataLink::connect(const BaseAddress & addr)
 void
 CUSBDataLink::bind(const BaseAddress & addr)
 {
-	// not required
+	initConnection(addr);
 }
 
 void
 CUSBDataLink::close()
 {
-	m_inputPos = 0;
+	Lock lock(&m_mutex);
 
+	// clear buffers and enter disconnected state
+	if (m_connected) {
+		sendEvent(m_events->forISocket().disconnected());
+	}
+	onDisconnected();
+
+	if (m_transferRead)
+	{
+		libusb_free_transfer(m_transferRead);
+		m_transferRead = NULL;
+	}
+
+	if (m_transferWrite){
+		libusb_free_transfer(m_transferWrite);
+		m_transferWrite = NULL;
+	}
+
+	// close the usb device
 	if (m_device)
 	{
 		ARCH->usbCloseDevice(m_device, m_config.ifid);
@@ -86,7 +116,7 @@ CUSBDataLink::close()
 void*
 CUSBDataLink::getEventTarget() const
 {
-	return const_cast<void*>(reinterpret_cast<const void*>(this)); // WTF?
+	return const_cast<void*>(reinterpret_cast<const void*>(this));
 }
 
 //
@@ -96,93 +126,124 @@ CUSBDataLink::getEventTarget() const
 bool
 CUSBDataLink::isReady() const
 {
-	fetchReceivedData();
-	return (m_inputPos > 0);
+	Lock lock(&m_mutex);
+	return (m_inputBuffer.getSize() > 0);
 }
 
 UInt32
 CUSBDataLink::getSize() const
 {
-	fetchReceivedData();
-	return m_inputPos;
-}
-
-void
-CUSBDataLink::fetchReceivedData() const
-{
-	if (m_inputPos < USB_BUF_LEN)
-	{
-		// input buffer empty space
-		unsigned int n = USB_BUF_LEN - m_inputPos;
-
-		// using small timeout to fetch already received data
-		unsigned int transferred = ARCH->usbTryBulkTransfer(m_device, false, m_config.bulkin, m_input + m_inputPos, n, 1);
-		m_inputPos += transferred;
-	}
+	Lock lock(&m_mutex);
+	return m_inputBuffer.getSize();
 }
 
 UInt32
 CUSBDataLink::read(void* buffer, UInt32 n)
 {
-	unsigned char* dst = (unsigned char*)buffer;
-	unsigned int bufferLen = n;
+	Lock lock(&m_mutex);
 
-	if (m_inputPos > 0) // some data already available in local buffer
-	{
-		unsigned char* src = m_input; // save pointer to input buffer because it may be changed
-		unsigned int readLen = m_inputPos;
+	// copy data directly from our input buffer
+	UInt32 size = m_inputBuffer.getSize();
+	if (n > size) {
+		n = size;
+	}
+	if (buffer != NULL && n != 0) {
+		memcpy(buffer, m_inputBuffer.peek(n), n);
+	}
+	m_inputBuffer.pop(n);
 
-		if (readLen > bufferLen) // buffer can't fit all available data
-		{
-			readLen = bufferLen; // clamp to max size
-
-			// get pointer to new buffer where to store remaining data
-			if (m_input == m_input1)
-			{
-				m_input = m_input2;
-			}
-			else
-			{
-				m_input = m_input1;
-			}
-
-			// copy remaining data
-			memcpy(m_input, src + readLen, m_inputPos - readLen);
-		}
-
-		memcpy(dst, src, readLen);
-		dst += readLen;
-		bufferLen -= readLen;
-		m_inputPos -= readLen;
+	// if no more data and we cannot read or write then send disconnected
+	if (n > 0 && m_inputBuffer.getSize() == 0 && !m_readable && !m_writable) {
+		sendEvent(m_events->forISocket().disconnected());
+		m_connected = false;
 	}
 
-	// blocking
-	return ARCH->usbBulkTransfer(m_device, false, m_config.bulkin, dst, bufferLen, 0);
+	return n;
 }
 
 void
 CUSBDataLink::write(const void* buffer, UInt32 n)
 {
-	// blocking
-	ARCH->usbBulkTransfer(m_device, true, m_config.bulkout, (unsigned char*)buffer, n, 0);
+	bool wasEmpty;
+	
+	Lock lock(&m_mutex);
+
+	// must not have shutdown output
+	if (!m_writable) {
+		sendEvent(m_events->forIStream().outputError());
+		return;
+	}
+
+	// ignore empty writes
+	if (n == 0) {
+		return;
+	}
+
+	// copy data to the output buffer
+	wasEmpty = (m_outputBuffer.getSize() == 0);
+	m_outputBuffer.write(buffer, n);
+
+	// there's data to write
+	m_flushed = false;
+
+	if (wasEmpty)
+	{
+		// No active write transfers at this moment. Call writeCallback to start new write transfer.
+		m_transferWrite->status = LIBUSB_TRANSFER_COMPLETED;
+		m_transferWrite->actual_length = 0;
+		m_transferWrite->user_data = this;
+		writeCallback(m_transferWrite);
+	}
 }
 
 void
 CUSBDataLink::flush()
 {
-	// not required?
+	Lock lock(&m_mutex);
+	
+	while (m_flushed == false) {
+		m_flushed.wait();
+	}
 }
 
 void
 CUSBDataLink::shutdownInput()
 {
-	// not required?
+	Lock lock(&m_mutex);
+
+	// shutdown socket for reading
+	try {
+		//ARCH->closeSocketForRead(m_socket);
+	}
+	catch (XArchNetwork&) {
+		// ignore
+	}
+
+	// shutdown buffer for reading
+	if (m_readable) {
+		sendEvent(m_events->forIStream().inputShutdown());
+		onInputShutdown();
+	}
 }
 
 void
 CUSBDataLink::shutdownOutput()
 {
-	// not required?
+	Lock lock(&m_mutex);
+
+	// shutdown socket for writing
+	try {
+//		ARCH->closeSocketForWrite(m_socket);
+	}
+	catch (XArchNetwork&) {
+		// ignore
+	}
+
+	// shutdown buffer for writing
+	if (m_writable) {
+		sendEvent(m_events->forIStream().outputShutdown());
+		onOutputShutdown();
+	}
 }
 
 //
@@ -190,7 +251,166 @@ CUSBDataLink::shutdownOutput()
 //
 
 void
-CUSBDataLink::init()
+CUSBDataLink::initConnection(const BaseAddress& addr)
 {
-	// not required?
+	assert(addr.getAddressType() == BaseAddress::USB);
+	const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
+
+	close();
+
+	m_config.idVendor = usbAddress.GetVID();
+	m_config.idProduct = usbAddress.GetPID();
+	m_config.busNumber = usbAddress.GetIDBus();
+	m_config.devAddress = usbAddress.GetIDDeviceOnBus();
+	m_config.ifid = 0;
+	m_config.bulkin = usbAddress.GetIDBulkIN();
+	m_config.bulkout = usbAddress.GetIDBulkOut();
+	
+	m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);	
+
+	m_transferRead = libusb_alloc_transfer(0);
+	m_transferWrite = libusb_alloc_transfer(0);
+
+	m_readable = true;
+	m_writable = true;
+
+	// Start pooling input endpoint.
+	m_transferRead->status = LIBUSB_TRANSFER_COMPLETED;
+	m_transferRead->actual_length = 0;
+	m_transferRead->user_data = this;
+	readCallback(m_transferRead);
+}
+
+void CUSBDataLink::readCallback(libusb_transfer *transfer)
+{
+	CUSBDataLink* this_ = reinterpret_cast<CUSBDataLink*>(transfer->user_data);
+
+	Lock lock(&this_->m_mutex);
+
+	if (transfer->status == LIBUSB_TRANSFER_NO_DEVICE)
+	{
+		// remote write end of stream hungup.  our input side
+		// has therefore shutdown but don't flush our buffer
+		// since there's still data to be read.
+		this_->sendEvent(this_->m_events->forIStream().inputShutdown());
+		if (!this_->m_writable && this_->m_inputBuffer.getSize() == 0) {
+			this_->sendEvent(this_->m_events->forISocket().disconnected());
+			this_->m_connected = false;
+		}
+		this_->m_readable = false;
+
+		return;
+	}
+
+	size_t n = transfer->actual_length;
+	if (n > 0) {
+		bool wasEmpty = (this_->m_inputBuffer.getSize() == 0);
+
+		this_->m_inputBuffer.write(this_->m_readBuffer, (UInt32)n);
+		// slurp up as much as possible
+		//do {
+		//	m_inputBuffer.write(buffer, (UInt32)n);
+		//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
+		//} while (n > 0);
+
+		if (this_->m_waitAccept && !this_->m_accepted)
+		{
+			std::string buf("");
+			buf.resize(this_->m_inputBuffer.getSize(), 0);
+			this_->read((void*)buf.c_str(), buf.size());
+
+			assert(buf == "USB_ACCEPT");
+
+			this_->m_accepted = true;
+			this_->m_accepted.broadcast();
+
+		}
+		else
+		{
+			// send input ready if input buffer was empty
+			if (wasEmpty) {
+				this_->sendEvent(this_->m_events->forIStream().inputReady());
+			}
+		}
+	}
+
+	libusb_fill_bulk_transfer(this_->m_transferRead, this_->m_device, this_->m_config.bulkin, (unsigned char*)this_->m_readBuffer, sizeof(this_->m_readBuffer), CUSBDataLink::readCallback, this_, -1);
+	libusb_submit_transfer(this_->m_transferRead);
+}
+
+void CUSBDataLink::writeCallback(libusb_transfer *transfer)
+{
+	CUSBDataLink* this_ = reinterpret_cast<CUSBDataLink*>(transfer->user_data);
+
+	Lock lock(&this_->m_mutex);
+
+	if (transfer->status == LIBUSB_TRANSFER_NO_DEVICE)
+	{
+		this_->sendEvent(this_->m_events->forISocket().disconnected());
+		this_->onDisconnected();
+		return;
+	}
+
+	// discard written data
+	UInt32 n = transfer->actual_length;
+	if (n > 0) 
+	{
+		this_->m_outputBuffer.pop(n);
+	}
+
+	n = this_->m_outputBuffer.getSize();
+	if (n == 0) 
+	{
+		this_->sendEvent(this_->m_events->forIStream().outputFlushed());
+		this_->m_flushed = true;
+		this_->m_flushed.broadcast();
+	}
+	else
+	{
+		// write data
+		const void* buffer = this_->m_outputBuffer.peek(n);
+		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)buffer, n, CUSBDataLink::writeCallback, this_, -1);
+		libusb_submit_transfer(this_->m_transferWrite);
+	}
+}
+
+void
+CUSBDataLink::sendEvent(Event::Type type)
+{
+	m_events->addEvent(Event(type, getEventTarget(), NULL));
+}
+
+void
+CUSBDataLink::onConnected()
+{
+	m_connected = true;
+	m_readable  = true;
+	m_writable  = true;
+}
+
+void
+CUSBDataLink::onInputShutdown()
+{
+	m_inputBuffer.pop(m_inputBuffer.getSize());
+	m_readable = false;
+}
+
+void
+CUSBDataLink::onOutputShutdown()
+{
+	m_outputBuffer.pop(m_outputBuffer.getSize());
+	m_writable = false;
+
+	// we're now flushed
+	m_flushed = true;
+	m_flushed.broadcast();
+}
+
+void
+CUSBDataLink::onDisconnected()
+{
+	// disconnected
+	onInputShutdown();
+	onOutputShutdown();
+	m_connected = false;
 }

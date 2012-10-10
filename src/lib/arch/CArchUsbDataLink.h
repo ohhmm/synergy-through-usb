@@ -19,7 +19,8 @@
 #ifndef CARCHUSBDATALINK_H
 #define CARCHUSBDATALINK_H
 
-#include "IArchUsbDataLink.h"
+#include "arch/IArchUsbDataLink.h"
+#include "arch/IArchMultithread.h"
 
 #define ARCH_USB CArchUsbDataLink
 
@@ -45,11 +46,14 @@ public:
 	USBDeviceHandle usbOpenDevice(USBDeviceEnumerator devEnum, int ifid);
 	USBDeviceHandle usbOpenDevice(struct USBDeviceInfo &devInfo, int ifid);
 	void usbCloseDevice(USBDeviceHandle dev, int ifid);
-	int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
-	int usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout);
+	int usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, char* buf, unsigned int len, unsigned int timeout);
+	int usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, char* buf, unsigned int len, unsigned int timeout);
 
 private:
+	static void*		threadFunc(void*);
+
 	USBContextHandle m_usbContext;
+	ArchThread	m_thread;
 };
 
 #endif

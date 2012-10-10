@@ -36,7 +36,7 @@ public:
 		String			m_what;
 	};
 
-    IDataTransfer(IEventQueue* events) { }
+	IDataTransfer(IEventQueue* events) { }
 
 	//! @name manipulators
 	//@{
