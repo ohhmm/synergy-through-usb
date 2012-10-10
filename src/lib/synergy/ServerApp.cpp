@@ -637,29 +637,15 @@ ServerApp::handleResume(const Event&, void*)
 ClientListener*
 ServerApp::openClientListener(const BaseAddress& address)
 {
-	ClientListener* listen;
-	switch( address.getAddressType() )
-	{
-	case BaseAddress::Network:
-		listen = new ClientListener(
+	ITransportFactory* transportFactory = ITransportFactory::createFactory(address.getAddressType(), m_events, NULL);
+
+	ClientListener* listen = new ClientListener(
 			address,
-			new CTCPSocketFactory(m_events, getSocketMultiplexer()),
+			transportFactory,
 			NULL,
 			args().m_crypto,
 			m_events);
-		break;
-	case BaseAddress::USB:
-		listen = new ClientListener(
-			address,
-			new CUSBDataLinkFactory(m_events),
-			NULL,
-			args().m_crypto,
-			m_events);
-		break;
-	default:
-		//unknown interface
-		break;
-	}
+
 	m_events->adoptHandler(
 		m_events->forClientListener().connected(), listen,
 		new TMethodEventJob<ServerApp>(
@@ -814,9 +800,9 @@ int
 ServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	m_synergyAddress = new NetworkAddress;
 	args().m_config         = new Config(m_events);
 	args().m_pname          = ARCH->getBasename(argv[0]);
+	m_synergyAddress = NULL;
 
 	// install caller's output filter
 	if (outputter != NULL) {
@@ -833,7 +819,7 @@ ServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc
 	}
 
 	delete args().m_config;
-	delete m_synergyAddress;
+	m_synergyAddress = NULL;
 	return result;
 }
 
