@@ -21,9 +21,11 @@
 
 #include "IArchUsbDataLink.h"
 #include "IListenSocket.h"
+#include "IDataTransfer.h"
 #include "CLock.h"
 #include "CThread.h"
-#include <vector>
+#include <set>
+#include <deque>
 
 //! USB data link cable listen
 /*!
@@ -43,13 +45,16 @@ public:
 	virtual IDataTransfer*	accept();
 
 private:
-	void				serviceThread(void*);
+	void				handleData(const CEvent&, void*);
 
-	typedef std::vector<USBDeviceHandle> CUSBLinks;
+	typedef std::set<IDataTransfer*> CUSBLinkSet;
+	typedef std::deque<IDataTransfer*> CUSBLinkDeque;
 
-	CUSBLinks			m_usbLinks;
+	CUSBLinkSet			m_bindedLinks;
+	CUSBLinkDeque		m_waitingLinks;
+	CUSBLinkSet			m_activeLinks;
+
 	CMutex*				m_mutex;
-	USBDataLinkConfig 	m_config;
 };
 
 #endif
