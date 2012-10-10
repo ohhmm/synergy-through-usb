@@ -20,7 +20,11 @@
 #define CUSBDATALINK_H
 
 #include "IDataTransfer.h"
+#include "CStreamBuffer.h"
+#include "CCondVar.h"
+#include "CMutex.h"
 #include "IArchUsbDataLink.h"
+#include <libusb.h>
 
 class CUSBDataLink : public IDataTransfer {
 public:
@@ -45,18 +49,38 @@ public:
 	virtual UInt32		getSize() const;
 
 private:
-	void				init();
-	void				fetchReceivedData() const;
+	void				initConnection(const CBaseAddress&);
+
+	static void LIBUSB_CALL	readCallback(libusb_transfer *transfer);
+	static void	LIBUSB_CALL writeCallback(libusb_transfer *transfer);
+
+	void				sendEvent(CEvent::Type);
+
+	void				onConnected();
+	void				onInputShutdown();
+	void				onOutputShutdown();
+	void				onDisconnected();
 
 private:
-	USBDeviceHandle m_device;
-	USBDataLinkConfig m_config;
+	USBDeviceHandle		m_device;
+	USBDataLinkConfig	m_config;
 
-	enum {USB_BUF_LEN = 4096};
-	unsigned char m_input1[USB_BUF_LEN];
-	unsigned char m_input2[USB_BUF_LEN];
-	mutable unsigned char* m_input;
-	mutable unsigned int m_inputPos; // where to write next chunk of data from system buffer
+	libusb_transfer*	m_transferRead;
+	libusb_transfer*	m_transferWrite;
+
+	CMutex				m_mutex;
+	char				m_readBuffer[512];
+	CStreamBuffer		m_inputBuffer;
+	CStreamBuffer		m_outputBuffer;
+	CCondVar<bool>		m_flushed;
+	bool				m_connected;
+	bool				m_readable;
+	bool				m_writable;
+
+	CMutex				m_waitAcceptMutex;
+	bool				m_waitAccept;
+	CCondVar<bool>		m_accepted;
+
 };
 
 #endif
