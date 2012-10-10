@@ -79,7 +79,12 @@ void* CArchUsbDataLink::threadFunc(void* ctx)
 		for (;;) {
 			ARCH->testCancelThread();
 
-			libusb_handle_events(usbContext);
+			struct timeval tv;
+			tv.tv_sec = 1;
+			tv.tv_usec = 0;
+			libusb_handle_events_timeout(usbContext, &tv);
+
+			//libusb_handle_events(usbContext);
 		}
 
 		//LOG((CLOG_DEBUG1 "thread 0x%08x exit", id));
@@ -186,8 +191,8 @@ USBDeviceHandle CArchUsbDataLink::usbOpenDevice(struct USBDeviceInfo &devInfo, i
 
 			if (info.idVendor == devInfo.idVendor &&
 				info.idProduct == devInfo.idProduct &&
-				info.busNumber == devInfo.busNumber &&
-				info.devAddress == devInfo.devAddress)
+				(info.busNumber == devInfo.busNumber || devInfo.busNumber == (unsigned char)-1) &&
+				(info.devAddress == devInfo.devAddress || devInfo.devAddress == (unsigned char)-1))
 			{
 				found = iter;
 				break;
