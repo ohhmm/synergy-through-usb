@@ -17,14 +17,11 @@
  */
 
 #include "CLog.h"
-#include "CUSBDataLinkListener.h"
 #include "CUSBAddress.h"
-#include "CMutex.h"
-#include "CArch.h"
-#include "IArchUsbDataLink.h"
 #include "CUSBDataLink.h"
+#include "CUSBDataLinkListener.h"
+#include "CMutex.h"
 #include "TMethodEventJob.h"
-#include <algorithm>
 
 //
 // CUSBDataLinkListener
@@ -49,17 +46,31 @@ CUSBDataLinkListener::bind(const CBaseAddress& addr)
 	IDataTransfer* dataLink = new CUSBDataLink();
 	try
 	{
-		dataLink->bind(addr);
-		
 		EVENTQUEUE->adoptHandler(
 			dataLink->getInputReadyEvent(),
 			dataLink->getEventTarget(),
 			new TMethodEventJob<CUSBDataLinkListener>(this, &CUSBDataLinkListener::handleData, dataLink));
 
+		EVENTQUEUE->adoptHandler(
+			dataLink->getDisconnectedEvent(),
+			dataLink->getEventTarget(),
+			new TMethodEventJob<CUSBDataLinkListener>(this, &CUSBDataLinkListener::handleDisconnected, dataLink));
+
+		dataLink->bind(addr);
+
 		m_bindedLinks.insert(dataLink);
+
+		{
+			const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
+			m_addressMap[dataLink] = usbAddress;
+		}
 	}
 	catch(...)
 	{
+		EVENTQUEUE->removeHandler(
+			dataLink->getInputReadyEvent(),
+			dataLink->getEventTarget());
+
 		delete dataLink;
 		throw;
 	}
@@ -81,12 +92,6 @@ CUSBDataLinkListener::close()
 		delete *i;
 	}
 	m_waitingLinks.clear();
-
-	for (CUSBLinkSet::const_iterator i=m_activeLinks.cbegin(); i!=m_activeLinks.cend(); ++i)
-	{
-		delete *i;
-	}
-	m_activeLinks.clear();
 }
 
 void*
@@ -101,12 +106,12 @@ CUSBDataLinkListener::accept()
 	CLock lock(m_mutex);
 
 	IDataTransfer* result = m_waitingLinks.front();
-	m_waitingLinks.pop_front();
 
-	m_activeLinks.insert(result);
-
-	std::string buf("USB_ACCEPT");
+	// send kUsbAccept message to client in response to kUsbConnect
+	std::string buf(kUsbAccept);
 	result->write(buf.c_str(), buf.size());
+
+	m_waitingLinks.pop_front();
 
 	return result;
 }
@@ -117,23 +122,53 @@ void CUSBDataLinkListener::handleData(const CEvent&, void* ctx)
 
 	IDataTransfer* dataLink = reinterpret_cast<IDataTransfer*>(ctx);
 
-	EVENTQUEUE->removeHandler(
-			dataLink->getInputReadyEvent(),
-			dataLink->getEventTarget());
-
+	// check if the client sent us kUsbConnect message
 	std::string buf("");
 		
 	buf.resize(dataLink->getSize(), 0);
 	dataLink->read((void*)buf.c_str(), buf.size());
 
-	assert(buf == "USB_CONNECT");
-
+	if (buf == kUsbConnect)
 	{
 		CLock lock(m_mutex);
 
+		EVENTQUEUE->removeHandler(
+				dataLink->getInputReadyEvent(),
+				dataLink->getEventTarget());
+
 		m_bindedLinks.erase(dataLink);
 		m_waitingLinks.push_back(dataLink);
-	}
 
-	EVENTQUEUE->addEvent(CEvent(getConnectingEvent(), this, NULL));
+		EVENTQUEUE->addEvent(CEvent(getConnectingEvent(), this, NULL));
+	}
+	else
+	{
+		CLock lock(m_mutex);
+
+		std::string buf(kUsbReject);
+		dataLink->write(buf.c_str(), buf.size());
+	}
+}
+
+void CUSBDataLinkListener::handleDisconnected(const CEvent&, void* ctx)
+{
+	LOG((CLOG_PRINT "CUSBDataLinkListener::handleDisconnected"));
+
+	IDataTransfer* dataLink = reinterpret_cast<IDataTransfer*>(ctx);
+
+	CLock lock(m_mutex);
+
+	// directly pass dataLink as target, because this object is already deleted.
+	EVENTQUEUE->removeHandler(
+		dataLink->getDisconnectedEvent(),
+		//dataLink->getEventTarget())
+		dataLink)
+		;
+
+	CUSBAddress addr = m_addressMap[dataLink];
+
+	m_addressMap.erase(dataLink);
+	//delete dataLink;
+
+	bind(addr);
 }

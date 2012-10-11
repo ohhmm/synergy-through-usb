@@ -23,6 +23,15 @@
 #include "CUSBDataLink.h"
 #include "CUSBAddress.h"
 
+const char*		kUsbConnect	= "USB_CONNECT";
+const char*		kUsbAccept	= "USB_ACCEPT";
+const char*		kUsbReject	= "USB_REJECT";
+
+enum message_id {
+	MSGID_NORMAL = 0,
+	MSGID_DISCONNECT = 1
+};
+
 //
 // CUSBDataLink
 //
@@ -36,16 +45,24 @@ CUSBDataLink::CUSBDataLink() :
 	m_connected(false),
 	m_readable(false),
 	m_writable(false),
-	m_waitAccept(false),
-	m_waitAcceptMutex(),
-	m_accepted(&m_waitAcceptMutex, false)
+	//m_acceptedMutex(),
+	m_acceptedFlag(&m_mutex, false),
+	//m_activeTransfersMutex(),
+	m_activeTransfers(&m_mutex, 0)
 {
 	memset(&m_config, 0, sizeof(m_config));
 }
 
 CUSBDataLink::~CUSBDataLink()
 {
-	close();
+	//m_connected = false;
+	m_writable = false;
+	try {
+		close();
+	} 
+	catch (...) {
+		// ignore
+	}
 }
 
 //
@@ -55,21 +72,25 @@ CUSBDataLink::~CUSBDataLink()
 void
 CUSBDataLink::connect(const CBaseAddress& addr)
 {
+	close();
+
 	initConnection(addr);
 
-	m_waitAccept = true;
-
-	std::string buf("USB_CONNECT");
+	std::string buf(kUsbConnect);
 	write(buf.c_str(), buf.size());	
-
-	// wait for connection to be accepted
-	CLock lock(&m_waitAcceptMutex);
 	
-	while (m_accepted == false) {
-		m_accepted.wait();
-	}
+	{
+		CLock lock(&m_mutex);
 
-	m_connected = true;
+		// wait for connection to be accepted
+		while (m_acceptedFlag == false) {
+			m_acceptedFlag.wait();
+		}
+
+		if (!m_connected) {
+			throw XSocketConnect("connection failed");
+		}
+	}
 }
 
 //
@@ -80,6 +101,12 @@ void
 CUSBDataLink::bind(const CBaseAddress& addr)
 {
 	initConnection(addr);
+	{
+		CLock lock(&m_mutex);
+		// set accepted flag, because this is a listen socket.
+		m_acceptedFlag = true;
+		m_connected = true;
+	}
 }
 
 void
@@ -89,24 +116,53 @@ CUSBDataLink::close()
 
 	// clear buffers and enter disconnected state
 	if (m_connected) {
+
+		if (m_writable)
+		{
+			// cleanup output buffer
+			m_outputBuffer.pop(m_outputBuffer.getSize());
+
+			// send disconnect message
+			message_id msg_id = MSGID_DISCONNECT;
+			m_outputBuffer.write(&msg_id, sizeof(msg_id));
+			scheduleWrite();
+
+			// wait for message to be delivered
+			while (m_flushed == false) {
+				m_flushed.wait();
+			}
+		}
+
 		sendEvent(getDisconnectedEvent());
 	}
 	onDisconnected();
 
-	if (m_transferRead)
-	{
+	// cancel active transfers
+	if (m_transferRead) {
+		libusb_cancel_transfer(m_transferRead);
+	}
+
+	if (m_transferWrite) {
+		libusb_cancel_transfer(m_transferWrite);
+	}
+	
+	// wait for transfers to finish
+	while (m_activeTransfers > 0) {
+		m_activeTransfers.wait();
+	}
+	
+	if (m_transferRead)	{
 		libusb_free_transfer(m_transferRead);
 		m_transferRead = NULL;
 	}
 
-	if (m_transferWrite){
+	if (m_transferWrite) {
 		libusb_free_transfer(m_transferWrite);
 		m_transferWrite = NULL;
 	}
 
 	// close the usb device
-	if (m_device)
-	{
+	if (m_device) {
 		ARCH->usbCloseDevice(m_device, m_config.ifid);
 		m_device = NULL;
 	}
@@ -180,19 +236,16 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 
 	// copy data to the output buffer
 	wasEmpty = (m_outputBuffer.getSize() == 0);
+
+	message_id msg_id = MSGID_NORMAL;
+	m_outputBuffer.write(&msg_id, sizeof(msg_id));
 	m_outputBuffer.write(buffer, n);
 
 	// there's data to write
 	m_flushed = false;
 
 	if (wasEmpty)
-	{
-		// No active write transfers at this moment. Call writeCallback to start new write transfer.
-		m_transferWrite->status = LIBUSB_TRANSFER_COMPLETED;
-		m_transferWrite->actual_length = 0;
-		m_transferWrite->user_data = this;
-		writeCallback(m_transferWrite);
-	}
+		scheduleWrite();
 }
 
 void
@@ -210,14 +263,6 @@ CUSBDataLink::shutdownInput()
 {
 	CLock lock(&m_mutex);
 
-	// shutdown socket for reading
-	try {
-		//ARCH->closeSocketForRead(m_socket);
-	}
-	catch (XArchNetwork&) {
-		// ignore
-	}
-
 	// shutdown buffer for reading
 	if (m_readable) {
 		sendEvent(getInputShutdownEvent());
@@ -229,14 +274,6 @@ void
 CUSBDataLink::shutdownOutput()
 {
 	CLock lock(&m_mutex);
-
-	// shutdown socket for writing
-	try {
-//		ARCH->closeSocketForWrite(m_socket);
-	}
-	catch (XArchNetwork&) {
-		// ignore
-	}
 
 	// shutdown buffer for writing
 	if (m_writable) {
@@ -252,10 +289,10 @@ CUSBDataLink::shutdownOutput()
 void
 CUSBDataLink::initConnection(const CBaseAddress& addr)
 {
+	CLock lock(&m_mutex);
+
 	assert(addr.getAddressType() == CBaseAddress::USB);
 	const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
-
-	close();
 
 	m_config.idVendor = usbAddress.GetVID();
 	m_config.idProduct = usbAddress.GetPID();
@@ -264,20 +301,65 @@ CUSBDataLink::initConnection(const CBaseAddress& addr)
 	m_config.ifid = 0;
 	m_config.bulkin = usbAddress.GetIDBulkIN();
 	m_config.bulkout = usbAddress.GetIDBulkOut();
-	
-	m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);	
 
-	m_transferRead = libusb_alloc_transfer(0);
-	m_transferWrite = libusb_alloc_transfer(0);
+	try 
+	{
+		m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);	
+		if (!m_device) {
+			throw XSocketConnect("Open device failed");
+		}
+
+		m_transferRead = libusb_alloc_transfer(0);
+		if (!m_transferRead) {
+			throw XSocketConnect("alloc read transfer failed");
+		}
+
+		m_transferWrite = libusb_alloc_transfer(0);
+		if (!m_transferWrite) {
+			throw XSocketConnect("alloc write transfer failed");
+		}
+	} 
+	catch (...) 
+	{
+		if (m_transferRead)	{
+			libusb_free_transfer(m_transferRead);
+			m_transferRead = NULL;
+		}
+
+		if (m_transferWrite) {
+			libusb_free_transfer(m_transferWrite);
+			m_transferWrite = NULL;
+		}
+
+		// close the usb device
+		if (m_device) {
+			ARCH->usbCloseDevice(m_device, m_config.ifid);
+			m_device = NULL;
+		}
+
+		throw;
+	}
 
 	m_readable = true;
 	m_writable = true;
 
 	// Start pooling input endpoint.
+	m_activeTransfers = m_activeTransfers + 1;
 	m_transferRead->status = LIBUSB_TRANSFER_COMPLETED;
 	m_transferRead->actual_length = 0;
 	m_transferRead->user_data = this;
 	readCallback(m_transferRead);
+}
+
+void CUSBDataLink::scheduleWrite()
+{
+	// No active write transfers at this moment. Call writeCallback to start new write transfer.
+	m_activeTransfers = m_activeTransfers + 1;
+
+	m_transferWrite->status = LIBUSB_TRANSFER_COMPLETED;
+	m_transferWrite->actual_length = 0;
+	m_transferWrite->user_data = this;
+	writeCallback(m_transferWrite);
 }
 
 void CUSBDataLink::readCallback(libusb_transfer *transfer)
@@ -288,9 +370,6 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 
 	if (transfer->status == LIBUSB_TRANSFER_NO_DEVICE)
 	{
-		// remote write end of stream hungup.  our input side
-		// has therefore shutdown but don't flush our buffer
-		// since there's still data to be read.
 		this_->sendEvent(this_->getInputShutdownEvent());
 		if (!this_->m_writable && this_->m_inputBuffer.getSize() == 0) {
 			this_->sendEvent(getDisconnectedEvent());
@@ -301,38 +380,70 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 		return;
 	}
 
+	this_->m_activeTransfers = this_->m_activeTransfers - 1;
+	if (!this_->m_readable)
+	{
+		this_->m_activeTransfers.signal();
+		return;
+	}
+
 	size_t n = transfer->actual_length;
 	if (n > 0) {
 		bool wasEmpty = (this_->m_inputBuffer.getSize() == 0);
 
-		this_->m_inputBuffer.write(this_->m_readBuffer, (UInt32)n);
+		message_id msg_id;
+
+		assert(sizeof(msg_id) <= n);
+		
+		memcpy(&msg_id, this_->m_readBuffer, sizeof(msg_id));
+		n -= sizeof(msg_id);
+
+		this_->m_inputBuffer.write(this_->m_readBuffer + sizeof(msg_id), (UInt32)n);
+
+		switch (msg_id)
+		{
+		case MSGID_NORMAL: 
+			break;
+		case MSGID_DISCONNECT:
+			assert(n == 0);
+			//this_->m_connected = false;
+			this_->sendEvent(this_->getInputShutdownEvent());
+			//this_->sendEvent(getDisconnectedEvent());
+			break;
+		default:
+			assert(false);
+		}
+
 		// slurp up as much as possible
 		//do {
 		//	m_inputBuffer.write(buffer, (UInt32)n);
 		//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
 		//} while (n > 0);
 
-		if (this_->m_waitAccept && !this_->m_accepted)
+		if (!this_->m_acceptedFlag)
 		{
 			std::string buf("");
 			buf.resize(this_->m_inputBuffer.getSize(), 0);
 			this_->read((void*)buf.c_str(), buf.size());
 
-			assert(buf == "USB_ACCEPT");
+			if (buf == kUsbAccept)
+			{
+				this_->m_connected = true;
+			}
 
-			this_->m_accepted = true;
-			this_->m_accepted.broadcast();
-
+			this_->m_acceptedFlag = true;
+			this_->m_acceptedFlag.broadcast();
 		}
 		else
 		{
 			// send input ready if input buffer was empty
-			if (wasEmpty) {
+			if (wasEmpty && n > 0) {
 				this_->sendEvent(this_->getInputReadyEvent());
 			}
 		}
 	}
 
+	this_->m_activeTransfers = this_->m_activeTransfers + 1;
 	libusb_fill_bulk_transfer(this_->m_transferRead, this_->m_device, this_->m_config.bulkin, (unsigned char*)this_->m_readBuffer, sizeof(this_->m_readBuffer), CUSBDataLink::readCallback, this_, -1);
 	libusb_submit_transfer(this_->m_transferRead);
 }
@@ -347,6 +458,13 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 	{
 		this_->sendEvent(getDisconnectedEvent());
 		this_->onDisconnected();
+		return;
+	}
+
+	this_->m_activeTransfers = this_->m_activeTransfers - 1;
+	if (!this_->m_writable)
+	{
+		this_->m_activeTransfers.signal();
 		return;
 	}
 
@@ -367,6 +485,7 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 	else
 	{
 		// write data
+		this_->m_activeTransfers = this_->m_activeTransfers + 1;
 		const void* buffer = this_->m_outputBuffer.peek(n);
 		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)buffer, n, CUSBDataLink::writeCallback, this_, -1);
 		libusb_submit_transfer(this_->m_transferWrite);
