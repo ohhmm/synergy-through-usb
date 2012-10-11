@@ -63,6 +63,7 @@ set(inc
 	../io
 	../mt
 	../synergy
+	${LIBUSB_1_INCLUDE_DIR}
 )
 
 if (UNIX)
