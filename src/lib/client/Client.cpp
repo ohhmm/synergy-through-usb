@@ -173,7 +173,7 @@ Client::connect()
 		LOG((CLOG_DEBUG1 "connecting to server"));
 		setupConnecting();
 		setupTimer();
-		socket->connect(static_cast<NetworkAddress&>(*m_serverAddress));
+		socket->connect(*m_serverAddress);
 	}
 	catch (XBase& e) {
 		cleanupTimer();
