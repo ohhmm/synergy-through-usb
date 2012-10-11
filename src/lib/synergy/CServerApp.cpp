@@ -97,7 +97,7 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 		// save listen address
 
 		try {
-			if( args().m_synergyUSBAddress.setUSBHostName(argv[i]) )
+			if( args().m_synergyUSBAddress.setUSBHostName(argv[i + 1]) )
 			{
 				args().m_synergyAddress = &args().m_synergyUSBAddress;
 			}
