@@ -96,8 +96,13 @@ ClientApp::parseArgs(int argc, const char* const* argv)
 				}
 				else
 				{
-					m_serverAddress = new NetworkAddress(args().m_synergyAddress, kDefaultPort);
-					static_cast<NetworkAddress*>(m_serverAddress)->resolve();
+					// be careful 2 lines below. Exceptions can be called inside 
+					// constructor CNetworkAddress and CNetworkAddress.resolve
+					NetworkAddress detect(args().m_synergyAddress, kDefaultPort);
+					detect.resolve();
+					NetworkAddress* newobj = new NetworkAddress;
+					m_serverAddress = newobj;
+					*newobj = detect;
 				}
 			}
 			catch (XSocketAddress& e) {
