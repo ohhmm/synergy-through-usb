@@ -80,7 +80,7 @@ void* CArchUsbDataLink::threadFunc(void* ctx)
 			ARCH->testCancelThread();
 
 			struct timeval tv;
-			tv.tv_sec = 1;
+			tv.tv_sec = 0;
 			tv.tv_usec = 0;
 			libusb_handle_events_timeout(usbContext, &tv);
 
