@@ -24,8 +24,10 @@
 #include "IDataTransfer.h"
 #include "mt/Lock.h"
 #include "mt/Thread.h"
+#include "CUSBAddress.h"
 #include <set>
 #include <deque>
+#include <map>
 
 
 //! USB data link cable listen
@@ -47,13 +49,15 @@ public:
 
 private:
 	void				handleData(const Event&, void*);
+	void				handleDisconnected(const Event&, void*);
 
 	typedef std::set<IDataTransfer*> CUSBLinkSet;
 	typedef std::deque<IDataTransfer*> CUSBLinkDeque;
-    
+	typedef std::map<IDataTransfer*, CUSBAddress> CAddressMap;
+
 	CUSBLinkSet			m_bindedLinks;
 	CUSBLinkDeque		m_waitingLinks;
-	CUSBLinkSet			m_activeLinks;
+	CAddressMap			m_addressMap;
 
 	Mutex*				m_mutex;
 	IEventQueue*		m_events;

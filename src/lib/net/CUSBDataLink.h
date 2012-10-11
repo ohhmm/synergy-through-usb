@@ -26,6 +26,14 @@
 #include "arch/IArchUsbDataLink.h"
 #include <libusb.h>
 
+//
+// handshake messages
+//
+
+extern const char*		kUsbConnect;
+extern const char*		kUsbAccept;
+extern const char*		kUsbReject;
+
 class CUSBDataLink : public IDataTransfer {
     typedef IDataTransfer base_t;
 public:
@@ -51,6 +59,7 @@ public:
 
 private:
 	void				initConnection(const BaseAddress&);
+	void				scheduleWrite();
 
 	static void LIBUSB_CALL	readCallback(libusb_transfer *transfer);
 	static void	LIBUSB_CALL writeCallback(libusb_transfer *transfer);
@@ -78,9 +87,11 @@ private:
 	bool				m_readable;
 	bool				m_writable;
 
-	Mutex				m_waitAcceptMutex;
-	bool				m_waitAccept;
-	CondVar<bool>		m_accepted;
+	//CMutex				m_acceptedMutex;
+	CondVar<bool>		m_acceptedFlag;
+
+	//CMutex				m_activeTransfersMutex;
+	CondVar<int>		m_activeTransfers;
 
 	IEventQueue*		m_events;
 };
