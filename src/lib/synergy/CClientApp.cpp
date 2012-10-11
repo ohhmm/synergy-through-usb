@@ -146,9 +146,11 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 		}
 		else
 		{
-			CNetworkAddress* newobj = new CNetworkAddress;
+			// be careful 2 lines below. Exceptions can be called inside 
+			// constructor CNetworkAddress and CNetworkAddress.resolve
 			CNetworkAddress detect(argv[i], kDefaultPort);
 			detect.resolve();
+			CNetworkAddress* newobj = new CNetworkAddress;
 			args().m_serverAddress = newobj;
 			*newobj = detect;
 		}
