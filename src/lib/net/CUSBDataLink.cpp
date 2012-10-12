@@ -57,7 +57,6 @@ CUSBDataLink::CUSBDataLink(IEventQueue* events) :
 
 CUSBDataLink::~CUSBDataLink()
 {
-	//m_connected = false;
 	m_writable = false;
 	try {
 		close();
@@ -91,6 +90,8 @@ CUSBDataLink::connect(const BaseAddress& addr)
 		if (!m_connected) {
 			throw XSocketConnect("connection failed");
 		}
+
+		sendEvent(m_events->forIDataSocket().connected());
 	}
 }
 
@@ -223,6 +224,8 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	bool wasEmpty;
 	
 	Lock lock(&m_mutex);
+
+	assert(n <= sizeof(m_readBuffer) + sizeof(message_id));
 
 	// must not have shutdown output
 	if (!m_writable) {
@@ -415,6 +418,7 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 			assert(false);
 		}
 
+		// TODO: add processing of transfers that exceed read buffer size
 		// slurp up as much as possible
 		//do {
 		//	m_inputBuffer.write(buffer, (UInt32)n);
@@ -497,14 +501,6 @@ void
 CUSBDataLink::sendEvent(Event::Type type)
 {
 	m_events->addEvent(Event(type, getEventTarget(), NULL));
-}
-
-void
-CUSBDataLink::onConnected()
-{
-	m_connected = true;
-	m_readable  = true;
-	m_writable  = true;
 }
 
 void
