@@ -260,6 +260,8 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 {
 	Lock lock(&m_mutex);
 
+	assert(n <= sizeof(m_readBuffer) + sizeof(message_id));
+
 	// must not have shutdown output
 	if (!m_writable) {
 		sendEvent(m_events->forIStream().outputError());
