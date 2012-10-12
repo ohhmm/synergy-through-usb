@@ -63,6 +63,7 @@ CUSBDataLink::CUSBDataLink(IEventQueue* events) :
 
 CUSBDataLink::~CUSBDataLink()
 {
+	m_writable = false;
 	try {
 		close();
 	} 
@@ -250,6 +251,8 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	
 	Lock lock(&m_mutex);
 
+	assert(n <= sizeof(m_readBuffer) + sizeof(message_id));
+
 	// must not have shutdown output
 	if (!m_writable) {
 		sendEvent(m_events->forIStream().outputError());
@@ -430,8 +433,12 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 			
 			memcpy(&hdr, data_ptr, sizeof(hdr));
 
-			n -= sizeof(hdr);
-			data_ptr += sizeof(hdr);
+		// TODO: add processing of transfers that exceed read buffer size
+		// slurp up as much as possible
+		//do {
+		//	m_inputBuffer.write(buffer, (UInt32)n);
+		//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
+		//} while (n > 0);
 
 			assert(hdr.data_size <= n);
 			this_->m_inputBuffer.write(data_ptr, hdr.data_size);

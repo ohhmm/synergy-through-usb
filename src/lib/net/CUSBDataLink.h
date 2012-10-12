@@ -97,8 +97,13 @@ private:
 	bool				m_readable;
 	bool				m_writable;
 
+	//CMutex				m_acceptedMutex;
 	CondVar<bool>		m_acceptedFlag;
+
+	//CMutex				m_activeTransfersMutex;
 	CondVar<int>		m_activeTransfers;
+
+	int					m_transferLeft;
 };
 
 #endif
