@@ -65,7 +65,6 @@ private:
 
 	void				sendEvent(CEvent::Type);
 
-	void				onConnected();
 	void				onInputShutdown();
 	void				onOutputShutdown();
 	void				onDisconnected();
@@ -78,7 +77,7 @@ private:
 	libusb_transfer*	m_transferWrite;
 
 	CMutex				m_mutex;
-	char				m_readBuffer[512];
+	char				m_readBuffer[1024*1024];
 	CStreamBuffer		m_inputBuffer;
 	CStreamBuffer		m_outputBuffer;
 	CCondVar<bool>		m_flushed;
@@ -91,6 +90,8 @@ private:
 
 	//CMutex				m_activeTransfersMutex;
 	CCondVar<int>		m_activeTransfers;
+
+	int					m_transferLeft;
 };
 
 #endif

@@ -148,11 +148,11 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 		{
 			// be careful 2 lines below. Exceptions can be called inside 
 			// constructor CNetworkAddress and CNetworkAddress.resolve
-			CNetworkAddress detect(argv[i], kDefaultPort);
-			detect.resolve();
+			CNetworkAddress detect2(argv[i], kDefaultPort);
+			detect2.resolve();
 			CNetworkAddress* newobj = new CNetworkAddress;
 			args().m_serverAddress = newobj;
-			*newobj = detect;
+			*newobj = detect2;
 		}
 	}
 	catch (XSocketAddress& e) {
