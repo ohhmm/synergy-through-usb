@@ -66,12 +66,13 @@ private:
 
 	void				sendEvent(Event::Type);
 
-	void				onConnected();
 	void				onInputShutdown();
 	void				onOutputShutdown();
 	void				onDisconnected();
 
 private:
+	IEventQueue*		m_events;
+
 	USBDeviceHandle		m_device;
 	USBDataLinkConfig	m_config;
 
@@ -79,7 +80,7 @@ private:
 	libusb_transfer*	m_transferWrite;
 
 	Mutex				m_mutex;
-	char				m_readBuffer[512];
+	char				m_readBuffer[1024*1024];
 	StreamBuffer		m_inputBuffer;
 	StreamBuffer		m_outputBuffer;
 	CondVar<bool>		m_flushed;
@@ -93,7 +94,7 @@ private:
 	//CMutex				m_activeTransfersMutex;
 	CondVar<int>		m_activeTransfers;
 
-	IEventQueue*		m_events;
+	int					m_transferLeft;
 };
 
 #endif

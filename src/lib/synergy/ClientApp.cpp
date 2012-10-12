@@ -98,11 +98,11 @@ ClientApp::parseArgs(int argc, const char* const* argv)
 				{
 					// be careful 2 lines below. Exceptions can be called inside 
 					// constructor CNetworkAddress and CNetworkAddress.resolve
-					NetworkAddress detect(args().m_synergyAddress, kDefaultPort);
-					detect.resolve();
+					NetworkAddress detect2(args().m_synergyAddress, kDefaultPort);
+					detect2.resolve();
 					NetworkAddress* newobj = new NetworkAddress;
 					m_serverAddress = newobj;
-					*newobj = detect;
+					*newobj = detect2;
 				}
 			}
 			catch (XSocketAddress& e) {
