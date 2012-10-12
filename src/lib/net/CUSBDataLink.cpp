@@ -257,6 +257,8 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 {
 	CLock lock(&m_mutex);
 
+	assert(n <= sizeof(m_readBuffer) + sizeof(message_id));
+
 	// must not have shutdown output
 	if (!m_writable) {
 		sendEvent(getOutputErrorEvent());
