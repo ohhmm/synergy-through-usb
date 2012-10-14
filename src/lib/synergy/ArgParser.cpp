@@ -22,7 +22,10 @@
 #include "synergy/ClientArgs.h"
 #include "synergy/ToolArgs.h"
 #include "synergy/ArgsBase.h"
+#include "net/CUSBAddress.h"
 #include "base/Log.h"
+
+#include <iostream>
 
 ArgsBase* ArgParser::m_argsBase = NULL;
 
@@ -219,6 +222,11 @@ ArgParser::parseGenericArgs(int argc, const char* const* argv, int& i)
 		if (m_app) {
 			m_app->version();
 		}
+		argsBase().m_shouldExit = true;
+	}
+	else if (isArg(i, argc, argv, "-u", "--usb-list")) {
+		// enumerate compatible usb devices list
+		std::cout << CUSBAddress::getConnectedCompatibleDeviceNames();
 		argsBase().m_shouldExit = true;
 	}
 	else if (isArg(i, argc, argv, NULL, "--no-tray")) {

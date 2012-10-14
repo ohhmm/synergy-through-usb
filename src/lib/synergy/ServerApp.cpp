@@ -101,9 +101,9 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 				}
 				else
 				{
-				std::auto_ptr<NetworkAddress> networkAddress(new NetworkAddress(args().m_synergyAddress, kDefaultPort));
-				networkAddress->resolve();
-				m_synergyAddress = networkAddress.release();
+					std::auto_ptr<NetworkAddress> networkAddress(new NetworkAddress(args().m_synergyAddress, kDefaultPort));
+					networkAddress->resolve();
+					m_synergyAddress = networkAddress.release();
 				}
 			}
 			catch (XSocketAddress& e) {

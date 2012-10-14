@@ -42,5 +42,7 @@ public:
 
 	virtual String			getName() const = 0;
 
-	virtual BaseAddress * 	clone() const = 0;
+	virtual BaseAddress* 	clone() const = 0;
+
+	virtual bool			resolve() = 0;
 };

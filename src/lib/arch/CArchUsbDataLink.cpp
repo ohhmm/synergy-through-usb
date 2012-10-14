@@ -81,7 +81,7 @@ void* CArchUsbDataLink::threadFunc(void* ctx)
 
 			struct timeval tv;
 			tv.tv_sec = 0;
-			tv.tv_usec = 0;
+			tv.tv_usec = 100;
 			libusb_handle_events_timeout(usbContext, &tv);
 
 			//libusb_handle_events(usbContext);
@@ -118,9 +118,10 @@ USBContextHandle CArchUsbDataLink::usbGetContext()
 	return m_usbContext;
 }
 
-void CArchUsbDataLink::usbGetDeviceList(USBDeviceEnumerator **list)
+size_t CArchUsbDataLink::usbGetDeviceList(USBDeviceEnumerator **list)
 {
-	if (libusb_get_device_list(m_usbContext, list) < 0)
+	size_t count = libusb_get_device_list(m_usbContext, list);
+	if (count < 0)
 	{
 		throw XArchNetwork("libusb_get_device_list failed");
 	}
@@ -158,6 +159,8 @@ USBDeviceHandle CArchUsbDataLink::usbOpenDevice(USBDeviceEnumerator devEnum, int
 	r = libusb_open(devEnum, &handle);
 	if (r < 0)
 	{
+		if(r == LIBUSB_ERROR_ACCESS)
+			throw XArchNetwork("Access denied (insufficient permissions)");
 		throw XArchNetwork("libusb_open failed");
 	}
 
@@ -173,9 +176,8 @@ USBDeviceHandle CArchUsbDataLink::usbOpenDevice(USBDeviceEnumerator devEnum, int
 
 USBDeviceHandle CArchUsbDataLink::usbOpenDevice(struct USBDeviceInfo &devInfo, int ifid)
 {
-	USBDeviceEnumerator *devs;
+	USBDeviceEnumerator* devs;
 	USBDeviceEnumerator iter;
-	USBDeviceEnumerator found = NULL;
 	USBDeviceHandle handle = NULL;	
 
 	size_t i = 0;
@@ -194,15 +196,10 @@ USBDeviceHandle CArchUsbDataLink::usbOpenDevice(struct USBDeviceInfo &devInfo, i
 				(info.busNumber == devInfo.busNumber || devInfo.busNumber == (unsigned char)-1) &&
 				(info.devAddress == devInfo.devAddress || devInfo.devAddress == (unsigned char)-1))
 			{
-				found = iter;
+				handle = usbOpenDevice(iter, ifid);
 				break;
 			}
 		}
-
-		if (found) {
-			handle = usbOpenDevice(found, ifid);
-		}
-
 	} 
 	catch (...) 
 	{

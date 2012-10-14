@@ -39,7 +39,7 @@ public:
 	void usbShut();
 	USBContextHandle usbGetContext();
 
-	void usbGetDeviceList(USBDeviceEnumerator **list);
+	size_t usbGetDeviceList(USBDeviceEnumerator **list);
 	void usbFreeDeviceList(USBDeviceEnumerator *list);
 	void usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBDeviceInfo &info);
 	
