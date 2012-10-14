@@ -37,7 +37,7 @@ public:
 	/*!
 	Returns true if this is not the invalid address.
 	*/
-	virtual bool			isValid() const = 0;
+	virtual bool			isValid() const { return false; }
 
 	virtual AddressType 	getAddressType() const = 0;
 
