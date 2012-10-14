@@ -44,6 +44,8 @@ public:
 	virtual CString			getName() const = 0;
 
 	virtual CBaseAddress* 	clone() const = 0;
+
+	virtual bool			resolve() = 0;
 };
 
 #endif

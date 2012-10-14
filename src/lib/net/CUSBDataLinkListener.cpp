@@ -81,13 +81,13 @@ CUSBDataLinkListener::close()
 {
 	CLock lock(m_mutex);
 
-	for (CUSBLinkSet::const_iterator i=m_bindedLinks.cbegin(); i!=m_bindedLinks.cend(); ++i)
+	for (CUSBLinkSet::const_iterator i=m_bindedLinks.begin(); i!=m_bindedLinks.end(); ++i)
 	{
 		delete *i;
 	}
 	m_bindedLinks.clear();
 
-	for (CUSBLinkDeque::const_iterator i=m_waitingLinks.cbegin(); i!=m_waitingLinks.cend(); ++i)
+	for (CUSBLinkDeque::const_iterator i=m_waitingLinks.begin(); i!=m_waitingLinks.end(); ++i)
 	{
 		delete *i;
 	}

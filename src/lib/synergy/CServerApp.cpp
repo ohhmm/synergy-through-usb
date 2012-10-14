@@ -106,7 +106,7 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 			else
 			{
 				std::auto_ptr<CNetworkAddress> networkAddress(new CNetworkAddress(argv[i + 1], kDefaultPort));
-				networkAddress->resolve();
+				args().m_synergyAddress->resolve();
 				args().m_synergyAddress = networkAddress.release();
 			}
 		}
@@ -884,7 +884,6 @@ CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFun
 
 	delete args().m_config;
 	delete args().m_synergyAddress;
-	args().m_synergyAddress = NULL;
 	args().m_synergyAddress = NULL;
 	return result;
 }

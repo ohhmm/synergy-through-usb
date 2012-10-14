@@ -59,7 +59,7 @@ public:
 
 	CNetworkAddress&	operator=(const CNetworkAddress&);
 
-	CNetworkAddress* 		clone() const;
+	CNetworkAddress* 	clone() const;
 
 	//! @name manipulators
 	//@{
@@ -71,7 +71,7 @@ public:
 	Throws XSocketAddress if resolution is unsuccessful, after which
 	\c isValid returns false until the next call to this method.
 	*/
-	void				resolve();
+	bool				resolve();
 
 	//@}
 	//! @name accessors
