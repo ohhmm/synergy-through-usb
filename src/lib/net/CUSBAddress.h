@@ -64,6 +64,8 @@ public:
 
 	virtual CUSBAddress* 	clone() const;
 
+	virtual bool 			resolve();
+
 	//! Return Vendor ID
 	UInt16 GetVID() const;
 	//! Return Product ID
@@ -93,13 +95,19 @@ public:
 
 	//@}
 
+	static String getConnectedCompatibleDeviceNames();
+
 private:
+
+	String path;
 	UInt16 nVID;
 	UInt16 nPID;
 	UInt8 nBulkIN;
 	UInt8 nBulkOut;
 	UInt8 nBus;
 	UInt8 nDeviceOnBus;
+
+	void assignDefaults();
 };
 
 

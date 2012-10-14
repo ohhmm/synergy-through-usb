@@ -58,7 +58,7 @@ public:
 
 	NetworkAddress&	operator=(const NetworkAddress&);
 
-	NetworkAddress* 		clone() const;
+	NetworkAddress* 	clone() const;
 
 	//! @name manipulators
 	//@{
@@ -70,7 +70,7 @@ public:
 	Throws XSocketAddress if resolution is unsuccessful, after which
 	\c isValid returns false until the next call to this method.
 	*/
-	void				resolve();
+	bool				resolve();
 
 	//@}
 	//! @name accessors

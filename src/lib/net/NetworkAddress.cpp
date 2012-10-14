@@ -138,7 +138,7 @@ NetworkAddress::clone() const
 	return new NetworkAddress(*this);
 }
 
-void
+bool
 NetworkAddress::resolve()
 {
 	// discard previous address
@@ -172,6 +172,8 @@ NetworkAddress::resolve()
 
 	// set port in address
 	ARCH->setAddrPort(m_address, m_port);
+
+	return m_address != NULL;
 }
 
 bool
