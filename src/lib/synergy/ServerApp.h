@@ -111,8 +111,6 @@ public:
 	PrimaryClient*		m_primaryClient;
 	ClientListener*		m_listener;
 	EventQueueTimer*	m_timer;
-	CUSBAddress			m_synergyUSBAddress;
-	NetworkAddress		m_synergyNetAddress;
 	BaseAddress*		m_synergyAddress;
 
 private:
