@@ -23,6 +23,8 @@
 
 #include <pthread.h>
 
+#define INFINITE -1
+
 #define ARCH_MULTITHREAD ArchMultithreadPosix
 
 class ArchCondImpl {

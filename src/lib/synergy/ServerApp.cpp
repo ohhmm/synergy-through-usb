@@ -58,6 +58,7 @@
 #endif
 
 #include <iostream>
+#include <memory>
 #include <stdio.h>
 #include <fstream>
 
@@ -93,15 +94,16 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 	else {
 		if (!args().m_synergyAddress.empty()) {
 			try {
-				if( m_synergyUSBAddress.setUSBHostName(args().m_synergyAddress) )
+				std::auto_ptr<CUSBAddress> usbAddress(new CUSBAddress());
+				if( usbAddress->setUSBHostName(args().m_synergyAddress) )
 				{
-					m_synergyAddress = &m_synergyUSBAddress;
+					m_synergyAddress = usbAddress.release();
 				}
 				else
 				{
-					m_synergyNetAddress = NetworkAddress(args().m_synergyAddress, kDefaultPort);
-					m_synergyNetAddress.resolve();
-					m_synergyAddress = &m_synergyNetAddress;
+				std::auto_ptr<NetworkAddress> networkAddress(new NetworkAddress(args().m_synergyAddress, kDefaultPort));
+				networkAddress->resolve();
+				m_synergyAddress = networkAddress.release();
 				}
 			}
 			catch (XSocketAddress& e) {
@@ -703,7 +705,7 @@ ServerApp::mainLoop()
 	// set the contact address, if provided, in the config.
 	// otherwise, if the config doesn't have an address, use
 	// the default.
-	if (m_synergyAddress->isValid()) {
+	if (m_synergyAddress && m_synergyAddress->isValid()) {
 		args().m_config->setSynergyAddress(*m_synergyAddress);
 	}
 	else if (!args().m_config->getSynergyAddress().isValid()) {
@@ -800,9 +802,9 @@ int
 ServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
+	m_synergyAddress = NULL;
 	args().m_config         = new Config(m_events);
 	args().m_pname          = ARCH->getBasename(argv[0]);
-	m_synergyAddress = NULL;
 
 	// install caller's output filter
 	if (outputter != NULL) {
@@ -819,6 +821,7 @@ ServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc
 	}
 
 	delete args().m_config;
+	delete m_synergyAddress;
 	m_synergyAddress = NULL;
 	return result;
 }
