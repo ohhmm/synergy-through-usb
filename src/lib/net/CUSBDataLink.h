@@ -77,6 +77,7 @@ private:
 	libusb_transfer*	m_transferWrite;
 
 	CMutex				m_mutex;
+	char				m_writeBuffer[1024*1024];
 	char				m_readBuffer[1024*1024];
 	CStreamBuffer		m_inputBuffer;
 	CStreamBuffer		m_outputBuffer;

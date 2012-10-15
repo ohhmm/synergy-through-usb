@@ -32,6 +32,11 @@ enum message_id {
 	MSGID_DISCONNECT = 1
 };
 
+struct message_hdr {
+	message_id		id;
+	unsigned int	data_size;
+};
+
 //
 // CUSBDataLink
 //
@@ -224,8 +229,6 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	
 	CLock lock(&m_mutex);
 
-	assert(n <= sizeof(m_readBuffer) + sizeof(message_id));
-
 	// must not have shutdown output
 	if (!m_writable) {
 		sendEvent(getOutputErrorEvent());
@@ -240,9 +243,14 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	// copy data to the output buffer
 	wasEmpty = (m_outputBuffer.getSize() == 0);
 
-	message_id msg_id = MSGID_NORMAL;
-	m_outputBuffer.write(&msg_id, sizeof(msg_id));
+	message_hdr hdr;
+
+	hdr.id = MSGID_NORMAL;
+	hdr.data_size = n;
+	m_outputBuffer.write(&hdr, sizeof(hdr));
 	m_outputBuffer.write(buffer, n);
+
+	assert(m_outputBuffer.getSize() <= sizeof(m_readBuffer));
 
 	// there's data to write
 	m_flushed = false;
@@ -393,58 +401,74 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 	size_t n = transfer->actual_length;
 	if (n > 0) {
 		bool wasEmpty = (this_->m_inputBuffer.getSize() == 0);
+		bool notifyClients = false;
 
-		message_id msg_id;
+		message_hdr hdr;
+		char* data_ptr = this_->m_readBuffer;
 
-		assert(sizeof(msg_id) <= n);
-		
-		memcpy(&msg_id, this_->m_readBuffer, sizeof(msg_id));
-		n -= sizeof(msg_id);
-
-		this_->m_inputBuffer.write(this_->m_readBuffer + sizeof(msg_id), (UInt32)n);
-
-		switch (msg_id)
+		while (n > 0) 
 		{
-		case MSGID_NORMAL: 
-			break;
-		case MSGID_DISCONNECT:
-			assert(n == 0);
-			//this_->m_connected = false;
-			this_->sendEvent(this_->getInputShutdownEvent());
-			//this_->sendEvent(getDisconnectedEvent());
-			break;
-		default:
-			assert(false);
-		}
+			assert(n >= sizeof(hdr));
+			
+			memcpy(&hdr, data_ptr, sizeof(hdr));
 
-		// TODO: add processing of transfers that exceed read buffer size
-		// slurp up as much as possible
-		//do {
-		//	m_inputBuffer.write(buffer, (UInt32)n);
-		//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
-		//} while (n > 0);
+			n -= sizeof(hdr);
+			data_ptr += sizeof(hdr);
 
-		if (!this_->m_acceptedFlag)
-		{
-			std::string buf("");
-			buf.resize(this_->m_inputBuffer.getSize(), 0);
-			this_->read((void*)buf.c_str(), buf.size());
+			assert(hdr.data_size <= n);
+			this_->m_inputBuffer.write(data_ptr, hdr.data_size);
 
-			if (buf == kUsbAccept)
+			n -= hdr.data_size;
+			data_ptr += hdr.data_size;
+
+			switch (hdr.id)
 			{
-				this_->m_connected = true;
+			case MSGID_NORMAL: 
+				break;
+			case MSGID_DISCONNECT:
+				assert(n == 0);
+				//this_->m_connected = false;
+				this_->sendEvent(this_->getInputShutdownEvent());
+				//this_->sendEvent(getDisconnectedEvent());
+				break;
+			default:
+				assert(false);
 			}
 
-			this_->m_acceptedFlag = true;
-			this_->m_acceptedFlag.broadcast();
-		}
-		else
-		{
-			// send input ready if input buffer was empty
-			if (wasEmpty && n > 0) {
-				this_->sendEvent(this_->getInputReadyEvent());
+			// TODO: add processing of transfers that exceed read buffer size
+			// slurp up as much as possible
+			//do {
+			//	m_inputBuffer.write(buffer, (UInt32)n);
+			//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
+			//} while (n > 0);
+	
+			if (!this_->m_acceptedFlag)
+			{
+				std::string buf("");
+				buf.resize(this_->m_inputBuffer.getSize(), 0);
+				this_->read((void*)buf.c_str(), buf.size());
+
+				if (buf == kUsbAccept)
+				{
+					this_->m_connected = true;
+				}
+
+				this_->m_acceptedFlag = true;
+				this_->m_acceptedFlag.broadcast();
+			}
+			else
+			{
+				// send input ready if input buffer was empty
+				if (wasEmpty && hdr.data_size > 0) {
+					notifyClients = true;
+				}
 			}
 		}
+
+		if (notifyClients) {
+			this_->sendEvent(this_->getInputReadyEvent());
+		}
+
 	}
 
 	this_->m_activeTransfers = this_->m_activeTransfers + 1;
@@ -491,7 +515,8 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 		// write data
 		this_->m_activeTransfers = this_->m_activeTransfers + 1;
 		const void* buffer = this_->m_outputBuffer.peek(n);
-		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)buffer, n, CUSBDataLink::writeCallback, this_, -1);
+		memcpy(this_->m_writeBuffer, buffer, n);
+		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)this_->m_writeBuffer, n, CUSBDataLink::writeCallback, this_, -1);
 		libusb_submit_transfer(this_->m_transferWrite);
 	}
 }
