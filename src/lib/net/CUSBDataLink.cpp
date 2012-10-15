@@ -251,8 +251,6 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	
 	Lock lock(&m_mutex);
 
-	assert(n <= sizeof(m_readBuffer) + sizeof(message_id));
-
 	// must not have shutdown output
 	if (!m_writable) {
 		sendEvent(m_events->forIStream().outputError());
@@ -433,12 +431,8 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 			
 			memcpy(&hdr, data_ptr, sizeof(hdr));
 
-		// TODO: add processing of transfers that exceed read buffer size
-		// slurp up as much as possible
-		//do {
-		//	m_inputBuffer.write(buffer, (UInt32)n);
-		//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
-		//} while (n > 0);
+			n -= sizeof(hdr);
+			data_ptr += sizeof(hdr);
 
 			assert(hdr.data_size <= n);
 			this_->m_inputBuffer.write(data_ptr, hdr.data_size);
@@ -452,9 +446,9 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 				break;
 			case MSGID_DISCONNECT:
 				assert(n == 0);
+				//this_->m_connected = false;
 				this_->sendEvent(this_->m_events->forIStream().inputShutdown());
-				this_->sendEvent(this_->m_events->forISocket().disconnected());
-				this_->onDisconnected();
+				//this_->sendEvent(getDisconnectedEvent());
 				break;
 			default:
 				assert(false);
@@ -549,17 +543,8 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 		// write data
 		const void* buffer = this_->m_outputBuffer.peek(n);
 		memcpy(this_->m_writeBuffer, buffer, n);
-		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)this_->m_writeBuffer, n, CUSBDataLink::writeCallback, this_, TRANSFER_TIMEOUT);
-		
-		if (libusb_submit_transfer(this_->m_transferWrite) != 0)
-		{
-			this_->sendEvent(this_->m_events->forIStream().outputShutdown());
-			this_->sendEvent(this_->m_events->forISocket().disconnected());
-			this_->onDisconnected();
-			return;
-		}
-
-		this_->m_activeTransfers = this_->m_activeTransfers + 1;
+		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)this_->m_writeBuffer, n, CUSBDataLink::writeCallback, this_, -1);
+		libusb_submit_transfer(this_->m_transferWrite);
 	}
 }
 
