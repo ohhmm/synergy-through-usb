@@ -80,6 +80,7 @@ private:
 	libusb_transfer*	m_transferWrite;
 
 	Mutex				m_mutex;
+	char				m_writeBuffer[1024*1024];
 	char				m_readBuffer[1024*1024];
 	StreamBuffer		m_inputBuffer;
 	StreamBuffer		m_outputBuffer;
