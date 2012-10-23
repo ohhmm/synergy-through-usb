@@ -50,6 +50,7 @@
 #endif
 
 #include <iostream>
+#include <memory>
 #include <stdio.h>
 #include <fstream>
 #include "XScreen.h"
@@ -97,15 +98,16 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 		// save listen address
 
 		try {
-			if( args().m_synergyUSBAddress.setUSBHostName(argv[i + 1]) )
+			std::auto_ptr<CUSBAddress> usbAddress(new CUSBAddress());
+			if( usbAddress->setUSBHostName(argv[i + 1]) )
 			{
-				args().m_synergyAddress = &args().m_synergyUSBAddress;
+				args().m_synergyAddress = usbAddress.release();
 			}
 			else
 			{
-				*args().m_synergyNetAddress = CNetworkAddress(argv[i + 1], kDefaultPort);
-				args().m_synergyNetAddress->resolve();
-				args().m_synergyAddress = args().m_synergyNetAddress;
+				std::auto_ptr<CNetworkAddress> networkAddress(new CNetworkAddress(argv[i + 1], kDefaultPort));
+				args().m_synergyAddress->resolve();
+				args().m_synergyAddress = networkAddress.release();
 			}
 		}
 		catch (XSocketAddress& e) {
@@ -781,7 +783,8 @@ CServerApp::mainLoop()
 	// set the contact address, if provided, in the config.
 	// otherwise, if the config doesn't have an address, use
 	// the default.
-	if (args().m_synergyAddress->isValid()) {
+	CBaseAddress* synergyAddress = args().m_synergyAddress;
+	if (synergyAddress && synergyAddress->isValid()) {
 		args().m_config->setSynergyAddress(*args().m_synergyAddress);
 	}
 	else if (!args().m_config->getSynergyAddress().isValid()) {
@@ -861,10 +864,9 @@ int
 CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	args().m_synergyNetAddress = new CNetworkAddress;
+	args().m_synergyAddress = NULL;
 	args().m_config         = new CConfig;
 	args().m_pname          = ARCH->getBasename(argv[0]);
-	args().m_synergyAddress = NULL;
 
 	// install caller's output filter
 	if (outputter != NULL) {
@@ -881,7 +883,7 @@ CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFun
 	}
 
 	delete args().m_config;
-	delete args().m_synergyNetAddress;
+	delete args().m_synergyAddress;
 	args().m_synergyAddress = NULL;
 	return result;
 }

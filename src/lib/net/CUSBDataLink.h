@@ -96,6 +96,8 @@ private:
 
 	CCondVar<bool>		m_acceptedFlag;
 	CCondVar<int>		m_activeTransfers;
+
+	int					m_transferLeft;
 };
 
 #endif

@@ -61,6 +61,7 @@ CUSBDataLink::CUSBDataLink() :
 
 CUSBDataLink::~CUSBDataLink()
 {
+	m_writable = false;
 	try {
 		close();
 	} 

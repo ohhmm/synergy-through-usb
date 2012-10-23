@@ -136,7 +136,7 @@ CNetworkAddress::clone() const
 	return new CNetworkAddress(*this);
 }
 
-void
+bool
 CNetworkAddress::resolve()
 {
 	// discard previous address
@@ -170,6 +170,8 @@ CNetworkAddress::resolve()
 
 	// set port in address
 	ARCH->setAddrPort(m_address, m_port);
+
+	return m_address != NULL;
 }
 
 bool

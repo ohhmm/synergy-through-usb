@@ -31,6 +31,7 @@
 #include "CIpcMessage.h"
 #include "Ipc.h"
 #include "CEventQueue.h"
+#include "CUSBAddress.h"
 
 #if SYSAPI_WIN32
 #include "CArchMiscWindows.h"
@@ -142,6 +143,12 @@ CApp::parseArg(const int& argc, const char* const* argv, int& i)
 
 	else if (isArg(i, argc, argv, NULL, "--version")) {
 		version();
+		m_bye(kExitSuccess);
+	}
+
+	else if (isArg(i, argc, argv, "-u", "--usb-list")) {
+		// enumerate compatible usb devices list
+		std::cout << CUSBAddress::getConnectedCompatibleDeviceNames();
 		m_bye(kExitSuccess);
 	}
 	

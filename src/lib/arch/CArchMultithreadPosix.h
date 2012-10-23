@@ -23,6 +23,8 @@
 #include "stdlist.h"
 #include <pthread.h>
 
+#define INFINITE -1
+
 #define ARCH_MULTITHREAD CArchMultithreadPosix
 
 class CArchCondImpl {
