@@ -27,6 +27,8 @@ const char*		kUsbConnect	= "USB_CONNECT";
 const char*		kUsbAccept	= "USB_ACCEPT";
 const char*		kUsbReject	= "USB_REJECT";
 
+const unsigned int	TRANSFER_TIMEOUT = 10*1000;
+
 enum message_id {
 	MSGID_NORMAL = 0,
 	MSGID_DISCONNECT = 1
@@ -42,6 +44,7 @@ struct message_hdr {
 //
 
 CUSBDataLink::CUSBDataLink() :
+	m_listenerEvents(NULL),
 	m_device(NULL),
 	m_transferRead(NULL),
 	m_transferWrite(NULL),
@@ -50,9 +53,7 @@ CUSBDataLink::CUSBDataLink() :
 	m_connected(false),
 	m_readable(false),
 	m_writable(false),
-	//m_acceptedMutex(),
 	m_acceptedFlag(&m_mutex, false),
-	//m_activeTransfersMutex(),
 	m_activeTransfers(&m_mutex, 0)
 {
 	memset(&m_config, 0, sizeof(m_config));
@@ -60,13 +61,14 @@ CUSBDataLink::CUSBDataLink() :
 
 CUSBDataLink::~CUSBDataLink()
 {
-	m_writable = false;
 	try {
 		close();
 	} 
 	catch (...) {
 		// ignore
 	}
+	if (m_listenerEvents)
+		m_listenerEvents->onDataLinkDestroyed(this);
 }
 
 //
@@ -107,12 +109,22 @@ void
 CUSBDataLink::bind(const CBaseAddress& addr)
 {
 	initConnection(addr);
+	
 	{
 		CLock lock(&m_mutex);
 		// set accepted flag, because this is a listen socket.
 		m_acceptedFlag = true;
 		m_connected = true;
 	}
+}
+
+void
+CUSBDataLink::bind(const CBaseAddress& addr, IUSBDataLinkListenerEvents* listenerEvents)
+{
+	assert(m_listenerEvents == NULL);
+
+	m_listenerEvents = listenerEvents;
+	bind(addr);
 }
 
 void
@@ -125,13 +137,20 @@ CUSBDataLink::close()
 
 		if (m_writable)
 		{
+			bool wasEmpty = (m_outputBuffer.getSize() == 0);
+
 			// cleanup output buffer
 			m_outputBuffer.pop(m_outputBuffer.getSize());
-
+			
 			// send disconnect message
-			message_id msg_id = MSGID_DISCONNECT;
-			m_outputBuffer.write(&msg_id, sizeof(msg_id));
-			scheduleWrite();
+			message_hdr hdr;
+
+			hdr.id = MSGID_DISCONNECT;
+			hdr.data_size = 0;
+			m_outputBuffer.write(&hdr, sizeof(hdr));
+
+			if (wasEmpty)
+				scheduleWrite();
 
 			// wait for message to be delivered
 			while (m_flushed == false) {
@@ -139,6 +158,7 @@ CUSBDataLink::close()
 			}
 		}
 
+		sendEvent(getInputShutdownEvent());
 		sendEvent(getDisconnectedEvent());
 	}
 	onDisconnected();
@@ -216,7 +236,7 @@ CUSBDataLink::read(void* buffer, UInt32 n)
 	// if no more data and we cannot read or write then send disconnected
 	if (n > 0 && m_inputBuffer.getSize() == 0 && !m_readable && !m_writable) {
 		sendEvent(getDisconnectedEvent());
-		m_connected = false;
+		onDisconnected();
 	}
 
 	return n;
@@ -365,6 +385,7 @@ CUSBDataLink::initConnection(const CBaseAddress& addr)
 void CUSBDataLink::scheduleWrite()
 {
 	// No active write transfers at this moment. Call writeCallback to start new write transfer.
+	assert(m_activeTransfers < 2);
 	m_activeTransfers = m_activeTransfers + 1;
 
 	m_transferWrite->status = LIBUSB_TRANSFER_COMPLETED;
@@ -379,22 +400,18 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 
 	CLock lock(&this_->m_mutex);
 
-	if (transfer->status == LIBUSB_TRANSFER_NO_DEVICE)
-	{
-		this_->sendEvent(this_->getInputShutdownEvent());
-		if (!this_->m_writable && this_->m_inputBuffer.getSize() == 0) {
-			this_->sendEvent(getDisconnectedEvent());
-			this_->m_connected = false;
-		}
-		this_->m_readable = false;
-
-		return;
-	}
-
 	this_->m_activeTransfers = this_->m_activeTransfers - 1;
 	if (!this_->m_readable)
 	{
 		this_->m_activeTransfers.signal();
+		return;
+	}
+
+	if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
+	{
+		this_->sendEvent(this_->getInputShutdownEvent());
+		this_->sendEvent(getDisconnectedEvent());
+		this_->onDisconnected();
 		return;
 	}
 
@@ -427,9 +444,9 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 				break;
 			case MSGID_DISCONNECT:
 				assert(n == 0);
-				//this_->m_connected = false;
 				this_->sendEvent(this_->getInputShutdownEvent());
-				//this_->sendEvent(getDisconnectedEvent());
+				this_->sendEvent(getDisconnectedEvent());
+				this_->onDisconnected();
 				break;
 			default:
 				assert(false);
@@ -471,9 +488,17 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 
 	}
 
-	this_->m_activeTransfers = this_->m_activeTransfers + 1;
 	libusb_fill_bulk_transfer(this_->m_transferRead, this_->m_device, this_->m_config.bulkin, (unsigned char*)this_->m_readBuffer, sizeof(this_->m_readBuffer), CUSBDataLink::readCallback, this_, -1);
-	libusb_submit_transfer(this_->m_transferRead);
+	
+	if (libusb_submit_transfer(this_->m_transferRead) != 0)
+	{
+		this_->sendEvent(this_->getInputShutdownEvent());
+		this_->sendEvent(getDisconnectedEvent());
+		this_->onDisconnected();
+		return;
+	}
+
+	this_->m_activeTransfers = this_->m_activeTransfers + 1;
 }
 
 void CUSBDataLink::writeCallback(libusb_transfer *transfer)
@@ -482,17 +507,18 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 
 	CLock lock(&this_->m_mutex);
 
-	if (transfer->status == LIBUSB_TRANSFER_NO_DEVICE)
-	{
-		this_->sendEvent(getDisconnectedEvent());
-		this_->onDisconnected();
-		return;
-	}
-
 	this_->m_activeTransfers = this_->m_activeTransfers - 1;
 	if (!this_->m_writable)
 	{
 		this_->m_activeTransfers.signal();
+		return;
+	}
+
+	if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
+	{
+		this_->sendEvent(this_->getOutputShutdownEvent());
+		this_->sendEvent(getDisconnectedEvent());
+		this_->onDisconnected();
 		return;
 	}
 
@@ -513,18 +539,26 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 	else
 	{
 		// write data
-		this_->m_activeTransfers = this_->m_activeTransfers + 1;
 		const void* buffer = this_->m_outputBuffer.peek(n);
 		memcpy(this_->m_writeBuffer, buffer, n);
-		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)this_->m_writeBuffer, n, CUSBDataLink::writeCallback, this_, -1);
-		libusb_submit_transfer(this_->m_transferWrite);
+		libusb_fill_bulk_transfer(this_->m_transferWrite, this_->m_device, this_->m_config.bulkout, (unsigned char*)this_->m_writeBuffer, n, CUSBDataLink::writeCallback, this_, TRANSFER_TIMEOUT);
+		
+		if (libusb_submit_transfer(this_->m_transferWrite) != 0)
+		{
+			this_->sendEvent(this_->getOutputShutdownEvent());
+			this_->sendEvent(getDisconnectedEvent());
+			this_->onDisconnected();
+			return;
+		}
+
+		this_->m_activeTransfers = this_->m_activeTransfers + 1;
 	}
 }
 
 void
 CUSBDataLink::sendEvent(CEvent::Type type)
 {
-	EVENTQUEUE->addEvent(CEvent(type, getEventTarget(), NULL));
+	EVENTQUEUE->addEvent(CEvent(type, getEventTarget()));
 }
 
 void

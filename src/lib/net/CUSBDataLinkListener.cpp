@@ -43,7 +43,7 @@ CUSBDataLinkListener::bind(const CBaseAddress& addr)
 {
 	CLock lock(m_mutex);
 	
-	IDataTransfer* dataLink = new CUSBDataLink();
+	CUSBDataLink* dataLink = new CUSBDataLink();
 	try
 	{
 		EVENTQUEUE->adoptHandler(
@@ -51,12 +51,7 @@ CUSBDataLinkListener::bind(const CBaseAddress& addr)
 			dataLink->getEventTarget(),
 			new TMethodEventJob<CUSBDataLinkListener>(this, &CUSBDataLinkListener::handleData, dataLink));
 
-		EVENTQUEUE->adoptHandler(
-			dataLink->getDisconnectedEvent(),
-			dataLink->getEventTarget(),
-			new TMethodEventJob<CUSBDataLinkListener>(this, &CUSBDataLinkListener::handleDisconnected, dataLink));
-
-		dataLink->bind(addr);
+		dataLink->bind(addr, this);
 
 		m_bindedLinks.insert(dataLink);
 
@@ -150,25 +145,16 @@ void CUSBDataLinkListener::handleData(const CEvent&, void* ctx)
 	}
 }
 
-void CUSBDataLinkListener::handleDisconnected(const CEvent&, void* ctx)
-{
-	LOG((CLOG_PRINT "CUSBDataLinkListener::handleDisconnected"));
 
-	IDataTransfer* dataLink = reinterpret_cast<IDataTransfer*>(ctx);
+void CUSBDataLinkListener::onDataLinkDestroyed(IDataTransfer* dataLink)
+{
+	LOG((CLOG_NOTE "data link destroyed"));
 
 	CLock lock(m_mutex);
-
-	// directly pass dataLink as target, because this object is already deleted.
-	EVENTQUEUE->removeHandler(
-		dataLink->getDisconnectedEvent(),
-		//dataLink->getEventTarget())
-		dataLink)
-		;
 
 	CUSBAddress addr = m_addressMap[dataLink];
 
 	m_addressMap.erase(dataLink);
-	//delete dataLink;
 
 	bind(addr);
 }
