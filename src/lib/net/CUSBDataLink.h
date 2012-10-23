@@ -34,6 +34,11 @@ extern const char*		kUsbConnect;
 extern const char*		kUsbAccept;
 extern const char*		kUsbReject;
 
+class IUSBDataLinkListenerEvents {
+public:
+	virtual void onDataLinkDestroyed(IDataTransfer* dataLink) = 0;
+};
+
 class CUSBDataLink : public IDataTransfer {
     typedef IDataTransfer base_t;
 public:
@@ -44,7 +49,8 @@ public:
 	virtual void		connect(const BaseAddress &);
 
 	// ISocket overrides
-	virtual void		bind(const BaseAddress &);
+	virtual void		bind(const BaseAddress&);
+	virtual void		bind(const BaseAddress&, IUSBDataLinkListenerEvents* listenerEvents);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 
@@ -73,6 +79,8 @@ private:
 private:
 	IEventQueue*		m_events;
 
+	IUSBDataLinkListenerEvents * m_listenerEvents;
+
 	USBDeviceHandle		m_device;
 	USBDataLinkConfig	m_config;
 
@@ -89,13 +97,8 @@ private:
 	bool				m_readable;
 	bool				m_writable;
 
-	//CMutex				m_acceptedMutex;
 	CondVar<bool>		m_acceptedFlag;
-
-	//CMutex				m_activeTransfersMutex;
 	CondVar<int>		m_activeTransfers;
-
-	int					m_transferLeft;
 };
 
 #endif
