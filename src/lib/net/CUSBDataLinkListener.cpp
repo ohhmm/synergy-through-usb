@@ -101,6 +101,8 @@ CUSBDataLinkListener::getEventTarget() const
 IDataTransfer*
 CUSBDataLinkListener::accept()
 {
+	LOG((CLOG_DEBUG "USB datalink listener: accept connection"));
+
 	Lock lock(m_mutex);
 
 	IDataTransfer* result = m_waitingLinks.front();
@@ -116,7 +118,7 @@ CUSBDataLinkListener::accept()
 
 void CUSBDataLinkListener::handleData(const Event&, void* ctx)
 {
-	LOG((CLOG_PRINT "CUSBDataLinkListener::handleData"));
+	LOG((CLOG_DEBUG "USB datalink listener: do handshake"));
 
 	IDataTransfer* dataLink = reinterpret_cast<IDataTransfer*>(ctx);
 
@@ -126,32 +128,39 @@ void CUSBDataLinkListener::handleData(const Event&, void* ctx)
 	buf.resize(dataLink->getSize(), 0);
 	dataLink->read((void*)buf.c_str(), buf.size());
 
-	if (buf == kUsbConnect)
 	{
 		Lock lock(m_mutex);
-
-		m_events->removeHandler(
-			m_events->forIStream().inputReady(),
-			dataLink->getEventTarget());
 
 		m_bindedLinks.erase(dataLink);
-		m_waitingLinks.push_back(dataLink);
 
-		m_events->addEvent(Event(m_events->forIListenSocket().connecting(), this, NULL));
-	}
-	else
-	{
-		Lock lock(m_mutex);
+		m_events->removeHandler(
+				m_events->forIStream().inputReady(),
+				dataLink->getEventTarget());
 
-		std::string buf(kUsbReject);
-		dataLink->write(buf.c_str(), buf.size());
+		if (buf == kUsbConnect)
+		{
+			LOG((CLOG_DEBUG "USB datalink listener: connection request detected"));
+
+			m_waitingLinks.push_back(dataLink);
+            m_events->addEvent(Event(m_events->forIListenSocket().connecting(), this, NULL));
+		}
+		else
+		{
+			LOG((CLOG_DEBUG "USB datalink listener: unexpected data during handshake, drop connection"));
+
+			buf = kUsbReject;
+			dataLink->write(buf.c_str(), buf.size());
+			dataLink->flush();
+
+			delete dataLink;
+		}
 	}
 }
 
 
 void CUSBDataLinkListener::onDataLinkDestroyed(IDataTransfer* dataLink)
 {
-	LOG((CLOG_NOTE "data link destroyed"));
+	LOG((CLOG_DEBUG "USB datalink listener: datalink destroyed"));
 
 	Lock lock(m_mutex);
 
