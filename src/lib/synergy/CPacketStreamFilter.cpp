@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "CLog.h"
 #include "CPacketStreamFilter.h"
 #include "IEventQueue.h"
 #include "CLock.h"
@@ -151,7 +152,8 @@ bool
 CPacketStreamFilter::readMore()
 {
 	// note if we have whole packet
-	bool wasReady = isReadyNoLock();
+	if (isReadyNoLock())
+		return true;
 
 	// read more data
 	char buffer[4096];
@@ -165,12 +167,10 @@ CPacketStreamFilter::readMore()
 	// if possible.
 	readPacketSize();
 
-	// note if we now have a whole packet
-	bool isReady = isReadyNoLock();
-
+	// note if we now have a whole packet.
 	// if we weren't ready before but now we are then send a
 	// input ready event apparently from the filtered stream.
-	return (wasReady != isReady);
+	return isReadyNoLock();
 }
 
 void
@@ -178,7 +178,7 @@ CPacketStreamFilter::filterEvent(const CEvent& event)
 {
 	if (event.getType() == getInputReadyEvent()) {
 		CLock lock(&m_mutex);
-		if (!readMore()) {
+		if (!readMore()) {			
 			return;
 		}
 	}

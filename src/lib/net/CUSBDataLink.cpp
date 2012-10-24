@@ -32,8 +32,9 @@ const char*		kUsbReject	= "USB_REJECT";
 const unsigned int	TRANSFER_TIMEOUT = 2*1000;
 
 enum message_id {
-	MSGID_NORMAL		= 0,
-	MSGID_DISCONNECT	= 1
+	MSGID_HANDSHAKE		= 0,
+	MSGID_NORMAL		= 1,
+	MSGID_DISCONNECT	= 2
 };
 
 struct message_hdr {
@@ -85,20 +86,21 @@ CUSBDataLink::connect(const CBaseAddress& addr)
 	close();
 
 	initConnection(addr);
-
-	std::string buf(kUsbConnect);
-	write(buf.c_str(), buf.size());	
 	
-	{
-		LOG((CLOG_DEBUG "USB datalink: send connection request"));
+	LOG((CLOG_DEBUG "USB datalink: send connection request"));
 
+	message_hdr hdr;
+	std::string buf(kUsbConnect);
+	
+	write(buf.c_str(), buf.size());
+
+	{
 		CLock lock(&m_mutex);
 
 		CStopwatch stopwatch(false);
 		bool bCancelled = false;
 
-		// wait for connection to be accepted
-		LOG((CLOG_DEBUG "USB datalink: waiting for connection to be accepted..."));
+		LOG((CLOG_DEBUG "USB datalink: wait for connection to be accepted..."));
 		while (m_acceptedFlag == false) {
 			m_acceptedFlag.wait(2.0);
 
@@ -269,8 +271,12 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	}
 
 	message_hdr hdr;
-	hdr.id = MSGID_NORMAL;
+	hdr.id = m_connected? MSGID_NORMAL : MSGID_HANDSHAKE;
 	hdr.data_size = n;
+
+	// if this is a server - set m_connected after first write, because we send kUsbAccept
+	if (m_listenerEvents)
+		m_connected = true;
 
 	doWrite(&hdr, buffer);
 }
@@ -422,9 +428,11 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 		this_->onDisconnect();
 		return;
 	}
-	
+
+
 	size_t n = transfer->actual_length;
-	if (n > 0) {
+	if (n > 0) 
+	{	
 		bool wasEmpty = (this_->m_inputBuffer.getSize() == 0);
 		bool notifyClients = false;
 
@@ -446,8 +454,47 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 			n -= hdr.data_size;
 			data_ptr += hdr.data_size;
 
+
 			switch (hdr.id)
 			{
+			case MSGID_HANDSHAKE:
+				if (this_->m_connected)
+				{
+					LOG((CLOG_ERR "USB datalink: unexpected handshake packet"));
+					this_->onDisconnect();
+					return;
+				}
+				else if (this_->m_acceptedFlag)
+				{
+					// server got handshake request. remove any previously read data.
+					LOG((CLOG_DEBUG "USB datalink: server got handshake packet"));
+					this_->m_inputBuffer.pop(this_->m_inputBuffer.getSize() - hdr.data_size);
+				}
+				else
+				{
+					std::string buf("");
+					buf.resize(this_->m_inputBuffer.getSize(), 0);
+					this_->read((void*)buf.c_str(), buf.size());
+
+					if (buf == kUsbAccept)
+					{
+						LOG((CLOG_DEBUG "USB datalink: connection accept detected"));
+						this_->m_connected = true;	
+					}
+					else
+					{
+						LOG((CLOG_ERR "USB datalink: unexpected data during handshake, connection is not accepted"));	
+						// Just skip setting m_connected in this case. "Connect" funcion detects this and drops exception
+					}
+
+					this_->m_acceptedFlag = true;
+					this_->m_acceptedFlag.broadcast();
+
+					if (!this_->m_connected)
+						return;
+				}
+				break;
+			
 			case MSGID_NORMAL: 
 				break;
 			case MSGID_DISCONNECT:
@@ -456,7 +503,7 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 				this_->onDisconnect();
 				break;
 			default:
-				LOG((CLOG_DEBUG "USB datalink: invalid data packet"));
+				LOG((CLOG_ERR "USB datalink: invalid data packet"));
 				this_->onDisconnect();
 				return;
 			}
@@ -468,35 +515,10 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 			//	n = ARCH->readSocket(m_socket, buffer, sizeof(buffer));
 			//} while (n > 0);
 	
-			if (!this_->m_acceptedFlag)
-			{
-				std::string buf("");
-				buf.resize(this_->m_inputBuffer.getSize(), 0);
-				this_->read((void*)buf.c_str(), buf.size());
-
-				if (buf == kUsbAccept)
-				{
-					LOG((CLOG_DEBUG "USB datalink: connection accept detected"));
-					this_->m_connected = true;	
-				}
-				else
-				{
-					LOG((CLOG_DEBUG "USB datalink: unexpected data during handshake, connection is not accepted"));	
-					// Just skip setting m_connected in this case. "Connect" funcion detects this and drops exception
-				}
-
-				this_->m_acceptedFlag = true;
-				this_->m_acceptedFlag.broadcast();
-
-				if (!this_->m_connected)
-					return;
-			}
-			else
-			{
-				// send input ready if input buffer was empty
-				if (wasEmpty && hdr.data_size > 0) {
-					notifyClients = true;
-				}
+	
+			// send input ready if input buffer was empty
+			if (wasEmpty && hdr.data_size > 0) {
+				notifyClients = true;
 			}
 		}
 
@@ -560,9 +582,12 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 	n = this_->m_outputBuffer.getSize();
 	if (n == 0) 
 	{
-		this_->sendEvent(this_->getOutputFlushedEvent());
-		this_->m_flushed = true;
-		this_->m_flushed.broadcast();
+		if (!this_->m_flushed)
+		{
+			this_->sendEvent(this_->getOutputFlushedEvent());
+			this_->m_flushed = true;
+			this_->m_flushed.broadcast();
+		}
 	}
 	else
 	{
@@ -581,6 +606,7 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 		
 		if (libusb_submit_transfer(this_->m_transferWrite) != 0)
 		{
+			LOG((CLOG_DEBUG "USB datalink: failed to write packet"));
 			this_->onDisconnect();
 			return;
 		}
@@ -604,7 +630,7 @@ void CUSBDataLink::doWrite(const message_hdr* hdr, const void* buffer)
 	if (hdr->data_size > 0)
 		m_outputBuffer.write(buffer, hdr->data_size);
 
-	assert(m_outputBuffer.getSize() <= sizeof(m_readBuffer));
+	assert(m_outputBuffer.getSize() <= sizeof(m_writeBuffer));
 
 	// there's data to write
 	m_flushed = false;
