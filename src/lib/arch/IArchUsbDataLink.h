@@ -29,10 +29,16 @@ typedef struct libusb_device_handle* USBDeviceHandle;
 
 struct USBDeviceInfo
 {
-	unsigned short idVendor;
-	unsigned short idProduct;
-	unsigned char busNumber;
-	unsigned char devAddress;
+	unsigned short	idVendor;
+	unsigned short	idProduct;
+	unsigned char	busNumber;
+	unsigned char	devAddress;
+	bool			bValidEndpointInfo;
+	unsigned char	nBulkIN;
+	unsigned char	nBulkOut;
+	unsigned char	nInterface;
+	int				wBulkINMaxPacketSize;
+	int				wBulkOutMaxPacketSize;
 };
 
 struct USBDataLinkConfig: USBDeviceInfo

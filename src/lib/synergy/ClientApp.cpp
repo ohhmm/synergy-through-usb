@@ -93,6 +93,8 @@ ClientApp::parseArgs(int argc, const char* const* argv)
 				if( detect.setUSBHostName(args().m_synergyAddress) )
 				{
 					m_serverAddress = new CUSBAddress(detect);
+					if( !m_serverAddress->resolve() )
+						throw XSocketAddress(XSocketAddress::kBadPort, args().m_synergyAddress, 0);
 				}
 				else
 				{
