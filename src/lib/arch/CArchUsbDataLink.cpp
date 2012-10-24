@@ -135,10 +135,8 @@ void CArchUsbDataLink::usbFreeDeviceList(USBDeviceEnumerator *list)
 
 void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBDeviceInfo &info)
 {
-	struct libusb_device_descriptor desc;
-	struct libusb_config_descriptor* config_desc;
-	const struct libusb_interface_descriptor* interface_desc;
-	const struct libusb_endpoint_descriptor* endpoint_desc;
+	libusb_device_descriptor desc;
+	libusb_config_descriptor* config_desc;
 
 	int r = libusb_get_device_descriptor(devEnum, &desc);
 	if (r < 0) {
@@ -159,18 +157,16 @@ void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBD
 	info.bValidEndpointInfo = false;
 	if( config_desc->interface != NULL )
 	{
-		bool bBulkINfound, bBulkOutfound;
-
 		for(int n=0; n < config_desc->interface->num_altsetting; n++ )
 		{
-			interface_desc = config_desc->interface->altsetting;
+			const libusb_interface_descriptor* interface_desc = config_desc->interface->altsetting;
 			if( interface_desc->bNumEndpoints>=2 )
 			{
-				bBulkINfound = false;
-				bBulkOutfound = false;
+				bool bBulkINfound = false;
+				bool bBulkOutfound = false;
 				for(int i=0; i<interface_desc->bNumEndpoints; i++)
 				{
-					endpoint_desc = &interface_desc->endpoint[i];
+					const libusb_endpoint_descriptor* endpoint_desc = &interface_desc->endpoint[i];
 					if( (endpoint_desc->bmAttributes&3) == libusb_transfer_type::LIBUSB_TRANSFER_TYPE_BULK )
 					{
 						if( endpoint_desc->bEndpointAddress&0x80 )
