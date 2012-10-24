@@ -118,7 +118,7 @@ CUSBDataLinkListener::accept()
 
 void CUSBDataLinkListener::handleData(const Event&, void* ctx)
 {
-	LOG((CLOG_DEBUG "USB datalink listener: do handshake"));
+	LOG((CLOG_DEBUG "USB datalink listener: process handshake"));
 
 	IDataSocket* dataLink = reinterpret_cast<IDataSocket*>(ctx);
 
