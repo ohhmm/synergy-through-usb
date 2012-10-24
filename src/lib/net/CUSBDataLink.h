@@ -34,6 +34,8 @@ extern const char*		kUsbConnect;
 extern const char*		kUsbAccept;
 extern const char*		kUsbReject;
 
+struct message_hdr;
+
 class IUSBDataLinkListenerEvents {
 public:
 	virtual void onDataLinkDestroyed(IDataTransfer* dataLink) = 0;
@@ -71,9 +73,11 @@ private:
 
 	void				sendEvent(CEvent::Type);
 
+	void				doWrite(const message_hdr* hdr, const void* buffer);
+
+	void				onDisconnect();
 	void				onInputShutdown();
 	void				onOutputShutdown();
-	void				onDisconnected();
 
 private:
 	IUSBDataLinkListenerEvents * m_listenerEvents;
@@ -96,8 +100,6 @@ private:
 
 	CCondVar<bool>		m_acceptedFlag;
 	CCondVar<int>		m_activeTransfers;
-
-	int					m_transferLeft;
 };
 
 #endif

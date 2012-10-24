@@ -125,6 +125,7 @@ size_t CArchUsbDataLink::usbGetDeviceList(USBDeviceEnumerator **list)
 	{
 		throw XArchNetwork("libusb_get_device_list failed");
 	}
+	return count;
 }
 
 void CArchUsbDataLink::usbFreeDeviceList(USBDeviceEnumerator *list)
