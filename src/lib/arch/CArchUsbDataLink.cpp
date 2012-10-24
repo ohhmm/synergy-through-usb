@@ -142,62 +142,61 @@ void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBD
 	if (r < 0) {
 		throw XArchNetwork("libusb_get_device_descriptor failed");
 	}
-	r = libusb_get_active_config_descriptor(devEnum, &config_desc);
-	if (r < 0) {
-		throw XArchNetwork("libusb_get_active_config_descriptor failed");
-	}
-
 	info.idVendor = desc.idVendor;
 	info.idProduct = desc.idProduct;
 	info.busNumber = libusb_get_bus_number(devEnum);
 	info.devAddress = libusb_get_device_address(devEnum);
 
-	//Investigate device interfaces. Detect 'in' and 'out' bulk endpoints
-	//in specific interface and save their numbers.
-	info.bValidEndpointInfo = false;
-	if( config_desc->interface != NULL )
+	r = libusb_get_config_descriptor_by_value(devEnum, 1, &config_desc);
+	if( r>=0 )
 	{
-		for(int n=0; n < config_desc->interface->num_altsetting; n++ )
+		//Investigate device interfaces. Detect 'in' and 'out' bulk endpoints
+		//in specific interface and save their numbers.
+		info.bValidEndpointInfo = false;
+		if( config_desc->interface != NULL )
 		{
-			const libusb_interface_descriptor* interface_desc = config_desc->interface->altsetting;
-			if( interface_desc->bNumEndpoints>=2 )
+			for(int n=0; n < config_desc->interface->num_altsetting; n++ )
 			{
-				bool bBulkINfound = false;
-				bool bBulkOutfound = false;
-				for(int i=0; i<interface_desc->bNumEndpoints; i++)
+				const libusb_interface_descriptor* interface_desc = config_desc->interface->altsetting;
+				if( interface_desc->bNumEndpoints>=2 )
 				{
-					const libusb_endpoint_descriptor* endpoint_desc = &interface_desc->endpoint[i];
-					if( (endpoint_desc->bmAttributes&3) == LIBUSB_TRANSFER_TYPE_BULK )
+					bool bBulkINfound = false;
+					bool bBulkOutfound = false;
+					for(int i=0; i<interface_desc->bNumEndpoints; i++)
 					{
-						if( endpoint_desc->bEndpointAddress&0x80 )
+						const libusb_endpoint_descriptor* endpoint_desc = &interface_desc->endpoint[i];
+						if( (endpoint_desc->bmAttributes&3) == LIBUSB_TRANSFER_TYPE_BULK )
 						{
-							info.nBulkIN = endpoint_desc->bEndpointAddress;
-							info.wBulkINMaxPacketSize = endpoint_desc->wMaxPacketSize;
-							bBulkINfound = true;
+							if( endpoint_desc->bEndpointAddress&0x80 )
+							{
+								info.nBulkIN = endpoint_desc->bEndpointAddress;
+								info.wBulkINMaxPacketSize = endpoint_desc->wMaxPacketSize;
+								bBulkINfound = true;
+							}
+							else
+							{
+								info.nBulkOut = endpoint_desc->bEndpointAddress;
+								info.wBulkOutMaxPacketSize = endpoint_desc->wMaxPacketSize;
+								bBulkOutfound = true;
+							}
 						}
-						else
+						if( bBulkINfound && bBulkOutfound )
 						{
-							info.nBulkOut = endpoint_desc->bEndpointAddress;
-							info.wBulkOutMaxPacketSize = endpoint_desc->wMaxPacketSize;
-							bBulkOutfound = true;
+							info.bValidEndpointInfo = true;
+							info.nInterface = n;
+							break;
 						}
 					}
-					if( bBulkINfound && bBulkOutfound )
+					if( info.bValidEndpointInfo )
 					{
-						info.bValidEndpointInfo = true;
-						info.nInterface = n;
 						break;
 					}
 				}
-				if( info.bValidEndpointInfo )
-				{
-					break;
-				}
 			}
 		}
-	}
 
-	libusb_free_config_descriptor(config_desc);
+		libusb_free_config_descriptor(config_desc);
+	}
 }
 
 
