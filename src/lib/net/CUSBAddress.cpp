@@ -74,12 +74,14 @@ bool CUSBAddress::resolve() {
 	USBDeviceInfo info;
 	for(; !result && count--; ) {
 		ARCH->usbGetDeviceInfo(devices[count], info);
-		result = info.idVendor == nVID && info.idProduct==nPID;
+		result = info.idVendor == nVID && info.idProduct==nPID && info.bValidEndpointInfo;
 	}
 
-	if(result){
+	if( result ){
 		nBus = info.busNumber;
 		nDeviceOnBus = info.devAddress;
+		nBulkIN = info.nBulkIN;
+		nBulkOut = info.nBulkOut;
 	}
 
 	ARCH->usbFreeDeviceList(devices);
