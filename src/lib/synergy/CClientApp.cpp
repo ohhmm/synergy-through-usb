@@ -143,6 +143,8 @@ CClientApp::parseArgs(int argc, const char* const* argv)
 		if( detect.setUSBHostName(argv[i]) )
 		{
 			args().m_serverAddress = new CUSBAddress(detect);
+			if( !args().m_serverAddress->resolve() )
+				throw XSocketAddress(XSocketAddress::kBadPort, argv[i], 0);
 		}
 		else
 		{
