@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "base/Log.h"
 #include "synergy/PacketStreamFilter.h"
 #include "base/IEventQueue.h"
 #include "mt/Lock.h"
@@ -153,7 +154,8 @@ bool
 PacketStreamFilter::readMore()
 {
 	// note if we have whole packet
-	bool wasReady = isReadyNoLock();
+	if (isReadyNoLock())
+		return true;
 
 	// read more data
 	char buffer[4096];
@@ -167,12 +169,10 @@ PacketStreamFilter::readMore()
 	// if possible.
 	readPacketSize();
 
-	// note if we now have a whole packet
-	bool isReady = isReadyNoLock();
-
+	// note if we now have a whole packet.
 	// if we weren't ready before but now we are then send a
 	// input ready event apparently from the filtered stream.
-	return (wasReady != isReady);
+	return isReadyNoLock();
 }
 
 void
