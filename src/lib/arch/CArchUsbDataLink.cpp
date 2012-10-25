@@ -90,12 +90,12 @@ void* CArchUsbDataLink::threadFunc(void* ctx)
 		//LOG((CLOG_DEBUG1 "thread 0x%08x exit", id));
 	}
 
-	catch (XThreadCancel&) {
+	catch (const XThreadCancel& a) {
 		// client called cancel()
 //		LOG((CLOG_DEBUG1 "caught cancel on thread 0x%08x", id));
-		throw;
+		throw a;//throw a;
 	}
-//	catch (XThreadExit& e) {
+//	catch (XThreadExit&) {
 		// client called exit()
 //		result = e.m_result;
 //		LOG((CLOG_DEBUG1 "caught exit on thread 0x%08x, result %p", id, result));
