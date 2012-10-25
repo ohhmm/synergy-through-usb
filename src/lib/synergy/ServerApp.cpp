@@ -98,6 +98,7 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 				if( usbAddress->setUSBHostName(args().m_synergyAddress) )
 				{
 					m_synergyAddress = usbAddress.release();
+					m_synergyAddress->resolve();
 				}
 				else
 				{

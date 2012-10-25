@@ -10,7 +10,7 @@ const char * UsbFirstID = "USB\\VID_";
 const char * UsbSecondID = "&PID_";
 const char UsbParametersDivider = ',';
 const int UsbParameterCount = 6;
-const int UsbMandatoryParametersCount = 4;
+const int UsbMandatoryParametersCount = 2;
 
 struct UsbDeviceType {
 	UInt16 VendorID;
@@ -166,8 +166,8 @@ bool CUSBAddress::isValid() const {
 	bool res;
 	res = (nVID != 0);
 	res = res && (nPID != 0);
-	res = res && (nBulkIN != 0);
-	res = res && (nBulkOut != 0);
+	//res = res && (nBulkIN != 0);
+	//res = res && (nBulkOut != 0);
 	return res;
 }
 
@@ -202,6 +202,8 @@ bool CUSBAddress::setUSBHostName(const String& path) {
 	int j;
 	for (j = 0; j < sizeof(value) / sizeof(value[0]); j++)
 		value[j] = 0;
+	value[4] = 0xff;
+	value[5] = 0xff;
 	index = 0;
 	if ((i = path.find(UsbFirstID, i)) != String::npos) {
 		i += strlen(UsbFirstID);
@@ -214,8 +216,7 @@ bool CUSBAddress::setUSBHostName(const String& path) {
 		if (i < path.size()) {
 			while ((i = path.find(UsbParametersDivider, i)) != String::npos) {
 				i++;
-				if (index >= sizeof(value) / sizeof(value[0])
-						&& i >= path.size())
+				if ( index >= sizeof(value) / sizeof(value[0]) || i >= path.length() )
 					break;
 				value[index++] = strtol(&path[i], &end, 16);
 			}

@@ -76,8 +76,11 @@ CUSBDataLink::~CUSBDataLink()
 	catch (...) {
 		// ignore
 	}
-	if (m_listenerEvents)
+	if( m_listenerEvents != NULL )
+	{
 		m_listenerEvents->onDataLinkDestroyed(this);
+		m_listenerEvents = NULL;
+	}
 }
 
 
