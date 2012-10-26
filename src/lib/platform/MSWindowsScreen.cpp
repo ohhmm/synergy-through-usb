@@ -1049,13 +1049,16 @@ MSWindowsScreen::onPreDispatchPrimary(HWND,
 }
 
 bool
-MSWindowsScreen::onEvent(HWND, UINT msg,
+CMSWindowsScreen::onEvent(HWND hwnd, UINT msg,
 				WPARAM wParam, LPARAM lParam, LRESULT* result)
 {
 	switch (msg) {
 	case WM_DRAWCLIPBOARD:
+
+		assert(hwnd!=m_nextClipboardWindow);
+
 		// first pass on the message
-		if (m_nextClipboardWindow != NULL) {
+		if (m_nextClipboardWindow) {
 			SendMessage(m_nextClipboardWindow, msg, wParam, lParam);
 		}
 
@@ -1063,12 +1066,16 @@ MSWindowsScreen::onEvent(HWND, UINT msg,
 		return onClipboardChange();
 
 	case WM_CHANGECBCHAIN:
-		m_nextClipboardWindow = (HWND)lParam;
+		if(wParam==lParam)
+			m_nextClipboardWindow = 0;
+		else
+			m_nextClipboardWindow = (HWND)lParam;
+
 		LOG((CLOG_DEBUG "clipboard chain: new next: 0x%08x", m_nextClipboardWindow));
-		if (m_nextClipboardWindow) {
+		if (m_nextClipboardWindow)
 			SendMessage(m_nextClipboardWindow, msg, wParam, lParam);
-		}
-		return true;
+
+		return 0;
 
 	case WM_DISPLAYCHANGE:
 		return onDisplayChange();
