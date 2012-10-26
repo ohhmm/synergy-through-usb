@@ -91,6 +91,9 @@ private:
 	CMutex				m_mutex;
 	char				m_writeBuffer[1024*1024];
 	char				m_readBuffer[1024*1024];
+//	char				m_writeBuffer[512];
+//	char				m_readBuffer[512];
+
 	CStreamBuffer		m_inputBuffer;
 	CStreamBuffer		m_outputBuffer;
 	CCondVar<bool>		m_flushed;
@@ -100,6 +103,9 @@ private:
 
 	CCondVar<bool>		m_acceptedFlag;
 	CCondVar<int>		m_activeTransfers;
+
+	unsigned int		m_leftToWrite;
+	unsigned int		m_leftToRead;
 };
 
 #endif
