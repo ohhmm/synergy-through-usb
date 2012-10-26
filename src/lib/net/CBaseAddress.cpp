@@ -25,3 +25,8 @@
 CBaseAddress::~CBaseAddress()
 {
 }
+
+bool CBaseAddress::equal(CBaseAddress* addr) const {
+	return getAddressType() == addr->getAddressType()
+			&& getName() == addr->getName();
+}

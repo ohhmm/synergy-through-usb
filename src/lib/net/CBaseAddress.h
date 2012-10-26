@@ -46,6 +46,8 @@ public:
 	virtual CBaseAddress* 	clone() const = 0;
 
 	virtual bool			resolve() = 0;
+
+	virtual bool 			equal(CBaseAddress*) const;
 };
 
 #endif

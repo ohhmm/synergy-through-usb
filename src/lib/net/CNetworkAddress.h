@@ -29,6 +29,9 @@
 This class represents a network address.
 */
 class CNetworkAddress : public CBaseAddress{
+
+	typedef CBaseAddress base_t;
+
 public:
 	/*!
 	Constructs the invalid address
@@ -60,6 +63,8 @@ public:
 	CNetworkAddress&	operator=(const CNetworkAddress&);
 
 	CNetworkAddress* 	clone() const;
+
+	bool 				equal(CBaseAddress*) const;
 
 	//! @name manipulators
 	//@{

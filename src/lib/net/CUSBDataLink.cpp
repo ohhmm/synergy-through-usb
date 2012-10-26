@@ -21,6 +21,7 @@
 #include "XArch.h"
 #include "XSocket.h"
 #include "CLock.h"
+#include "CEvent.h"
 #include "CStopwatch.h"
 #include "CUSBDataLink.h"
 #include "CUSBAddress.h"
@@ -43,12 +44,14 @@ struct message_hdr {
 	unsigned int	data_size;
 };
 
+CEvent::Type CUSBDataLink::s_deletingEvent = CEvent::kUnknown;
+
 //
 // CUSBDataLink
 //
 
 CUSBDataLink::CUSBDataLink() :
-	m_listenerEvents(NULL),
+	m_listener(NULL),
 	m_device(NULL),
 	m_transferRead(NULL),
 	m_transferWrite(NULL),
@@ -74,10 +77,12 @@ CUSBDataLink::~CUSBDataLink()
 	catch (...) {
 		// ignore
 	}
-	if( m_listenerEvents != NULL )
+
+	// if listener is registered then send notification about our destruction
+	if( m_listener != NULL )
 	{
-		m_listenerEvents->onDataLinkDestroyed(this);
-		m_listenerEvents = NULL;
+		EVENTQUEUE->addEvent(CEvent(getDeletingEvent(), m_listener, this, CEvent::kDontFreeData));
+		m_listener = NULL;
 	}
 }
 
@@ -145,11 +150,11 @@ CUSBDataLink::bind(const CBaseAddress& addr)
 }
 
 void
-CUSBDataLink::bind(const CBaseAddress& addr, IUSBDataLinkListenerEvents* listenerEvents)
+CUSBDataLink::bind(const CBaseAddress& addr, void* listener)
 {
-	assert(m_listenerEvents == NULL);
+	assert(m_listener == NULL);
 
-	m_listenerEvents = listenerEvents;
+	m_listener = listener;
 	bind(addr);
 }
 
@@ -237,6 +242,13 @@ CUSBDataLink::getSize() const
 	return m_inputBuffer.getSize();
 }
 
+CEvent::Type
+CUSBDataLink::getDeletingEvent()
+{
+	return EVENTQUEUE->registerTypeOnce(s_deletingEvent,
+							"CUSBDataLink::connecting");
+}
+
 UInt32
 CUSBDataLink::read(void* buffer, UInt32 n)
 {
@@ -281,7 +293,7 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	hdr.data_size = n;
 
 	// if this is a server - set m_connected after first write, because we send kUsbAccept
-	if (m_listenerEvents)
+	if (m_listener)
 		m_connected = true;
 
 	doWrite(&hdr, buffer);

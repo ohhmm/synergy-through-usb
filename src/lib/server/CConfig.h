@@ -282,7 +282,7 @@ public:
 	Set the synergy listen addresses.  There is no default address so
 	this must be called to run a server using this configuration.
 	*/
-	void				setSynergyAddress(const CBaseAddress&);
+	void				addSynergyAddress(const CBaseAddress&);
 
 	//! Add a screen option
 	/*!
@@ -385,9 +385,6 @@ public:
 	//! Get ending neighbor iterator
 	link_const_iterator	endNeighbor(const CString&) const;
 
-	//! Get the server address
-	const CBaseAddress&	getSynergyAddress() const;
-	
 	//! Compare addresses
 	bool EqualAddress(const CConfig& x) const;
 
@@ -445,6 +442,31 @@ public:
 	static CString		formatInterval(const CInterval&);
 
 	//@}
+/*
+	const CNetworkAddress& getSynergyNetAddress() const {
+		return m_synergyNetAddress;
+	}
+
+	void setSynergyNetAddress(const CNetworkAddress& synergyNetAddress) {
+		m_synergyNetAddress = synergyNetAddress;
+	}
+
+	const CUSBAddress& getSynergyUsbAddress() const {
+		return m_synergyUSBAddress;
+	}
+
+	void setSynergyUsbAddress(const CUSBAddress& synergyUsbAddress) {
+		m_synergyUSBAddress = synergyUsbAddress;
+	}
+*/
+
+	const std::vector<CBaseAddress*>& getAddresses() const {
+		return m_addresses;
+	}
+
+	void setAddresses(const std::vector<CBaseAddress*>& addresses) {
+		m_addresses = addresses;
+	}
 
 private:
 	void				readSection(CConfigReadContext&);
@@ -470,9 +492,7 @@ private:
 private:
 	CCellMap			m_map;
 	CNameMap			m_nameToCanonicalName;
-	CNetworkAddress		m_synergyNetAddress;
-	CUSBAddress			m_synergyUSBAddress;
-	CBaseAddress::AddressType m_synergyAddressType;
+	std::vector<CBaseAddress*> m_addresses;
 	CScreenOptions		m_globalOptions;
 	CInputFilter		m_inputFilter;
 	bool				m_hasLockToScreenAction;
