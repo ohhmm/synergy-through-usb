@@ -147,7 +147,7 @@ void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBD
 	info.busNumber = libusb_get_bus_number(devEnum);
 	info.devAddress = libusb_get_device_address(devEnum);
 
-	r = libusb_get_config_descriptor_by_value(devEnum, 1, &config_desc);
+	r = libusb_get_active_config_descriptor(devEnum, &config_desc);
 	if( r>=0 )
 	{
 		//Investigate device interfaces. Detect 'in' and 'out' bulk endpoints
