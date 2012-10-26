@@ -30,10 +30,19 @@
 CUSBDataLinkListener::CUSBDataLinkListener()
 {
 	m_mutex = new CMutex;
+
+	EVENTQUEUE->adoptHandler(
+			CUSBDataLink::getDeletingEvent(),
+			getEventTarget(),
+			new TMethodEventJob<CUSBDataLinkListener>(this, &CUSBDataLinkListener::handleDeleting, NULL));
 }
 
 CUSBDataLinkListener::~CUSBDataLinkListener()
 {
+	EVENTQUEUE->removeHandler(
+			CUSBDataLink::getDeletingEvent(),
+			getEventTarget());
+
 	close();
 	delete m_mutex;
 }
@@ -154,12 +163,13 @@ void CUSBDataLinkListener::handleData(const CEvent&, void* ctx)
 	}
 }
 
-
-void CUSBDataLinkListener::onDataLinkDestroyed(IDataTransfer* dataLink)
+void CUSBDataLinkListener::handleDeleting(const CEvent& ev, void*)
 {
 	LOG((CLOG_DEBUG "USB datalink listener: datalink destroyed"));
 
 	CLock lock(m_mutex);
+
+	IDataTransfer* dataLink = (IDataTransfer*)ev.getData();
 
 	CUSBAddress addr = m_addressMap[dataLink];
 

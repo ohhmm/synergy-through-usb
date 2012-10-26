@@ -33,10 +33,10 @@
 /*!
  Data link connection listener class.
 */
-class CUSBDataLinkListener : public IListenSocket, private IUSBDataLinkListenerEvents {
+class CUSBDataLinkListener : public IListenSocket {
 public:
 	CUSBDataLinkListener();
-	~CUSBDataLinkListener();
+	virtual ~CUSBDataLinkListener();
 
 	// ISocket overrides
 	virtual void		bind(const CBaseAddress&);
@@ -48,10 +48,7 @@ public:
 
 private:
 	void				handleData(const CEvent&, void*);
-	
-	// IUSBDataLinkListenerEvents
-	void				onDataLinkDestroyed(IDataTransfer* dataLink);
-
+	void				handleDeleting(const CEvent&, void*);
 
 	typedef std::set<IDataTransfer*> CUSBLinkSet;
 	typedef std::deque<IDataTransfer*> CUSBLinkDeque;
