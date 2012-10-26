@@ -102,6 +102,7 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 			if( usbAddress->setUSBHostName(argv[i + 1]) )
 			{
 				args().m_synergyAddress = usbAddress.release();
+				args().m_synergyAddress->resolve();
 			}
 			else
 			{
