@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "base/Event.h"
 #include "base/Log.h"
 #include "base/Stopwatch.h"
 #include "arch/Arch.h"
@@ -43,6 +44,8 @@ struct message_hdr {
 	unsigned int	data_size;
 };
 
+Event::Type CUSBDataLink::s_deletingEvent = Event::kUnknown;
+
 //
 // CUSBDataLink
 //
@@ -50,7 +53,7 @@ struct message_hdr {
 CUSBDataLink::CUSBDataLink(IEventQueue* events) :
 	base_t(events),
 	m_events(events),
-    m_listenerEvents(NULL),
+	m_listener(NULL),
 	m_device(NULL),
 	m_transferRead(NULL),
 	m_transferWrite(NULL),
@@ -76,10 +79,12 @@ CUSBDataLink::~CUSBDataLink()
 	catch (...) {
 		// ignore
 	}
-	if( m_listenerEvents != NULL )
+
+	// if listener is registered then send notification about our destruction
+	if( m_listener != NULL )
 	{
-		m_listenerEvents->onDataLinkDestroyed(this);
-		m_listenerEvents = NULL;
+		m_events->addEvent(Event(getDeletingEvent(m_events), m_listener, this, Event::kDontFreeData));
+		m_listener = NULL;
 	}
 }
 
@@ -146,11 +151,11 @@ CUSBDataLink::bind(const BaseAddress & addr)
 }
 
 void
-CUSBDataLink::bind(const BaseAddress& addr, IUSBDataLinkListenerEvents* listenerEvents)
+CUSBDataLink::bind(const BaseAddress& addr, void* listener)
 {
-	assert(m_listenerEvents == NULL);
+	assert(m_listener == NULL);
 
-	m_listenerEvents = listenerEvents;
+	m_listener = listener;
 	bind(addr);
 }
 
@@ -238,6 +243,12 @@ CUSBDataLink::getSize() const
 	return m_inputBuffer.getSize();
 }
 
+Event::Type
+CUSBDataLink::getDeletingEvent(IEventQueue* events)
+{
+	return events->registerTypeOnce(s_deletingEvent, "CUSBDataLink::connecting");
+}
+
 UInt32
 CUSBDataLink::read(void* buffer, UInt32 n)
 {
@@ -282,7 +293,7 @@ CUSBDataLink::write(const void* buffer, UInt32 n)
 	hdr.data_size = n;
 
 	// if this is a server - set m_connected after first write, because we send kUsbAccept
-	if (m_listenerEvents)
+	if (m_listener)
 		m_connected = true;
 
 	doWrite(&hdr, buffer);

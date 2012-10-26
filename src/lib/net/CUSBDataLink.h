@@ -36,23 +36,18 @@ extern const char*		kUsbReject;
 
 struct message_hdr;
 
-class IUSBDataLinkListenerEvents {
-public:
-	virtual void onDataLinkDestroyed(IDataTransfer* dataLink) = 0;
-};
-
 class CUSBDataLink : public IDataTransfer {
     typedef IDataTransfer base_t;
 public:
-    CUSBDataLink(IEventQueue* events);
-	~CUSBDataLink();
+	CUSBDataLink(IEventQueue* events);
+	virtual ~CUSBDataLink();
 
 	// IDataTransfer overrides
 	virtual void		connect(const BaseAddress &);
 
 	// ISocket overrides
 	virtual void		bind(const BaseAddress&);
-	virtual void		bind(const BaseAddress&, IUSBDataLinkListenerEvents* listenerEvents);
+	virtual void		bind(const BaseAddress&, void* listener);
 	virtual void		close();
 	virtual void*		getEventTarget() const;
 
@@ -64,6 +59,8 @@ public:
 	virtual void		shutdownOutput();
 	virtual bool		isReady() const;
 	virtual UInt32		getSize() const;
+
+	static Event::Type	getDeletingEvent(IEventQueue* events);
 
 private:
 	void				initConnection(const BaseAddress&);
@@ -83,8 +80,10 @@ private:
 private:
 	IEventQueue*		m_events;
 
-	IUSBDataLinkListenerEvents * m_listenerEvents;
+	static Event::Type	s_deletingEvent;
 
+	void*				m_listener;
+	
 	USBDeviceHandle		m_device;
 	USBDataLinkConfig	m_config;
 
@@ -94,8 +93,6 @@ private:
 	Mutex				m_mutex;
 	char				m_writeBuffer[1024*1024];
 	char				m_readBuffer[1024*1024];
-//	char				m_writeBuffer[512];
-//	char				m_readBuffer[512];
 
 	StreamBuffer		m_inputBuffer;
 	StreamBuffer		m_outputBuffer;
