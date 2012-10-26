@@ -67,22 +67,81 @@ bool UsbDeviceType::isCompatible() const {
 	return result;
 }
 
-
 bool CUSBAddress::resolve() {
 	bool result = false;
+
 	USBDeviceEnumerator* devices;
 	size_t count = ARCH->usbGetDeviceList(&devices);
 	USBDeviceInfo info;
-	for(; !result && count--; ) {
-		ARCH->usbGetDeviceInfo(devices[count], info);
-		result = info.idVendor == nVID && info.idProduct==nPID && info.bValidEndpointInfo;
+	int rank;
+	int maxrank;
+	size_t index;
+	size_t i;
+	
+	maxrank = 0;
+	for( i = 0; i<count; i++ )
+	{
+		ARCH->usbGetDeviceInfo(devices[i], info);
+		if( info.idVendor == nVID && info.idProduct == nPID )
+		{
+			result = true;
+			rank = 20;
+			if( info.busNumber == nBus )
+			{
+				rank += 10;
+			}
+			if( info.devAddress == nDeviceOnBus )
+			{
+				rank += 4;
+			}
+			if( !info.bValidEndpointInfo )
+			{
+				rank = 0;
+			}
+			else
+			{
+				if( info.nBulkIN == nBulkIN )
+				{
+					rank += 1;
+				}
+				if( info.nBulkOut == nBulkOut )
+				{
+					rank += 1;
+				}
+			}
+			if( rank > maxrank )
+			{
+				index = i;
+				maxrank = rank;
+			}
+		}
 	}
 
-	if( result ){
-		nBus = info.busNumber;
-		nDeviceOnBus = info.devAddress;
-		nBulkIN = info.nBulkIN;
-		nBulkOut = info.nBulkOut;
+	if( result )
+	{
+		ARCH->usbGetDeviceInfo(devices[index], info);
+		if( info.idVendor == nVID && info.idProduct == nPID )
+		{
+			if( info.busNumber != nBus )
+			{
+				nBus = info.busNumber;		
+			}
+			if( info.devAddress != nDeviceOnBus )
+			{
+				nDeviceOnBus = info.devAddress;
+			}
+			if( info.bValidEndpointInfo )
+			{
+				if( info.nBulkIN != nBulkIN )
+				{
+					nBulkIN = info.nBulkIN;
+				}
+				if( info.nBulkOut != nBulkOut )
+				{
+					nBulkOut = info.nBulkOut;
+				}
+			}
+		}
 	}
 
 	ARCH->usbFreeDeviceList(devices);
