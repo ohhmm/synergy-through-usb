@@ -107,6 +107,11 @@ String CUSBAddress::getConnectedCompatibleDeviceNames() {
 	return ss.str();
 }
 
+bool CUSBAddress::equal(BaseAddress* obj) const {
+	return getAddressType() == obj->getAddressType() &&
+				operator ==(*reinterpret_cast<CUSBAddress*>(obj));
+}
+
 void CUSBAddress::assignDefaults() {
 	nVID = 0x0402;
 	nPID = 0x5632;

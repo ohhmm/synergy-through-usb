@@ -217,6 +217,11 @@ BaseAddress::AddressType NetworkAddress::getAddressType() const
 	return Network;
 }
 
+bool NetworkAddress::equal(BaseAddress* obj) const {
+	return getAddressType() == obj->getAddressType() &&
+			operator ==(*reinterpret_cast<NetworkAddress*>(obj));
+}
+
 void
 NetworkAddress::checkPort()
 {

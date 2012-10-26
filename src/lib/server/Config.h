@@ -287,7 +287,7 @@ public:
 	Set the synergy listen addresses.  There is no default address so
 	this must be called to run a server using this configuration.
 	*/
-	void				setSynergyAddress(const BaseAddress&);
+	void				addSynergyAddress(const BaseAddress&);
 
 	//! Add a screen option
 	/*!
@@ -391,9 +391,6 @@ public:
 	//! Get ending neighbor iterator
 	link_const_iterator	endNeighbor(const String&) const;
 
-	//! Get the server address
-	const BaseAddress&	getSynergyAddress() const;
-	
 	//! Compare addresses
 	bool EqualAddress(const Config& x) const;
 
@@ -451,6 +448,31 @@ public:
 	static String		formatInterval(const Interval&);
 
 	//@}
+/*
+	const CNetworkAddress& getSynergyNetAddress() const {
+		return m_synergyNetAddress;
+	}
+
+	void setSynergyNetAddress(const CNetworkAddress& synergyNetAddress) {
+		m_synergyNetAddress = synergyNetAddress;
+	}
+
+	const CUSBAddress& getSynergyUsbAddress() const {
+		return m_synergyUSBAddress;
+	}
+
+	void setSynergyUsbAddress(const CUSBAddress& synergyUsbAddress) {
+		m_synergyUSBAddress = synergyUsbAddress;
+	}
+*/
+
+	const std::vector<BaseAddress*>& getAddresses() const {
+		return m_addresses;
+	}
+
+	void setAddresses(const std::vector<BaseAddress*>& addresses) {
+		m_addresses = addresses;
+	}
 
 private:
 	void				readSection(ConfigReadContext&);
@@ -474,13 +496,11 @@ private:
 	static String		getOptionValue(OptionID, OptionValue);
 
 private:
-	CellMap				m_map;
-	NameMap				m_nameToCanonicalName;
-	NetworkAddress		m_synergyNetAddress;
-	CUSBAddress			m_synergyUSBAddress;
-	BaseAddress::AddressType m_synergyAddressType;
+	CellMap			m_map;
+	NameMap			m_nameToCanonicalName;
+	std::vector<BaseAddress*> m_addresses;
 	ScreenOptions		m_globalOptions;
-	InputFilter			m_inputFilter;
+	InputFilter		m_inputFilter;
 	bool				m_hasLockToScreenAction;
 	IEventQueue*		m_events;
 };

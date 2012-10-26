@@ -109,9 +109,9 @@ public:
 	EServerState		m_serverState;
 	synergy::Screen*	m_serverScreen;
 	PrimaryClient*		m_primaryClient;
-	ClientListener*		m_listener;
+	std::vector<ClientListener*> m_listeners;
 	EventQueueTimer*	m_timer;
-	BaseAddress*		m_synergyAddress;
+	std::vector<BaseAddress*> m_synergyAddresses;
 
 private:
 	void handleScreenSwitched(const Event&, void*  data);
