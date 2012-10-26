@@ -36,7 +36,11 @@ CConfig::CConfig() : m_hasLockToScreenAction(false)
 
 CConfig::~CConfig()
 {
-	// do nothing
+	for(auto addr = m_addresses.begin();
+			addr != m_addresses.end();
+			++addr) {
+		delete *addr;
+	}
 }
 
 bool
@@ -272,18 +276,9 @@ CConfig::disconnect(const CString& srcName, EDirection srcSide, float position)
 }
 
 void
-CConfig::setSynergyAddress(const CBaseAddress& addr)
+CConfig::addSynergyAddress(const CBaseAddress& addr)
 {
-	switch( addr.getAddressType() )
-	{
-	case CBaseAddress::Network:
-		m_synergyNetAddress = reinterpret_cast<const CNetworkAddress& >(addr);
-		break;
-	case CBaseAddress::USB:
-		m_synergyUSBAddress = reinterpret_cast<const CUSBAddress& >(addr);
-		break;
-	}
-	m_synergyAddressType = addr.getAddressType();
+	this->m_addresses.push_back(addr.clone());
 }
 
 bool
@@ -529,19 +524,6 @@ CConfig::endNeighbor(const CString& srcName) const
 	return index->second.end();
 }
 
-const CBaseAddress&
-CConfig::getSynergyAddress() const
-{
-	switch( m_synergyAddressType )
-	{
-	case CBaseAddress::Network:
-		return m_synergyNetAddress;
-	case CBaseAddress::USB:
-		return m_synergyUSBAddress;
-	}
-	return m_synergyNetAddress;
-}
-
 const CConfig::CScreenOptions*
 CConfig::getOptions(const CString& name) const
 {
@@ -570,17 +552,27 @@ CConfig::hasLockToScreenAction() const
 bool
 CConfig::EqualAddress(const CConfig& x) const
 {
-	bool res = false;
-	if( m_synergyAddressType== x.m_synergyAddressType){
-		switch( m_synergyAddressType )
-		{
-		case CBaseAddress::Network:
-			res = ( m_synergyNetAddress == x.m_synergyNetAddress );
-			break;
-		case CBaseAddress::USB:
-			res = ( m_synergyUSBAddress == x.m_synergyUSBAddress );
+	bool res = m_addresses.size() == x.m_addresses.size();
+	if(res) {
+		for(auto it = m_addresses.begin(); it != m_addresses.end(); ++it) {
+
+			CBaseAddress* addr = *it;
+
+			bool foundSame = false;
+			for(auto xit = x.m_addresses.begin(); xit != x.m_addresses.end(); ++xit) {
+				CBaseAddress* xaddr = *xit;
+				foundSame = addr->equal(xaddr);
+				if(foundSame)
+					break;
+			}
+
+			if(!foundSame) {
+				res = false;
+				break;
+			}
 		}
 	}
+
 	return res;
 }
 
@@ -753,14 +745,13 @@ CConfig::readSectionOptions(CConfigReadContext& s)
 				CUSBAddress detect;
 				if( detect.setUSBHostName(value) )
 				{
-					m_synergyUSBAddress = detect;
-					m_synergyAddressType = m_synergyUSBAddress.getAddressType();
+					addSynergyAddress(detect);
 				}
 				else
 				{
-					m_synergyNetAddress = CNetworkAddress(value, kDefaultPort);
-					m_synergyNetAddress.resolve();
-					m_synergyAddressType = m_synergyNetAddress.getAddressType();
+					CNetworkAddress addr(value, kDefaultPort);
+					addr.resolve();
+					addSynergyAddress(addr);
 				}
 			}
 			catch (XSocketAddress& e) {
@@ -1890,10 +1881,14 @@ operator<<(std::ostream& s, const CConfig& config)
 			}
 		}
 	}
-	if (config.getSynergyAddress().isValid()) {
-		s << "\taddress = " <<
-			config.getSynergyAddress().getName().c_str() << std::endl;
+
+	auto addresses = config.getAddresses();
+	for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+		if ((*it)->isValid()) {
+			s << "\taddress = " << (*it)->getName() << std::endl;
+		}
 	}
+
 	s << config.m_inputFilter.format("\t");
 	s << "end" << std::endl;
 

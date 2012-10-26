@@ -64,6 +64,8 @@ public:
 
 	virtual CUSBAddress* 	clone() const;
 
+	bool 					equal(CBaseAddress*) const;
+
 	virtual bool 			resolve();
 
 	//! Return Vendor ID

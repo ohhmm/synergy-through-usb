@@ -215,6 +215,11 @@ CBaseAddress::AddressType CNetworkAddress::getAddressType() const
 	return Network;
 }
 
+bool CNetworkAddress::equal(CBaseAddress* obj) const {
+	return getAddressType() == obj->getAddressType() &&
+			operator ==(*reinterpret_cast<CNetworkAddress*>(obj));
+}
+
 void
 CNetworkAddress::checkPort()
 {

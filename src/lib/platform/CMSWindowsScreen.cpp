@@ -1067,11 +1067,9 @@ CMSWindowsScreen::onEvent(HWND, UINT msg,
 		return onClipboardChange();
 
 	case WM_CHANGECBCHAIN:
-		if (m_nextClipboardWindow == (HWND)wParam) {
-			m_nextClipboardWindow = (HWND)lParam;
-			LOG((CLOG_DEBUG "clipboard chain: new next: 0x%08x", m_nextClipboardWindow));
-		}
-		else if (m_nextClipboardWindow != NULL) {
+		m_nextClipboardWindow = (HWND)lParam;
+		LOG((CLOG_DEBUG "clipboard chain: new next: 0x%08x", m_nextClipboardWindow));
+		if (m_nextClipboardWindow) {
 			SendMessage(m_nextClipboardWindow, msg, wParam, lParam);
 		}
 		return true;
