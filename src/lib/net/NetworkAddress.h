@@ -27,7 +27,10 @@
 /*!
 This class represents a network address.
 */
-class NetworkAddress : public BaseAddress {
+class NetworkAddress : public BaseAddress{
+
+	typedef BaseAddress base_t;
+
 public:
 	/*!
 	Constructs the invalid address
@@ -59,6 +62,8 @@ public:
 	NetworkAddress&	operator=(const NetworkAddress&);
 
 	NetworkAddress* 	clone() const;
+
+	bool 				equal(BaseAddress*) const;
 
 	//! @name manipulators
 	//@{

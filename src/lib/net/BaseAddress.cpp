@@ -25,3 +25,8 @@
 BaseAddress::~BaseAddress()
 {
 }
+
+bool BaseAddress::equal(BaseAddress* addr) const {
+	return getAddressType() == addr->getAddressType()
+			&& getName() == addr->getName();
+}

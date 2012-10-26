@@ -72,9 +72,7 @@ ServerApp::ServerApp(IEventQueue* events, CreateTaskBarReceiverFunc createTaskBa
 	m_serverState(kUninitialized),
 	m_serverScreen(NULL),
 	m_primaryClient(NULL),
-	m_listener(NULL),
-	m_timer(NULL),
-	m_synergyAddress(NULL)
+	m_timer(NULL)
 {
 }
 
@@ -97,14 +95,14 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 				std::auto_ptr<CUSBAddress> usbAddress(new CUSBAddress());
 				if( usbAddress->setUSBHostName(args().m_synergyAddress) )
 				{
-					m_synergyAddress = usbAddress.release();
-					m_synergyAddress->resolve();
+					usbAddress->resolve();
+					m_synergyAddresses.push_back(usbAddress.release());
 				}
 				else
 				{
 					std::auto_ptr<NetworkAddress> networkAddress(new NetworkAddress(args().m_synergyAddress, kDefaultPort));
 					networkAddress->resolve();
-					m_synergyAddress = networkAddress.release();
+					m_synergyAddresses.push_back(networkAddress.release());
 				}
 			}
 			catch (XSocketAddress& e) {
@@ -349,10 +347,11 @@ void
 ServerApp::stopServer()
 {
 	if (m_serverState == kStarted) {
-		closeClientListener(m_listener);
+		for(auto& listener : m_listeners)
+			closeClientListener(listener);
 		closeServer(m_server);
 		m_server      = NULL;
-		m_listener    = NULL;
+		m_listeners.clear();
 		m_serverState = kInitialized;
 	}
 	else if (m_serverState == kStarting) {
@@ -360,7 +359,7 @@ ServerApp::stopServer()
 		m_serverState = kInitialized;
 	}
 	assert(m_server == NULL);
-	assert(m_listener == NULL);
+	assert(m_listeners.empty());
 }
 
 void
@@ -549,28 +548,33 @@ ServerApp::startServer()
 	}
 
 	double retryTime;
-	ClientListener* listener = NULL;
-	try {
-		listener   = openClientListener(args().m_config->getSynergyAddress());
-		m_server   = openServer(*args().m_config, m_primaryClient);
-		listener->setServer(m_server);
-		m_listener = listener;
-		updateStatus();
-		LOG((CLOG_NOTE "started server, waiting for clients"));
-		m_serverState = kStarted;
-		return true;
+	m_server   = openServer(*args().m_config, m_primaryClient);
+
+	auto addresses = args().m_config->getAddresses();
+	for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+		ClientListener* listener = 0;
+		try {
+			listener = openClientListener(**it);
+			listener->setServer(m_server);
+			m_listeners.push_back(listener);
+		}
+		catch (XSocketAddressInUse& e) {
+			LOG((CLOG_WARN "cannot listen for clients: %s", e.what()));
+			closeClientListener(listener);
+			updateStatus(String("cannot listen for clients: ") + e.what());
+			retryTime = 10.0;
+		}
+		catch (XBase& e) {
+			LOG((CLOG_CRIT "failed to start server: %s", e.what()));
+			closeClientListener(listener);
+			return false;
+		}
 	}
-	catch (XSocketAddressInUse& e) {
-		LOG((CLOG_WARN "cannot listen for clients: %s", e.what()));
-		closeClientListener(listener);
-		updateStatus(String("cannot listen for clients: ") + e.what());
-		retryTime = 10.0;
-	}
-	catch (XBase& e) {
-		LOG((CLOG_CRIT "failed to start server: %s", e.what()));
-		closeClientListener(listener);
-		return false;
-	}
+
+	updateStatus();
+	LOG((CLOG_NOTE "started server, waiting for clients"));
+	m_serverState = kStarted;
+	return true;
 
 	if (args().m_restartable) {
 		// install a timer and handler to retry later
@@ -706,11 +710,16 @@ ServerApp::mainLoop()
 	// set the contact address, if provided, in the config.
 	// otherwise, if the config doesn't have an address, use
 	// the default.
-	if (m_synergyAddress && m_synergyAddress->isValid()) {
-		args().m_config->setSynergyAddress(*m_synergyAddress);
+	auto addresses = m_synergyAddresses;
+	if(addresses.size()) {
+		for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+			BaseAddress* addr = *it;
+			if (addr && addr->isValid()) {
+				args().m_config->addSynergyAddress(*addr);
 	}
-	else if (!args().m_config->getSynergyAddress().isValid()) {
-		args().m_config->setSynergyAddress(NetworkAddress(kDefaultPort));
+		}
+	} else {
+		args().m_config->addSynergyAddress(NetworkAddress(kDefaultPort));
 	}
 
 	// canonicalize the primary screen name
@@ -803,7 +812,6 @@ int
 ServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	m_synergyAddress = NULL;
 	args().m_config         = new Config(m_events);
 	args().m_pname          = ARCH->getBasename(argv[0]);
 
@@ -822,8 +830,12 @@ ServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc
 	}
 
 	delete args().m_config;
-	delete m_synergyAddress;
-	m_synergyAddress = NULL;
+	auto addresses = m_synergyAddresses;
+	for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+		BaseAddress* addr = *it;
+		delete addr;
+	}
+	m_synergyAddresses.clear();
 	return result;
 }
 
