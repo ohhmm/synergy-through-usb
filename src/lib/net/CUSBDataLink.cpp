@@ -100,7 +100,6 @@ CUSBDataLink::connect(const CBaseAddress& addr)
 	
 	LOG((CLOG_DEBUG "USB datalink: send connection request"));
 
-	message_hdr hdr;
 	std::string buf(kUsbConnect);
 	
 	write(buf.c_str(), buf.size());
