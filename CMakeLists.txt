@@ -268,7 +268,7 @@ if (UNIX)
 	# For config.h, save the results based on a template (config.h.in).
 	configure_file(res/config.h.in ${root_dir}/config.h)
 
-	add_definitions(-DSYSAPI_UNIX=1 -DHAVE_CONFIG_H)
+	add_definitions(-DSYSAPI_UNIX=1 -DHAVE_CONFIG_H -std=c++0x)
 
 	if (APPLE)
 		add_definitions(-DWINAPI_CARBON=1 -D_THREAD_SAFE)
