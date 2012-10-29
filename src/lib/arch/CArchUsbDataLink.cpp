@@ -145,14 +145,14 @@ void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBD
 	info.idVendor = desc.idVendor;
 	info.idProduct = desc.idProduct;
 	info.busNumber = libusb_get_bus_number(devEnum);
-	info.devAddress = libusb_get_device_address(devEnum);
+	info.deviceAddress = libusb_get_device_address(devEnum);
 
 	r = libusb_get_active_config_descriptor(devEnum, &config_desc);
 	if( r>=0 )
 	{
 		//Investigate device interfaces. Detect 'in' and 'out' bulk endpoints
 		//in specific interface and save their numbers.
-		info.bValidEndpointInfo = false;
+		info.validEndpointInfo = false;
 		if( config_desc->interface != NULL )
 		{
 			for(int n=0; n < config_desc->interface->num_altsetting; n++ )
@@ -169,25 +169,25 @@ void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBD
 						{
 							if( endpoint_desc->bEndpointAddress&0x80 )
 							{
-								info.nBulkIN = endpoint_desc->bEndpointAddress;
-								info.wBulkINMaxPacketSize = endpoint_desc->wMaxPacketSize;
+								info.inputEndpoint = endpoint_desc->bEndpointAddress;
+								info.inputEndpointMaxPacketSize = endpoint_desc->wMaxPacketSize;
 								bBulkINfound = true;
 							}
 							else
 							{
-								info.nBulkOut = endpoint_desc->bEndpointAddress;
-								info.wBulkOutMaxPacketSize = endpoint_desc->wMaxPacketSize;
+								info.outputEndpoint = endpoint_desc->bEndpointAddress;
+								info.outputEndpointMaxPacketSize = endpoint_desc->wMaxPacketSize;
 								bBulkOutfound = true;
 							}
 						}
 						if( bBulkINfound && bBulkOutfound )
 						{
-							info.bValidEndpointInfo = true;
-							info.nInterface = n;
+							info.validEndpointInfo = true;
+							info.interfaceNumber = n;
 							break;
 						}
 					}
-					if( info.bValidEndpointInfo )
+					if( info.validEndpointInfo )
 					{
 						break;
 					}
@@ -247,7 +247,7 @@ USBDeviceHandle CArchUsbDataLink::usbOpenDevice(struct USBDeviceInfo &devInfo, i
 			if (info.idVendor == devInfo.idVendor &&
 				info.idProduct == devInfo.idProduct &&
 				(info.busNumber == devInfo.busNumber || devInfo.busNumber == (unsigned char)-1) &&
-				(info.devAddress == devInfo.devAddress || devInfo.devAddress == (unsigned char)-1))
+				(info.deviceAddress == devInfo.deviceAddress || devInfo.deviceAddress == (unsigned char)-1))
 			{
 				handle = usbOpenDevice(iter, ifid);
 				break;

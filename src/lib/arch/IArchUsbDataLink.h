@@ -32,13 +32,13 @@ struct USBDeviceInfo
 	unsigned short	idVendor;
 	unsigned short	idProduct;
 	unsigned char	busNumber;
-	unsigned char	devAddress;
-	bool			bValidEndpointInfo;
-	unsigned char	nBulkIN;
-	unsigned char	nBulkOut;
-	unsigned char	nInterface;
-	int				wBulkINMaxPacketSize;
-	int				wBulkOutMaxPacketSize;
+	unsigned char	deviceAddress;
+	bool			validEndpointInfo;
+	unsigned char	inputEndpoint;
+	unsigned char	outputEndpoint;
+	unsigned char	interfaceNumber;
+	int				inputEndpointMaxPacketSize;
+	int				outputEndpointMaxPacketSize;
 };
 
 struct USBDataLinkConfig: USBDeviceInfo
