@@ -77,6 +77,7 @@ bool CUSBAddress::resolve() {
 				(fullPathSpecified ? info.busNumber == busNumber && info.deviceAddress == deviceAddress : true);
 	}
 
+	fullPathSpecified = result;
 	if( result ){
 		busNumber = info.busNumber;
 		deviceAddress = info.deviceAddress;
