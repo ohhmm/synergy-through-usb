@@ -186,13 +186,14 @@ CUSBDataLink::close()
 		onDisconnect();
 	}
 
-	// cancel active transfers
-	if (m_transferRead) {
+	// Cancel active transfers.
+	// If there was no transfer yet, than dev_handle == 0 and we should not call libusb_cancel_transfer because it causes AV in this case.
+	if (m_transferRead && m_transferRead->dev_handle) {
 		onInputShutdown();
 		libusb_cancel_transfer(m_transferRead);
 	}
 
-	if (m_transferWrite) {
+	if (m_transferWrite && m_transferWrite->dev_handle) {
 		onOutputShutdown();
 		libusb_cancel_transfer(m_transferWrite);
 	}
@@ -364,11 +365,13 @@ CUSBDataLink::initConnection(const BaseAddress& addr)
 		if (!m_transferRead) {
 			throw XSocketConnect("alloc read transfer failed");
 		}
-
+		m_transferRead->dev_handle = 0;
+		
 		m_transferWrite = libusb_alloc_transfer(0);
 		if (!m_transferWrite) {
 			throw XSocketConnect("alloc write transfer failed");
-		}
+		}		
+		m_transferWrite->dev_handle = 0;
 	} 
 	catch (...) 
 	{
