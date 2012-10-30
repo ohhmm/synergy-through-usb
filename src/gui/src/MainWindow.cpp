@@ -237,6 +237,7 @@ void MainWindow::loadSettings()
 	m_pGroupServer->setChecked(settings().value("groupServerChecked", false).toBool());
 	m_pLineEditConfigFile->setText(settings().value("configFile", QDir::homePath() + "/" + synergyConfigName).toString());
 	m_pGroupClient->setChecked(settings().value("groupClientChecked", true).toBool());
+	m_pUSBGroupClient->setChecked(settings().value("groupUSBClientChecked", true).toBool());
 	m_pLineEditHostname->setText(settings().value("serverHostname").toString());
 }
 
@@ -258,6 +259,7 @@ void MainWindow::saveSettings()
 	settings().setValue("configFile", m_pLineEditConfigFile->text());
 	settings().setValue("useInternalConfig", m_pRadioInternalConfig->isChecked());
 	settings().setValue("groupClientChecked", m_pGroupClient->isChecked());
+	settings().setValue("groupUSBClientChecked", m_pUSBGroupClient->isChecked());
 	settings().setValue("serverHostname", m_pLineEditHostname->text());
 
 	settings().sync();
@@ -408,7 +410,8 @@ void MainWindow::startSynergy()
 
 #endif
 
-	if ((synergyType() == synergyClient && !clientArgs(args, app))
+	if ((synergyType() == synergyNetworkClient && !clientArgs(args, app))
+		|| (synergyType() == synergyUSBClient && !clientArgs(args, app))
 		|| (synergyType() == synergyServer && !serverArgs(args, app)))
 	{
 		if (desktopMode)
@@ -697,6 +700,13 @@ void MainWindow::setSynergyState(qSynergyState state)
 	}
 }
 
+void MainWindow::setFormEnabled(bool enabled)
+{
+	m_pGroupClient->setEnabled(enabled);
+	m_pUSBGroupClient->setEnabled(enabled);
+	m_pGroupServer->setEnabled(enabled);
+}
+
 void MainWindow::setVisible(bool visible)
 {
 	QMainWindow::setVisible(visible);
@@ -791,14 +801,14 @@ void MainWindow::updateZeroconfService()
 
 void MainWindow::on_m_pGroupClient_toggled(bool on)
 {
-	m_pGroupServer->setChecked(!on);
-	updateZeroconfService();
+	if (on)
+		setActiveClientServer( synergyNetworkClient );
 }
 
 void MainWindow::on_m_pGroupServer_toggled(bool on)
 {
-	m_pGroupClient->setChecked(!on);
-	updateZeroconfService();
+	if( on )
+		setActiveClientServer( synergyServer );
 }
 
 bool MainWindow::on_m_pButtonBrowseConfigFile_clicked()
@@ -895,4 +905,17 @@ void MainWindow::on_m_pAutoConnectCheckBox_toggled(bool checked)
 	m_pLineEditHostname->setDisabled(checked);
 	appConfig().setAutoConnect(checked);
 	updateZeroconfService();
+}
+void MainWindow::setActiveClientServer(MainWindow::qSynergyType activeObject)
+{
+    m_pGroupServer->setChecked( synergyServer == activeObject );
+    m_pUSBGroupClient->setChecked( synergyUSBClient == activeObject );
+    m_pGroupClient->setChecked( synergyNetworkClient == activeObject );
+	updateZeroconfService();
+}
+void MainWindow::on_m_pUSBGroupClient_toggled(bool on) {
+    if( on && updateUSBClientDeviceList( on ) ) setActiveClientServer( synergyUSBClient );
+}
+void MainWindow::on_m_useUSBServer_toggled(bool on) {
+    m_useUSBServer->setChecked( on && updateUSBServerDeviceList( on ) );
 }

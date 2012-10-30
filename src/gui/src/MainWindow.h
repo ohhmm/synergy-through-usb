@@ -68,7 +68,8 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 
 		enum qSynergyType
 		{
-			synergyClient,
+			synergyNetworkClient,
+			synergyUSBClient,
 			synergyServer
 		};
 
@@ -83,7 +84,7 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 
 	public:
 		void setVisible(bool visible);
-		int synergyType() const { return m_pGroupClient->isChecked() ? synergyClient : synergyServer; }
+		int synergyType() const { return m_pGroupServer->isChecked() ? synergyServer : (m_pGroupClient->isChecked() ? synergyNetworkClient : synergyUSBClient); }
 		int synergyState() const { return m_SynergyState; }
 		QString hostname() const { return m_pLineEditHostname->text(); }
 		QString configFilename();
@@ -108,6 +109,9 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 	protected slots:
 		void on_m_pGroupClient_toggled(bool on);
 		void on_m_pGroupServer_toggled(bool on);
+		void on_m_pUSBGroupClient_toggled(bool on);
+		void on_m_useUSBServer_toggled(bool on);
+
 		bool on_m_pButtonBrowseConfigFile_clicked();
 		void on_m_pButtonConfigureServer_clicked();
 		bool on_m_pActionSave_triggered();
@@ -146,6 +150,22 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void stopDesktop();
 		void changeEvent(QEvent* event);
 		void retranslateMenuBar();
+		void setFormEnabled(bool enabled);
+
+		void setActiveClientServer( qSynergyType activeObject );
+		bool updateUSBServerDeviceList( bool on )
+		{
+			m_USBServerDevice->setEnabled( on );
+			// TODO: fill list of the accesable USB devices and activate a first one
+			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
+		}
+		bool updateUSBClientDeviceList( bool /*on*/ )
+		{
+			// TODO: fill list of the accesable USB devices and activate a first one
+			m_USBClientDevicesComboBox->clear();
+			m_USBClientDevicesComboBox->addItem( "USB Debug" );
+			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
+		}
 
 	private:
 		QSettings& m_Settings;
