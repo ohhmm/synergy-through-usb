@@ -42,13 +42,16 @@ Config::Config(IEventQueue* events) :
 	// do nothing
 }
 
-Config::~Config()
-{
-	for(auto addr = m_addresses.begin();
-			addr != m_addresses.end();
-			++addr) {
+void Config::freeAddresses() {
+	for (auto addr = m_addresses.begin(); addr != m_addresses.end(); ++addr) {
 		delete *addr;
 	}
+	m_addresses.clear();
+}
+
+Config::~Config()
+{
+	freeAddresses();
 }
 
 bool
@@ -1412,6 +1415,23 @@ Config::getOptionName(OptionID id)
 		return "preserveFocus";
 	}
 	return NULL;
+}
+
+Config& Config::operator =(const Config& config) {
+
+	freeAddresses();
+	for(auto addr = config.m_addresses.begin(); addr != config.m_addresses.end(); ++addr) {
+		BaseAddress* address = (*addr)->clone();
+		m_addresses.push_back(address);
+	}
+
+	this->m_globalOptions = config.m_globalOptions;
+	this->m_hasLockToScreenAction = config.m_hasLockToScreenAction;
+	this->m_inputFilter = config.m_inputFilter;
+	this->m_map = config.m_map;
+	this->m_nameToCanonicalName = config.m_nameToCanonicalName;
+
+	return *this;
 }
 
 String

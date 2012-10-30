@@ -70,9 +70,19 @@ MSWindowsHook::loadLibrary()
 
 	// initialize library
 	if (init(GetCurrentThreadId()) == 0) {
-		LOG((CLOG_ERR "failed to init %s.dll, another program may be using it", g_name));
-		LOG((CLOG_INFO "restarting your computer may solve this error"));
-		throw XScreenOpenFailure();
+
+		// try to reset the library before retry
+		typedef void (*ResetFn)();
+		ResetFn resetFn = (ResetFn)GetProcAddress(hookLibrary, "reset");
+		if(resetFn)
+			resetFn();
+
+		// initialize hook library
+		if (m_init(GetCurrentThreadId()) == 0) {
+			LOG((CLOG_ERR "failed to init %s.dll, another program may be using it", name));
+			LOG((CLOG_INFO "restarting your computer may solve this error"));
+			throw XScreenOpenFailure();
+		}
 	}
 }
 

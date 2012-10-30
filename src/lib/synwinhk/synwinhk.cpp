@@ -825,25 +825,7 @@ getWheelSupport()
 //
 
 BOOL WINAPI
-DllMain(HINSTANCE instance, DWORD reason, LPVOID)
-{
-	if (reason == DLL_PROCESS_ATTACH) {
-		DisableThreadLibraryCalls(instance);
-		if (g_processID == 0) {
-			g_hinstance = instance;
-			g_processID = GetCurrentProcessId();
-		}
-	}
-	else if (reason == DLL_PROCESS_DETACH) {
-		if (g_processID == GetCurrentProcessId()) {
-			uninstall();
-			uninstallScreenSaver();
-			g_processID = 0;
-			g_hinstance = NULL;
-		}
-	}
-	return TRUE;
-}
+DllMain(HINSTANCE instance, DWORD reason, LPVOID);
 
 extern "C" {
 
@@ -968,14 +950,22 @@ init(DWORD threadID)
 	return 1;
 }
 
+void
+reset()
+{
+	uninstall();
+	uninstallScreenSaver();
+	g_processID = 0;
+	g_hinstance = NULL;
+}
+
 int
 cleanup(void)
 {
 	assert(g_hinstance != NULL);
 
-	if (g_processID == GetCurrentProcessId()) {
+	if (g_processID == GetCurrentProcessId()) 
 		g_threadID = 0;
-	}
 
 	return 1;
 }
@@ -1174,4 +1164,22 @@ setMode(EHookMode mode)
 	g_mode = mode;
 }
 
+}
+
+BOOL WINAPI
+DllMain(HINSTANCE instance, DWORD reason, LPVOID)
+{
+	if (reason == DLL_PROCESS_ATTACH) {
+		DisableThreadLibraryCalls(instance);
+		if (g_processID == 0) {
+			g_hinstance = instance;
+			g_processID = GetCurrentProcessId();
+		}
+	}
+	else if (reason == DLL_PROCESS_DETACH) {
+		if (g_processID == GetCurrentProcessId()) {
+			reset();
+		}
+	}
+	return TRUE;
 }
