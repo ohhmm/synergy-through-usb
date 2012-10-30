@@ -405,6 +405,8 @@ public:
 
 	bool				CompareAddress(const CConfig& x)const;
 
+	CConfig& 			operator=(const CConfig& config);
+
 	//! Compare configurations
 	bool				operator==(const CConfig&) const;
 	//! Compare configurations
@@ -488,6 +490,7 @@ private:
 							std::set<CString>& screens) const;
 	static const char*	getOptionName(OptionID);
 	static CString		getOptionValue(OptionID, OptionValue);
+	void freeAddresses();
 
 private:
 	CCellMap			m_map;
