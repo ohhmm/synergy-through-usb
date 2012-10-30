@@ -14,13 +14,13 @@ const int UsbParameterCount = 6;
 const int UsbMandatoryParametersCount = 2;
 
 struct UsbDeviceType {
-	UInt16 VendorID;
-	UInt16 ProductId;
+	UInt16 vendorId;
+	UInt16 productId;
 
 	static const int MaxStringRepresentationLength = 9; // vid:pid
 
 	UsbDeviceType(int vid, int pid) :
-			VendorID(vid), ProductId(pid) {
+			vendorId(vid), productId(pid) {
 	}
 
 	UsbDeviceType(const CString& str)
@@ -28,27 +28,27 @@ struct UsbDeviceType {
 		std::stringstream ss(str);
 		unsigned uint = 0;
 		ss >> std::hex >> uint;
-		VendorID = uint;
+		vendorId = uint;
 
 		char delimeter;
 		ss >> delimeter;
 
 		ss >> uint;
-		ProductId = uint;
+		productId = uint;
 	}
 
 	CString toString() const {
 		std::stringstream ss;
-		ss << std::hex << VendorID << ':' << ProductId;
+		ss << std::hex << vendorId << ':' << productId;
 		return ss.str();
 	}
 
 	bool operator==(const UsbDeviceType& usbDeviceType) const {
-		return usbDeviceType.VendorID == VendorID && usbDeviceType.ProductId == ProductId;
+		return usbDeviceType.vendorId == vendorId && usbDeviceType.productId == productId;
 	}
 
 	bool operator==(const USBDeviceInfo& info) const {
-		return info.idVendor == VendorID && info.idProduct == ProductId;
+		return info.idVendor == vendorId && info.idProduct == productId;
 	}
 
 	bool isCompatible() const;
@@ -67,7 +67,6 @@ bool UsbDeviceType::isCompatible() const {
 	return result;
 }
 
-
 bool CUSBAddress::resolve() {
 	bool result = false;
 	USBDeviceEnumerator* devices;
@@ -75,14 +74,16 @@ bool CUSBAddress::resolve() {
 	USBDeviceInfo info;
 	for(; !result && count--; ) {
 		ARCH->usbGetDeviceInfo(devices[count], info);
-		result = info.idVendor == nVID && info.idProduct==nPID && info.bValidEndpointInfo;
+		result = info.idVendor == vendorId && info.idProduct==productId && info.validEndpointInfo &&
+				(fullPathSpecified ? info.busNumber == busNumber && info.deviceAddress == deviceAddress : true);
 	}
 
+	fullPathSpecified = result;
 	if( result ){
-		nBus = info.busNumber;
-		nDeviceOnBus = info.devAddress;
-		nBulkIN = info.nBulkIN;
-		nBulkOut = info.nBulkOut;
+		busNumber = info.busNumber;
+		deviceAddress = info.deviceAddress;
+		inputEndpoint = info.inputEndpoint;
+		outputEndpoint = info.outputEndpoint;
 	}
 
 	ARCH->usbFreeDeviceList(devices);
@@ -108,65 +109,56 @@ CString CUSBAddress::getConnectedCompatibleDeviceNames() {
 	return ss.str();
 }
 
-void CUSBAddress::assignDefaults() {
-	nVID = 0x0402;
-	nPID = 0x5632;
-	nBulkIN = 0x81;
-	nBulkOut = 0x2;
-	nBus = 0;
-	nDeviceOnBus = 0;
+bool CUSBAddress::equal(CBaseAddress* obj) const {
+	return getAddressType() == obj->getAddressType() &&
+				operator ==(*reinterpret_cast<CUSBAddress*>(obj));
 }
 
-CUSBAddress::CUSBAddress(void) {
+void CUSBAddress::assignDefaults() {
+	vendorId = 0x0402;
+	productId = 0x5632;
+	inputEndpoint = 0x81;
+	outputEndpoint = 0x2;
+	busNumber = 0;
+	deviceAddress = 0;
+}
+
+CUSBAddress::CUSBAddress(void) : fullPathSpecified(false) {
 	assignDefaults();
 }
 
 CUSBAddress::CUSBAddress(const UInt16 nnVID, const UInt16 nnPID,
 		const UInt8 nnBulkIN, const UInt8 nnBulkOUT, const UInt8 nnBus,
-		const UInt8 nnDeviceOnBus) {
-	nVID = nnVID;
-	nPID = nnPID;
-	nBulkIN = nnBulkIN;
-	nBulkOut = nnBulkOUT;
-	nBus = nnBus;
-	nDeviceOnBus = nnDeviceOnBus;
+		const UInt8 nnDeviceOnBus) : fullPathSpecified(false) {
+	vendorId = nnVID;
+	productId = nnPID;
+	inputEndpoint = nnBulkIN;
+	outputEndpoint = nnBulkOUT;
+	busNumber = nnBus;
+	deviceAddress = nnDeviceOnBus;
 }
 
-CUSBAddress::CUSBAddress(const CString& devicePath) {
+CUSBAddress::CUSBAddress(const CString& devicePath) : fullPathSpecified(false) {
 	if (!setUSBHostName(devicePath)) {
 		assignDefaults();
 	}
 }
 
-CUSBAddress::CUSBAddress(const CUSBAddress& deviceAddress) {
-	*this = operator=(deviceAddress);
-}
-
-CUSBAddress& CUSBAddress::operator=(const CUSBAddress& address) {
-	nVID = address.nVID;
-	nPID = address.nPID;
-	nBulkIN = address.nBulkIN;
-	nBulkOut = address.nBulkOut;
-	nBus = address.nBus;
-	nDeviceOnBus = address.nDeviceOnBus;
-	return *this;
-}
-
 bool CUSBAddress::operator==(const CUSBAddress& address) const {
 	bool res;
-	res = (nVID == address.nVID);
-	res = res && (nPID == address.nPID);
-	res = res && (nBulkIN == address.nBulkIN);
-	res = res && (nBulkOut == address.nBulkOut);
-	res = res && (nBus == address.nBus);
-	res = res && (nDeviceOnBus == address.nDeviceOnBus);
+	res = (vendorId == address.vendorId);
+	res = res && (productId == address.productId);
+	res = res && (inputEndpoint == address.inputEndpoint);
+	res = res && (outputEndpoint == address.outputEndpoint);
+	res = res && (busNumber == address.busNumber);
+	res = res && (deviceAddress == address.deviceAddress);
 	return res;
 }
 
 bool CUSBAddress::isValid() const {
 	bool res;
-	res = (nVID != 0);
-	res = res && (nPID != 0);
+	res = (vendorId != 0);
+	res = res && (productId != 0);
 	//res = res && (nBulkIN != 0);
 	//res = res && (nBulkOut != 0);
 	return res;
@@ -181,8 +173,8 @@ CUSBAddress::~CUSBAddress(void) {
 
 CString CUSBAddress::getUSBHostname() const {
 	CString res;
-	res = CStringUtil::print(UsbAddressFormat, nVID, nPID, nBulkIN, nBulkOut,
-			nBus, nDeviceOnBus);
+	res = CStringUtil::print(UsbAddressFormat, vendorId, productId, inputEndpoint, outputEndpoint,
+			busNumber, deviceAddress);
 	return res;
 }
 
@@ -192,8 +184,8 @@ bool CUSBAddress::setUSBHostName(const CString& path) {
 
 	if (path.length() <= UsbDeviceType::MaxStringRepresentationLength) {
 		UsbDeviceType usbDeviceType(path);
-		this->nVID = usbDeviceType.VendorID;
-		this->nPID = usbDeviceType.ProductId;
+		this->vendorId = usbDeviceType.vendorId;
+		this->productId = usbDeviceType.productId;
 		return resolve();
 	}
 
@@ -233,8 +225,10 @@ bool CUSBAddress::setUSBHostName(const CString& path) {
 			static_cast<UInt8>(value[3]), static_cast<UInt8>(value[4]),
 			static_cast<UInt8>(value[5]));
 	res = res && temp.isValid();
+
 	if (res) {
 		*this = temp;
+		fullPathSpecified = true;
 	}
 	return res;
 }
@@ -253,26 +247,26 @@ CUSBAddress::clone() const {
 }
 
 UInt16 CUSBAddress::GetVID() const {
-	return nVID;
+	return vendorId;
 }
 
 UInt16 CUSBAddress::GetPID() const {
-	return nPID;
+	return productId;
 }
 
 UInt8 CUSBAddress::GetIDBulkIN() const {
-	return nBulkIN;
+	return inputEndpoint;
 }
 
 UInt8 CUSBAddress::GetIDBulkOut() const {
-	return nBulkOut;
+	return outputEndpoint;
 }
 
 UInt8 CUSBAddress::GetIDBus() const {
-	return nBus;
+	return busNumber;
 }
 
 UInt8 CUSBAddress::GetIDDeviceOnBus() const {
-	return nDeviceOnBus;
+	return deviceAddress;
 }
 

@@ -100,7 +100,6 @@ CUSBDataLink::connect(const CBaseAddress& addr)
 	
 	LOG((CLOG_DEBUG "USB datalink: send connection request"));
 
-	message_hdr hdr;
 	std::string buf(kUsbConnect);
 	
 	write(buf.c_str(), buf.size());
@@ -349,7 +348,7 @@ CUSBDataLink::initConnection(const CBaseAddress& addr)
 	m_config.idVendor = usbAddress.GetVID();
 	m_config.idProduct = usbAddress.GetPID();
 	m_config.busNumber = usbAddress.GetIDBus();
-	m_config.devAddress = usbAddress.GetIDDeviceOnBus();
+	m_config.deviceAddress = usbAddress.GetIDDeviceOnBus();
 	m_config.ifid = 0;
 	m_config.bulkin = usbAddress.GetIDBulkIN();
 	m_config.bulkout = usbAddress.GetIDBulkOut();

@@ -29,12 +29,7 @@ public:
 	*/
 	CUSBAddress(const CString& devicepath);
 
-	//!Copy constructor
-	CUSBAddress(const CUSBAddress&);
-
 	~CUSBAddress();
-
-	CUSBAddress&			operator=(const CUSBAddress&);
 
 	//@}
 	//! @name accessors
@@ -63,6 +58,8 @@ public:
 	virtual CString			getName() const;
 
 	virtual CUSBAddress* 	clone() const;
+
+	bool 					equal(CBaseAddress*) const;
 
 	virtual bool 			resolve();
 
@@ -100,12 +97,13 @@ public:
 private:
 
 	CString path;
-	UInt16 nVID;
-	UInt16 nPID;
-	UInt8 nBulkIN;
-	UInt8 nBulkOut;
-	UInt8 nBus;
-	UInt8 nDeviceOnBus;
+	UInt16 vendorId;
+	UInt16 productId;
+	UInt8 inputEndpoint;
+	UInt8 outputEndpoint;
+	UInt8 busNumber;
+	UInt8 deviceAddress;
+	bool fullPathSpecified;
 
 	void assignDefaults();
 };

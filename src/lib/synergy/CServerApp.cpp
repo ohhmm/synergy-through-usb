@@ -66,7 +66,6 @@ s_resetServerEvent(CEvent::kUnknown),
 s_serverState(kUninitialized),
 s_serverScreen(NULL),
 s_primaryClient(NULL),
-s_listener(NULL),
 s_timer(NULL),
 m_vncClient(NULL)
 {
@@ -77,7 +76,6 @@ CServerApp::~CServerApp()
 }
 
 CServerApp::CArgs::CArgs() :
-m_synergyAddress(NULL),
 m_config(NULL)
 {
 }
@@ -101,14 +99,14 @@ CServerApp::parseArg(const int& argc, const char* const* argv, int& i)
 			std::auto_ptr<CUSBAddress> usbAddress(new CUSBAddress());
 			if( usbAddress->setUSBHostName(argv[i + 1]) )
 			{
-				args().m_synergyAddress = usbAddress.release();
-				args().m_synergyAddress->resolve();
+				usbAddress->resolve();
+				args().m_synergyAddresses.push_back(usbAddress.release());
 			}
 			else
 			{
 				std::auto_ptr<CNetworkAddress> networkAddress(new CNetworkAddress(argv[i + 1], kDefaultPort));
-				args().m_synergyAddress->resolve();
-				args().m_synergyAddress = networkAddress.release();
+				networkAddress->resolve();
+				args().m_synergyAddresses.push_back(networkAddress.release());
 			}
 		}
 		catch (XSocketAddress& e) {
@@ -417,10 +415,10 @@ void
 CServerApp::stopServer()
 {
 	if (s_serverState == kStarted) {
-		closeClientListener(s_listener);
+		std::for_each(s_listeners.begin(), s_listeners.end(), &CServerApp::closeClientListener);
 		closeServer(s_server);
 		s_server      = NULL;
-		s_listener    = NULL;
+		s_listeners.clear();
 		s_serverState = kInitialized;
 	}
 	else if (s_serverState == kStarting) {
@@ -428,7 +426,7 @@ CServerApp::stopServer()
 		s_serverState = kInitialized;
 	}
 	assert(s_server == NULL);
-	assert(s_listener == NULL);
+	assert(s_listeners.empty());
 }
 
 void
@@ -615,28 +613,32 @@ CServerApp::startServer()
 	}
 
 	double retryTime;
-	CClientListener* listener = NULL;
-	try {
-		listener   = openClientListener(args().m_config->getSynergyAddress());
-		s_server   = openServer(*args().m_config, s_primaryClient);
-		listener->setServer(s_server);
-		s_listener = listener;
-		updateStatus();
-		LOG((CLOG_NOTE "started server, waiting for clients"));
-		s_serverState = kStarted;
-		return true;
+	s_server   = openServer(*args().m_config, s_primaryClient);
+
+	auto addresses = args().m_config->getAddresses();
+	for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+		CClientListener* listener = 0;
+		try{
+			listener = openClientListener(**it);
+			listener->setServer(s_server);
+			s_listeners.push_back(listener);
+		}	catch (XSocketAddressInUse& e) {
+			LOG((CLOG_WARN "cannot listen for clients: %s", e.what()));
+			closeClientListener(listener);
+			updateStatus(CString("cannot listen for clients: ") + e.what());
+			retryTime = 10.0;
+		}
+		catch (XBase& e) {
+			LOG((CLOG_CRIT "failed to start server: %s", e.what()));
+			closeClientListener(listener);
+			return false;
+		}
 	}
-	catch (XSocketAddressInUse& e) {
-		LOG((CLOG_WARN "cannot listen for clients: %s", e.what()));
-		closeClientListener(listener);
-		updateStatus(CString("cannot listen for clients: ") + e.what());
-		retryTime = 10.0;
-	}
-	catch (XBase& e) {
-		LOG((CLOG_CRIT "failed to start server: %s", e.what()));
-		closeClientListener(listener);
-		return false;
-	}
+
+	updateStatus();
+	LOG((CLOG_NOTE "started server, waiting for clients"));
+	s_serverState = kStarted;
+	return true;
 
 	if (args().m_restartable) {
 		// install a timer and handler to retry later
@@ -784,12 +786,16 @@ CServerApp::mainLoop()
 	// set the contact address, if provided, in the config.
 	// otherwise, if the config doesn't have an address, use
 	// the default.
-	CBaseAddress* synergyAddress = args().m_synergyAddress;
-	if (synergyAddress && synergyAddress->isValid()) {
-		args().m_config->setSynergyAddress(*args().m_synergyAddress);
-	}
-	else if (!args().m_config->getSynergyAddress().isValid()) {
-		args().m_config->setSynergyAddress(CNetworkAddress(kDefaultPort));
+	auto addresses = args().m_synergyAddresses;
+	if(addresses.size()) {
+		for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+			CBaseAddress* addr = *it;
+			if (addr && addr->isValid()) {
+				args().m_config->addSynergyAddress(*addr);
+			}
+		}
+	} else {
+		args().m_config->addSynergyAddress(CNetworkAddress(kDefaultPort));
 	}
 
 	// canonicalize the primary screen name
@@ -865,7 +871,6 @@ int
 CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFunc startup)
 {
 	// general initialization
-	args().m_synergyAddress = NULL;
 	args().m_config         = new CConfig;
 	args().m_pname          = ARCH->getBasename(argv[0]);
 
@@ -884,8 +889,12 @@ CServerApp::runInner(int argc, char** argv, ILogOutputter* outputter, StartupFun
 	}
 
 	delete args().m_config;
-	delete args().m_synergyAddress;
-	args().m_synergyAddress = NULL;
+	auto addresses = args().m_synergyAddresses;
+	for(auto it = addresses.begin(); it!= addresses.end(); ++it) {
+		CBaseAddress* addr = *it;
+		delete addr;
+	}
+	args().m_synergyAddresses.clear();
 	return result;
 }
 

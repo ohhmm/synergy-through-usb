@@ -52,7 +52,7 @@ public:
 
 	public:
 		CString	m_configFile;
-		CBaseAddress* m_synergyAddress;
+		std::vector<CBaseAddress*> m_synergyAddresses;
 		CConfig* m_config;
 	};
 
@@ -88,7 +88,7 @@ public:
 	void stopRetryTimer();
 	void updateStatus();
 	void updateStatus(const CString& msg);
-	void closeClientListener(CClientListener* listen);
+	static void closeClientListener(CClientListener* listen);
 	void stopServer();
 	void closePrimaryClient(CPrimaryClient* primaryClient);
 	void closeServerScreen(CScreen* screen);
@@ -121,7 +121,7 @@ public:
 	EServerState s_serverState;
 	CScreen* s_serverScreen;
 	CPrimaryClient* s_primaryClient;
-	CClientListener* s_listener;
+	std::vector<CClientListener*> s_listeners;
 	CEventQueueTimer* s_timer;
 
 private:
