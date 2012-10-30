@@ -1328,14 +1328,12 @@ MSWindowsKeyState::setWindowGroup(SInt32 group)
 	// XXX -- determine if m_groups[group] can be used with the system
 	// character set.
 
-	PostMessage(targetWindow, WM_INPUTLANGCHANGEREQUEST,
-								sysCharSet ? 1 : 0, (LPARAM)m_groups[group]);
-
-	// XXX -- use a short delay to let the target window process the message
+	// XXX -- use the SendMessage instead of PostMessage to let the target window process the message
 	// before it sees the keyboard events.  i'm not sure why this is
-	// necessary since the messages should arrive in order.  if we don't
-	// delay, though, some of our keyboard events may disappear.
-	Sleep(100);
+	// necessary since the messages should arrive in order.  if we use
+	// PostMessage, though, some of our keyboard events may disappear.
+	SendMessage(targetWindow, WM_INPUTLANGCHANGEREQUEST,
+								sysCharSet ? 1 : 0, (LPARAM)m_groups[group]);
 }
 
 KeyID

@@ -53,9 +53,10 @@ CUSBDataLinkListener::~CUSBDataLinkListener()
 void
 CUSBDataLinkListener::bind(const BaseAddress & addr)
 {
+	assert(addr.getAddressType() == BaseAddress::USB);
 	Lock lock(m_mutex);
-
-    CUSBDataLink* dataLink = new CUSBDataLink(m_events);
+	
+	CUSBDataLink* dataLink = new CUSBDataLink(m_events);
 	try
 	{
 		m_events->adoptHandler(
@@ -66,11 +67,7 @@ CUSBDataLinkListener::bind(const BaseAddress & addr)
 		dataLink->bind(addr, this);
 
 		m_bindedLinks.insert(dataLink);
-
-		{
-			const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
-			m_addressMap[dataLink] = usbAddress;
-		}
+		m_addressMap[dataLink] = reinterpret_cast<const CUSBAddress&>(addr);
 	}
 	catch(...)
 	{
