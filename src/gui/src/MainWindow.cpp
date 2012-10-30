@@ -230,6 +230,7 @@ void MainWindow::loadSettings()
 	m_pGroupServer->setChecked(settings().value("groupServerChecked", false).toBool());
 	m_pLineEditConfigFile->setText(settings().value("configFile", QDir::homePath() + "/" + synergyConfigName).toString());
 	m_pGroupClient->setChecked(settings().value("groupClientChecked", true).toBool());
+	m_pUSBGroupClient->setChecked(settings().value("groupUSBClientChecked", true).toBool());
 	m_pLineEditHostname->setText(settings().value("serverHostname").toString());
 
 	m_SuppressElevateWarning = true;
@@ -255,6 +256,7 @@ void MainWindow::saveSettings()
 	settings().setValue("configFile", m_pLineEditConfigFile->text());
 	settings().setValue("internalConfig", m_pRadioInternalConfig->isChecked());
 	settings().setValue("groupClientChecked", m_pGroupClient->isChecked());
+	settings().setValue("groupUSBClientChecked", m_pUSBGroupClient->isChecked());
 	settings().setValue("serverHostname", m_pLineEditHostname->text());
 
 	settings().sync();
@@ -398,7 +400,8 @@ void MainWindow::startSynergy()
 #endif
 	}
 
-	if ((synergyType() == synergyClient && !clientArgs(args, app))
+	if ((synergyType() == synergyNetworkClient && !clientArgs(args, app))
+		|| (synergyType() == synergyUSBClient && !clientArgs(args, app))
 		|| (synergyType() == synergyServer && !serverArgs(args, app)))
 	{
 		if (desktopMode)
@@ -660,6 +663,7 @@ void MainWindow::setSynergyState(qSynergyState state)
 void MainWindow::setFormEnabled(bool enabled)
 {
 	m_pGroupClient->setEnabled(enabled);
+	m_pUSBGroupClient->setEnabled(enabled);
 	m_pGroupServer->setEnabled(enabled);
 }
 

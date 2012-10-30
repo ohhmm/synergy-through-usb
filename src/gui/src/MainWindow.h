@@ -67,7 +67,8 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 
 		enum qSynergyType
 		{
-			synergyClient,
+			synergyNetworkClient,
+			synergyUSBClient,
 			synergyServer
 		};
 
@@ -82,7 +83,7 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 
 	public:
 		void setVisible(bool visible);
-		int synergyType() const { return m_pGroupClient->isChecked() ? synergyClient : synergyServer; }
+		int synergyType() const { return m_pGroupServer->isChecked() ? synergyServer : (m_pGroupClient->isChecked() ? synergyNetworkClient : synergyUSBClient); }
 		int synergyState() const { return m_SynergyState; }
 		QString hostname() const { return m_pLineEditHostname->text(); }
 		QString configFilename();
@@ -97,8 +98,11 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void appendLogError(const QString& text);
 
 	protected slots:
-		void on_m_pGroupClient_toggled(bool on) { m_pGroupServer->setChecked(!on); }
-		void on_m_pGroupServer_toggled(bool on) { m_pGroupClient->setChecked(!on); }
+		void on_m_pGroupClient_toggled(bool on) { if( on ) setActiveClientServer( synergyNetworkClient ); }
+		void on_m_pGroupServer_toggled(bool on) { if( on ) setActiveClientServer( synergyServer ); }
+		void on_m_pUSBGroupClient_toggled(bool on) { if( on && updateUSBClientDeviceList( on ) ) setActiveClientServer( synergyUSBClient ); }
+		void on_m_useUSBServer_toggled(bool on) { m_useUSBServer->setChecked( on && updateUSBServerDeviceList( on ) ); }
+
 		bool on_m_pButtonBrowseConfigFile_clicked();
 		void on_m_pButtonConfigureServer_clicked();
 		bool on_m_pActionSave_triggered();
@@ -141,6 +145,26 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void stopService();
 		void stopDesktop();
 		void setFormEnabled(bool enabled);
+
+		void setActiveClientServer( qSynergyType activeObject )
+		{
+			m_pGroupServer->setChecked( synergyServer == activeObject );
+			m_pUSBGroupClient->setChecked( synergyUSBClient == activeObject ); 
+			m_pGroupClient->setChecked( synergyNetworkClient == activeObject ); 
+		}
+		bool updateUSBServerDeviceList( bool on )
+		{
+			m_USBServerDevice->setEnabled( on );
+			// TODO: fill list of the accesable USB devices and activate a first one
+			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
+		}
+		bool updateUSBClientDeviceList( bool /*on*/ )
+		{
+			// TODO: fill list of the accesable USB devices and activate a first one
+			m_USBClientDevicesComboBox->clear();
+			m_USBClientDevicesComboBox->addItem( "USB Debug" );
+			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
+		}
 
 	private:
 		QSettings& m_Settings;
