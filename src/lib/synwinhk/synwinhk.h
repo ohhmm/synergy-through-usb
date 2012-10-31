@@ -76,9 +76,11 @@ typedef int				(*UninstallScreenSaverFunc)(void);
 typedef void			(*SetSidesFunc)(UInt32);
 typedef void			(*SetZoneFunc)(SInt32, SInt32, SInt32, SInt32, SInt32);
 typedef void			(*SetModeFunc)(int);
+typedef void			(*ResetFunc)(void);
 
 CSYNERGYHOOK_API int	init(DWORD);
 CSYNERGYHOOK_API int	cleanup(void);
+CSYNERGYHOOK_API void	reset(void);
 CSYNERGYHOOK_API EHookResult	install(void);
 CSYNERGYHOOK_API int	uninstall(void);
 CSYNERGYHOOK_API int	installScreenSaver(void);
