@@ -63,8 +63,7 @@ CMSWindowsHookLibraryLoader::openHookLibrary(const char* name)
 	if (m_init(GetCurrentThreadId()) == 0) {
 
 		// try to reset the library before retry
-		typedef void (*ResetFn)();
-		ResetFn resetFn = (ResetFn)GetProcAddress(hookLibrary, "reset");
+		ResetFunc resetFn = (ResetFunc)GetProcAddress(hookLibrary, "reset");
 		if(resetFn)
 			resetFn();
 

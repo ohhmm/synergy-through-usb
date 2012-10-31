@@ -920,13 +920,31 @@ init(DWORD threadID)
 	return 1;
 }
 
-void
-reset()
+void 
+attach(HINSTANCE instance)
+{
+	DisableThreadLibraryCalls(instance);
+	if (g_processID == 0) {
+		g_hinstance = instance;
+		g_processID = GetCurrentProcessId();
+	}
+}
+
+void 
+detach()
 {
 	uninstall();
 	uninstallScreenSaver();
 	g_processID = 0;
 	g_hinstance = NULL;
+}
+
+void
+reset()
+{
+	HINSTANCE instance = g_hinstance;
+	detach();
+	attach(instance);
 }
 
 int
@@ -1140,15 +1158,11 @@ BOOL WINAPI
 DllMain(HINSTANCE instance, DWORD reason, LPVOID)
 {
 	if (reason == DLL_PROCESS_ATTACH) {
-		DisableThreadLibraryCalls(instance);
-		if (g_processID == 0) {
-			g_hinstance = instance;
-			g_processID = GetCurrentProcessId();
-		}
+		attach(instance);
 	}
 	else if (reason == DLL_PROCESS_DETACH) {
 		if (g_processID == GetCurrentProcessId()) {
-			reset();
+			detach();
 		}
 	}
 	return TRUE;
