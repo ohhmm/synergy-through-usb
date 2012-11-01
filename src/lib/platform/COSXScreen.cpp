@@ -67,7 +67,7 @@ bool					COSXScreen::s_testedForGHOM = false;
 bool					COSXScreen::s_hasGHOM	    = false;
 CEvent::Type			COSXScreen::s_confirmSleepEvent = CEvent::kUnknown;
 
-COSXScreen::COSXScreen(bool isPrimary) :
+COSXScreen::COSXScreen(bool isPrimary, bool autoShowHideCursor) :
 	MouseButtonEventMap(NumButtonIDs),
 	m_isPrimary(isPrimary),
 	m_isOnScreen(m_isPrimary),
@@ -92,7 +92,11 @@ COSXScreen::COSXScreen(bool isPrimary) :
 	m_lastSingleClick(0),
 	m_lastDoubleClick(0),
 	m_lastSingleClickXCursor(0),
-	m_lastSingleClickYCursor(0)
+	m_lastSingleClickYCursor(0),
+	m_autoShowHideCursor(autoShowHideCursor),
+	m_eventTapRLSR(nullptr),
+	m_eventTapPort(nullptr),
+	m_pmRootPort(0)
 {
 	try {
 		m_displayID   = CGMainDisplayID();
@@ -136,6 +140,7 @@ COSXScreen::COSXScreen(bool isPrimary) :
 									&COSXScreen::handleConfirmSleep));
 
 		// create thread for monitoring system power state.
+		*m_pmThreadReady = false;
 		LOG((CLOG_DEBUG "starting watchSystemPowerThread"));
 		m_pmWatchThread = new CThread(new TMethodJob<COSXScreen>
 								(this, &COSXScreen::watchSystemPowerThread));
@@ -644,21 +649,58 @@ void
 COSXScreen::showCursor()
 {
 	LOG((CLOG_DEBUG "showing cursor"));
-    CGDisplayShowCursor(m_displayID);
-    CFStringRef propertyString = CFStringCreateWithCString(NULL, "SetsCursorInBackground", kCFStringEncodingMacRoman);
-    CGSSetConnectionProperty(_CGSDefaultConnection(), _CGSDefaultConnection(), propertyString, kCFBooleanFalse);
-    CFRelease(propertyString);
+
+	CFStringRef propertyString = CFStringCreateWithCString(
+		NULL, "SetsCursorInBackground", kCFStringEncodingMacRoman);
+
+	CGSSetConnectionProperty(
+		_CGSDefaultConnection(), _CGSDefaultConnection(),
+		propertyString, kCFBooleanTrue);
+
+	CFRelease(propertyString);
+
+	CGError error = CGDisplayShowCursor(m_displayID);
+	if (error != kCGErrorSuccess) {
+		LOG((CLOG_ERR "failed to show cursor, error=%d", error));
+	}
+
+	// appears to fix "mouse randomly not showing" bug
+	CGAssociateMouseAndMouseCursorPosition(true);
+
+	if (!CGCursorIsVisible()) {
+		LOG((CLOG_WARN "cursor may not be visible"));
+	}
+
+	m_cursorHidden = false;
 }
 
 void
 COSXScreen::hideCursor()
 {
-    CFStringRef propertyString = CFStringCreateWithCString(NULL, "SetsCursorInBackground", kCFStringEncodingMacRoman);
-    CGSSetConnectionProperty(_CGSDefaultConnection(), _CGSDefaultConnection(), propertyString, kCFBooleanTrue);
-    CFRelease(propertyString);
-
 	LOG((CLOG_DEBUG "hiding cursor"));
-    CGDisplayHideCursor(m_displayID);
+
+	CFStringRef propertyString = CFStringCreateWithCString(
+		NULL, "SetsCursorInBackground", kCFStringEncodingMacRoman);
+
+	CGSSetConnectionProperty(
+		_CGSDefaultConnection(), _CGSDefaultConnection(),
+		propertyString, kCFBooleanTrue);
+
+	CFRelease(propertyString);
+
+	CGError error = CGDisplayHideCursor(m_displayID);
+	if (error != kCGErrorSuccess) {
+		LOG((CLOG_ERR "failed to hide cursor, error=%d", error));
+	}
+
+	// appears to fix "mouse randomly not hiding" bug
+	CGAssociateMouseAndMouseCursorPosition(true);
+
+	if (CGCursorIsVisible()) {
+		LOG((CLOG_WARN "cursor may be still visible"));
+	}
+
+	m_cursorHidden = true;
 }
 
 void
@@ -674,7 +716,7 @@ COSXScreen::enable()
 		// FIXME -- start watching jump zones
 		
 		// kCGEventTapOptionDefault = 0x00000000 (Missing in 10.4, so specified literally)
-		m_eventTapPort=CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, 0, 
+		m_eventTapPort = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, 0,
 										kCGEventMaskForAllEvents, 
 										handleCGInputEvent, 
 										this);
@@ -682,10 +724,8 @@ COSXScreen::enable()
 	else {
 		// FIXME -- prevent system from entering power save mode
 
-		// hide cursor
-		if (!m_cursorHidden) {
-	                hideCursor();
-			m_cursorHidden = true;
+		if (m_autoShowHideCursor) {
+			hideCursor();
 		}
 
 		// warp the mouse to the cursor center
@@ -694,39 +734,41 @@ COSXScreen::enable()
                 // there may be a better way to do this, but we register an event handler even if we're
                 // not on the primary display (acting as a client). This way, if a local event comes in
                 // (either keyboard or mouse), we can make sure to show the cursor if we've hidden it. 
-		m_eventTapPort=CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, 0, 
+		m_eventTapPort = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, 0,
 										kCGEventMaskForAllEvents, 
 										handleCGInputEventSecondary, 
 										this);
 	}
-	if(!m_eventTapPort) {
+
+	if (!m_eventTapPort) {
 		LOG((CLOG_ERR "failed to create quartz event tap"));
 	}
-	m_eventTapRLSR=CFMachPortCreateRunLoopSource(kCFAllocatorDefault, m_eventTapPort, 0);
-	if(!m_eventTapRLSR) {
+
+	m_eventTapRLSR = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, m_eventTapPort, 0);
+	if (!m_eventTapRLSR) {
 		LOG((CLOG_ERR "failed to create a CFRunLoopSourceRef for the quartz event tap"));
 	}
+
 	CFRunLoopAddSource(CFRunLoopGetCurrent(), m_eventTapRLSR, kCFRunLoopDefaultMode);
 }
 
 void
 COSXScreen::disable()
 {
-        // show cursor if hidden
-        if (m_cursorHidden) {
-                showCursor();
-		m_cursorHidden = false;
+	if (m_autoShowHideCursor) {
+		showCursor();
 	}
     
-        // FIXME -- stop watching jump zones, stop capturing input
+	// FIXME -- stop watching jump zones, stop capturing input
 	
-	if(m_eventTapRLSR) {
+	if (m_eventTapRLSR) {
 		CFRelease(m_eventTapRLSR);
-		m_eventTapRLSR=NULL;
-	}		
-	if(m_eventTapPort) {
+		m_eventTapRLSR = nullptr;
+	}
+
+	if (m_eventTapPort) {
 		CFRelease(m_eventTapPort);
-		m_eventTapPort=NULL;
+		m_eventTapPort = nullptr;
 	}
 	// FIXME -- allow system to enter power saving mode
 
@@ -747,11 +789,8 @@ COSXScreen::disable()
 void
 COSXScreen::enter()
 {
-    // show cursor
-	if (m_cursorHidden) {
-                showCursor();
-		m_cursorHidden = false;
-	}
+	showCursor();
+
 	if (m_isPrimary) {
 		CGSetLocalEventsSuppressionInterval(0.0);
 		
@@ -780,15 +819,11 @@ COSXScreen::enter()
 bool
 COSXScreen::leave()
 {
-    // hide cursor
-	if (!m_cursorHidden) {
-        hideCursor();
-		m_cursorHidden = true;
-	}
+    hideCursor();
     
 	if (m_isPrimary) {
 		// warp to center
-		warpCursor(m_xCenter, m_yCenter);
+		//warpCursor(m_xCenter, m_yCenter);
 		
 		// This used to be necessary to get smooth mouse motion on other screens,
 		// but now is just to avoid a hesitating cursor when transitioning to
@@ -800,7 +835,7 @@ COSXScreen::leave()
 	}
 	else {
 		// warp the mouse to the cursor center
-		fakeMouseMove(m_xCenter, m_yCenter);
+		//fakeMouseMove(m_xCenter, m_yCenter);
 
 		// FIXME -- prepare to show cursor if it moves
 
@@ -1760,31 +1795,32 @@ COSXScreen::CHotKeyItem::operator<(const CHotKeyItem& x) const
 			(m_keycode == x.m_keycode && m_mask < x.m_mask));
 }
 
-// Quartz event tap support for the secondary display. This make sure that we 
-// will show the cursor if a local event comes in while synergy has the cursor off the screen.
+// Quartz event tap support for the secondary display. This makes sure that we
+// will show the cursor if a local event comes in while synergy has the cursor
+// off the screen.
 CGEventRef
-COSXScreen::handleCGInputEventSecondary(CGEventTapProxy proxy,
-							   CGEventType type,
-							   CGEventRef event,
-							   void* refcon)
+COSXScreen::handleCGInputEventSecondary(
+	CGEventTapProxy proxy,
+	CGEventType type,
+	CGEventRef event,
+	void* refcon)
 {
-       COSXScreen* screen = (COSXScreen*)refcon;
-       if (screen->m_cursorHidden) {
-                CGPoint pos;
-                bool showCursor = true;
-                if (type == kCGEventMouseMoved) {
-                        pos = CGEventGetLocation(event);
-                        if (pos.x == screen->m_xCenter && pos.y == screen->m_yCenter) {
-                                showCursor = false;
-                        }
-                }
-                if (showCursor) {
-                        LOG((CLOG_DEBUG "show cursor, event type %d", type));
-                        screen->showCursor();
-                        screen->m_cursorHidden = false;
-                }
-        }
-        return event;
+	// this fix is really screwing with the correct show/hide behavior. it
+	// should be tested better before reintroducing.
+	return event;
+
+	COSXScreen* screen = (COSXScreen*)refcon;
+	if (screen->m_cursorHidden && type == kCGEventMouseMoved) {
+
+		CGPoint pos = CGEventGetLocation(event);
+		if (pos.x != screen->m_xCenter || pos.y != screen->m_yCenter) {
+
+			LOG((CLOG_DEBUG "show cursor on secondary, type=%d pos=%d,%d",
+					type, pos.x, pos.y));
+			screen->showCursor();
+		}
+	}
+	return event;
 }
 
 // Quartz event tap support
