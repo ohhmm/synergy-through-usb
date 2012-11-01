@@ -756,6 +756,7 @@ Config::readSectionOptions(ConfigReadContext& s)
 				CUSBAddress detect;
 				if( detect.setUSBHostName(value) )
 				{
+					detect.resolve();
 					addSynergyAddress(detect);
 				}
 				else
