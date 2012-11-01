@@ -229,18 +229,19 @@ bool CUSBAddress::setUSBHostName(const CString& path) {
 	}
 	if (index >= UsbMandatoryParametersCount) {
 		res = true;
-		if( index == UsbMandatoryParametersCount ) {
+		if( index == UsbParameterCount ) {
 			fullPathSpecified = true;
 		}
 	}
-	CUSBAddress temp(static_cast<UInt16>(value[0]),
-			static_cast<UInt16>(value[1]), 0, 0, static_cast<UInt8>(value[2]),
-			static_cast<UInt8>(value[3]));
-	res = res && temp.isValid();
 
-	if (res) {
-		*this = temp;
-	}
+	vendorId = static_cast<UInt16>(value[0]);
+	productId = static_cast<UInt16>(value[1]);
+	inputEndpoint = 0;
+	outputEndpoint = 0;
+	busNumber = static_cast<UInt8>(value[2]);
+	deviceAddress = static_cast<UInt8>(value[3]);
+
+	res = res && isValid();
 	return res;
 }
 
