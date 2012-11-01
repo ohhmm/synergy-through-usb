@@ -73,10 +73,8 @@ bool CUSBAddress::resolve() {
 	USBDeviceInfo info;
 	for(; !result && count--; ) {
 		ARCH->usbGetDeviceInfo(devices[count], info);
-		result = info.idVendor == vendorId && info.idProduct==productId && info.validEndpointInfo;
-		if( fullPathSpecified ) {
-			result = result && info.busNumber == busNumber && info.deviceAddress == deviceAddress;
-		}
+		result = info.idVendor == vendorId && info.idProduct==productId && info.validEndpointInfo &&
+			(fullPathSpecified ? info.busNumber == busNumber && info.deviceAddress == deviceAddress : true);
 		if( result ){
 			break;
 		}
