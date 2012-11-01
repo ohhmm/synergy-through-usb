@@ -5,11 +5,11 @@
 #include <sstream>
 #include <iomanip>
 
-const char * UsbAddressFormat = "USB\\VID_%#4x&PID%#4x,%#2x,%#2x,%#2x,%#2x";
+const char * UsbAddressFormat = "USB\\VID_%04x&PID_%04x,%02x,%02x";
 const char * UsbFirstID = "USB\\VID_";
 const char * UsbSecondID = "&PID_";
 const char UsbParametersDivider = ',';
-const int UsbParameterCount = 6;
+const int UsbParameterCount = 4;
 const int UsbMandatoryParametersCount = 2;
 
 struct UsbDeviceType {
@@ -73,8 +73,13 @@ bool CUSBAddress::resolve() {
 	USBDeviceInfo info;
 	for(; !result && count--; ) {
 		ARCH->usbGetDeviceInfo(devices[count], info);
-		result = info.idVendor == vendorId && info.idProduct==productId && info.validEndpointInfo &&
-				(fullPathSpecified ? info.busNumber == busNumber && info.deviceAddress == deviceAddress : true);
+		result = info.idVendor == vendorId && info.idProduct==productId && info.validEndpointInfo;
+		if( fullPathSpecified ) {
+			result = result && info.busNumber == busNumber && info.deviceAddress == deviceAddress;
+		}
+		if( result ){
+			break;
+		}
 	}
 
 	fullPathSpecified = result;
@@ -93,14 +98,23 @@ String CUSBAddress::getConnectedCompatibleDeviceNames() {
 	std::stringstream ss;
 
 	USBDeviceEnumerator* devices;
-	for(size_t count = ARCH->usbGetDeviceList(&devices); count--; ) {
-
-		USBDeviceInfo info;
+	size_t count = ARCH->usbGetDeviceList(&devices);
+	USBDeviceInfo info;
+	if( count==1 ) {
 		ARCH->usbGetDeviceInfo(devices[count], info);
-
 		UsbDeviceType deviceTypeConnected(info.idVendor, info.idProduct);
 		if(deviceTypeConnected.isCompatible())
 			ss << deviceTypeConnected.toString() << std::endl;
+	}
+	else {
+		for( size_t i = 0; i < count; i++ ) {
+			ARCH->usbGetDeviceInfo(devices[i], info);
+			UsbDeviceType deviceTypeConnected(info.idVendor, info.idProduct);
+			if(deviceTypeConnected.isCompatible()) {
+				CUSBAddress local(info.idVendor, info.idProduct, info.inputEndpoint, info.outputEndpoint, info.busNumber, info.deviceAddress);
+				ss<< local.getName().c_str() << std::endl;
+			}
+		}
 	}
 
 	ARCH->usbFreeDeviceList(devices);
@@ -174,14 +188,14 @@ CUSBAddress::~CUSBAddress(void) {
 
 String CUSBAddress::getUSBHostname() const {
 	String res;
-	res = synergy::string::sprintf(UsbAddressFormat, vendorId, productId, inputEndpoint, outputEndpoint,
-			busNumber, deviceAddress);
+	res = synergy::string::sprintf(UsbAddressFormat, vendorId, productId, busNumber, deviceAddress);
 	return res;
 }
 
 bool CUSBAddress::setUSBHostName(const String& path) {
 
 	this->path = path;
+	fullPathSpecified = false;
 
 	if (path.length() <= UsbDeviceType::MaxStringRepresentationLength) {
 		UsbDeviceType usbDeviceType(path);
@@ -198,8 +212,6 @@ bool CUSBAddress::setUSBHostName(const String& path) {
 	int j;
 	for (j = 0; j < sizeof(value) / sizeof(value[0]); j++)
 		value[j] = 0;
-	value[4] = 0xff;
-	value[5] = 0xff;
 	index = 0;
 	if ((i = path.find(UsbFirstID, i)) != String::npos) {
 		i += strlen(UsbFirstID);
@@ -220,16 +232,17 @@ bool CUSBAddress::setUSBHostName(const String& path) {
 	}
 	if (index >= UsbMandatoryParametersCount) {
 		res = true;
+		if( index == UsbMandatoryParametersCount ) {
+			fullPathSpecified = true;
+		}
 	}
 	CUSBAddress temp(static_cast<UInt16>(value[0]),
-			static_cast<UInt16>(value[1]), static_cast<UInt8>(value[2]),
-			static_cast<UInt8>(value[3]), static_cast<UInt8>(value[4]),
-			static_cast<UInt8>(value[5]));
+			static_cast<UInt16>(value[1]), 0, 0, static_cast<UInt8>(value[2]),
+			static_cast<UInt8>(value[3]));
 	res = res && temp.isValid();
 
 	if (res) {
 		*this = temp;
-		fullPathSpecified = true;
 	}
 	return res;
 }
