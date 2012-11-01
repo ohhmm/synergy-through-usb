@@ -748,6 +748,7 @@ CConfig::readSectionOptions(CConfigReadContext& s)
 				CUSBAddress detect;
 				if( detect.setUSBHostName(value) )
 				{
+					detect.resolve();
 					addSynergyAddress(detect);
 				}
 				else
