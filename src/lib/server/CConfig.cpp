@@ -34,13 +34,16 @@ CConfig::CConfig() : m_hasLockToScreenAction(false)
 	// do nothing
 }
 
-CConfig::~CConfig()
-{
-	for(auto addr = m_addresses.begin();
-			addr != m_addresses.end();
-			++addr) {
+void CConfig::freeAddresses() {
+	for (auto addr = m_addresses.begin(); addr != m_addresses.end(); ++addr) {
 		delete *addr;
 	}
+	m_addresses.clear();
+}
+
+CConfig::~CConfig()
+{
+	freeAddresses();
 }
 
 bool
@@ -745,6 +748,7 @@ CConfig::readSectionOptions(CConfigReadContext& s)
 				CUSBAddress detect;
 				if( detect.setUSBHostName(value) )
 				{
+					detect.resolve();
 					addSynergyAddress(detect);
 				}
 				else
@@ -1404,6 +1408,23 @@ CConfig::getOptionName(OptionID id)
 		return "preserveFocus";
 	}
 	return NULL;
+}
+
+CConfig& CConfig::operator =(const CConfig& config) {
+
+	freeAddresses();
+	for(auto addr = config.m_addresses.begin(); addr != config.m_addresses.end(); ++addr) {
+		CBaseAddress* address = (*addr)->clone();
+		m_addresses.push_back(address);
+	}
+
+	this->m_globalOptions = config.m_globalOptions;
+	this->m_hasLockToScreenAction = config.m_hasLockToScreenAction;
+	this->m_inputFilter = config.m_inputFilter;
+	this->m_map = config.m_map;
+	this->m_nameToCanonicalName = config.m_nameToCanonicalName;
+
+	return *this;
 }
 
 CString

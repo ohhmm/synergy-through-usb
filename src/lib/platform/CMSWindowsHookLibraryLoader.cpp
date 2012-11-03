@@ -61,9 +61,18 @@ CMSWindowsHookLibraryLoader::openHookLibrary(const char* name)
 
 	// initialize hook library
 	if (m_init(GetCurrentThreadId()) == 0) {
-		LOG((CLOG_ERR "failed to init %s.dll, another program may be using it", name));
-		LOG((CLOG_INFO "restarting your computer may solve this error"));
-		throw XScreenOpenFailure();
+
+		// try to reset the library before retry
+		ResetFunc resetFn = (ResetFunc)GetProcAddress(hookLibrary, "reset");
+		if(resetFn)
+			resetFn();
+
+		// initialize hook library
+		if (m_init(GetCurrentThreadId()) == 0) {
+			LOG((CLOG_ERR "failed to init %s.dll, another program may be using it", name));
+			LOG((CLOG_INFO "restarting your computer may solve this error"));
+			throw XScreenOpenFailure();
+		}
 	}
 
 	return hookLibrary;

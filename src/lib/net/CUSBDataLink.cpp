@@ -100,7 +100,6 @@ CUSBDataLink::connect(const CBaseAddress& addr)
 	
 	LOG((CLOG_DEBUG "USB datalink: send connection request"));
 
-	message_hdr hdr;
 	std::string buf(kUsbConnect);
 	
 	write(buf.c_str(), buf.size());
@@ -185,13 +184,14 @@ CUSBDataLink::close()
 		onDisconnect();
 	}
 
-	// cancel active transfers
-	if (m_transferRead) {
+	// Cancel active transfers.
+	// If there was no transfer yet, than dev_handle == 0 and we should not call libusb_cancel_transfer because it causes AV in this case.
+	if (m_transferRead && m_transferRead->dev_handle) {
 		onInputShutdown();
 		libusb_cancel_transfer(m_transferRead);
 	}
 
-	if (m_transferWrite) {
+	if (m_transferWrite && m_transferWrite->dev_handle) {
 		onOutputShutdown();
 		libusb_cancel_transfer(m_transferWrite);
 	}
@@ -348,7 +348,7 @@ CUSBDataLink::initConnection(const CBaseAddress& addr)
 	m_config.idVendor = usbAddress.GetVID();
 	m_config.idProduct = usbAddress.GetPID();
 	m_config.busNumber = usbAddress.GetIDBus();
-	m_config.devAddress = usbAddress.GetIDDeviceOnBus();
+	m_config.deviceAddress = usbAddress.GetIDDeviceOnBus();
 	m_config.ifid = 0;
 	m_config.bulkin = usbAddress.GetIDBulkIN();
 	m_config.bulkout = usbAddress.GetIDBulkOut();
@@ -364,11 +364,13 @@ CUSBDataLink::initConnection(const CBaseAddress& addr)
 		if (!m_transferRead) {
 			throw XSocketConnect("alloc read transfer failed");
 		}
-
+		m_transferRead->dev_handle = 0;
+		
 		m_transferWrite = libusb_alloc_transfer(0);
 		if (!m_transferWrite) {
 			throw XSocketConnect("alloc write transfer failed");
-		}
+		}		
+		m_transferWrite->dev_handle = 0;
 	} 
 	catch (...) 
 	{
