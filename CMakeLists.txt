@@ -304,6 +304,11 @@ if (VNC_SUPPORT)
 	add_definitions(-DVNC_SUPPORT)
 endif()
 
+
+# Additional build params
+# Build GUI configuration tool
+option ( SYNERGY_BUILD_GUI "Build GUI configuration tool" OFF )
+
 add_subdirectory(src)
 
 if (WIN32)
@@ -396,4 +401,3 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "IRIX")
 	set_target_properties(synergyc PROPERTIES LINK_FLAGS "-all -woff 33 -woff 84 -woff 15")
 	set_target_properties(synergyd PROPERTIES LINK_FLAGS "-all -woff 33 -woff 84 -woff 15")
 endif()
-
