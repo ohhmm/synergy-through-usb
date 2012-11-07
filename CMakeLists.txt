@@ -320,6 +320,10 @@ else() # not-unix
 
 endif()
 
+# Additional build params
+# Build GUI configuration tool
+option ( SYNERGY_BUILD_GUI "Build GUI configuration tool" OFF )
+
 add_subdirectory(src)
 add_subdirectory(ext)
 

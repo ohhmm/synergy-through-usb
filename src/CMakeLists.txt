@@ -22,3 +22,7 @@ add_subdirectory(micro)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "IRIX")
 	add_subdirectory(test)
 endif()
+
+if ( ${SYNERGY_BUILD_GUI} MATCHES ON )
+	add_subdirectory(gui)
+endif()
