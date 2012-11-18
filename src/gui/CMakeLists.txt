@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CMAKE_MINIMUM_REQUIRED ( VERSION 2.6 )
-FIND_PACKAGE (Qt4 REQUIRED )
+FIND_PACKAGE (Qt4 REQUIRED QtCore QtGui QtNetwork)
 
 
 INCLUDE_DIRECTORIES (	. 
@@ -94,3 +94,57 @@ TARGET_LINK_LIBRARIES ( synergygui ${QT_LIBRARIES}
 			${QT_QTNETWORK_LIBRARIES}
 			dns_sd
 )
+
+
+
+# Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
+# TODO: clean code
+
+# Copy the needed Qt libraries into the Build directory. Also add installation
+# and CPack code to support installer generation.
+# this is a complete hack for Visual Studio to copy the Qt libraries.
+
+
+
+if ( NOT Q_WS_MAC)
+    if (DEFINED QT_QMAKE_EXECUTABLE)
+        SET (QTLIBLIST QtCore QtGui QtNetwork)
+
+        IF (MSVC)
+            set(TYPE "d")
+            FOREACH(qtlib ${QTLIBLIST})
+              IF (WIN32)
+                GET_FILENAME_COMPONENT(QT_DLL_PATH_tmp
+${QT_QMAKE_EXECUTABLE} PATH)
+                file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/Debug)
+                file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/Release)
+                file(MAKE_DIRECTORY
+${EXECUTABLE_OUTPUT_PATH}/MinSizeRel)
+                file(MAKE_DIRECTORY
+${EXECUTABLE_OUTPUT_PATH}/RelWithDebInfo)
+                INSTALL(FILES ${QT_DLL_PATH_tmp}/${qtlib}${type}d4.dll
+                    DESTINATION ./
+                    CONFIGURATIONS Debug
+                    COMPONENT Applications)
+                INSTALL(FILES ${QT_DLL_PATH_tmp}/${qtlib}4.dll
+                    DESTINATION ./
+                    CONFIGURATIONS Release
+                    COMPONENT Applications)
+                add_custom_target(ZZ_${qtlib}-Debug-Copy ALL
+                            COMMAND ${CMAKE_COMMAND} -E
+copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+                            ${EXECUTABLE_OUTPUT_PATH}/Debug/
+                            COMMENT "Copying ${qtlib}${TYPE}4.dll to
+${EXECUTABLE_OUTPUT_PATH}/Debug/")
+                add_custom_target(ZZ_${qtlib}-Release-Copy ALL
+                            COMMAND ${CMAKE_COMMAND} -E
+copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}4.dll
+                            ${EXECUTABLE_OUTPUT_PATH}/Release/
+                            COMMENT "Copying ${qtlib}4.dll to
+${EXECUTABLE_OUTPUT_PATH}/Release/")
+              ENDIF (WIN32)
+            ENDFOREACH(qtlib)
+
+        endif()
+    endif(DEFINED QT_QMAKE_EXECUTABLE)
+endif()
