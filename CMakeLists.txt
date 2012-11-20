@@ -290,7 +290,8 @@ if (UNIX)
 	set(HAVE_SOCKLEN_T 1)
 
 	# For config.h, save the results based on a template (config.h.in).
-	configure_file(res/config.h.in ${root_dir}/config.h)
+	configure_file(res/config.h.in ${CMAKE_BINARY_DIR}/config.h)
+	include_directories(${CMAKE_BINARY_DIR})
 
 	add_definitions(-DSYSAPI_UNIX=1 -DHAVE_CONFIG_H -std=c++0x)
 

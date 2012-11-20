@@ -139,7 +139,8 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void setIcon(qSynergyState state);
 		void setSynergyState(qSynergyState state);
 		bool checkForApp(int which, QString& app);
-		bool clientArgs(QStringList& args, QString& app);
+		bool networkClientArgs(QStringList& args, QString& app);
+		bool usbClientArgs(QStringList& args, QString& app);
 		bool serverArgs(QStringList& args, QString& app);
 		void setStatus(const QString& status);
 		void sendIpcMessage(qIpcMessageType type, const char* buffer, bool showErrors);
@@ -153,19 +154,7 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void setFormEnabled(bool enabled);
 
 		void setActiveClientServer( qSynergyType activeObject );
-		bool updateUSBServerDeviceList( bool on )
-		{
-			m_USBServerDevice->setEnabled( on );
-			// TODO: fill list of the accesable USB devices and activate a first one
-			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
-		}
-		bool updateUSBClientDeviceList( bool /*on*/ )
-		{
-			// TODO: fill list of the accesable USB devices and activate a first one
-			m_USBClientDevicesComboBox->clear();
-			m_USBClientDevicesComboBox->addItem( "USB Debug" );
-			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
-		}
+		bool populateUsbDeviceList( QComboBox * );
 
 	private:
 		QSettings& m_Settings;

@@ -1,4 +1,3 @@
-config.h
 *.pyc
 /bin
 /lib
@@ -10,6 +9,7 @@ config.h
 /src/gui/object_script*
 /src/gui/tmp
 /src/gui/ui_*
+/src/build-gui-*
 src/gui/gui.pro.user
 src/gui/.qmake.stash
 src/setup/win32/synergy.suo

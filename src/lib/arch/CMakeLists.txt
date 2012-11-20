@@ -44,12 +44,6 @@ include_directories(
 	${LIBUSB_1_INCLUDE_DIRS}
 )
 
-if (UNIX)
-	include_directories(
-		../../..
-	)
-endif()
-
 add_library(arch STATIC ${sources})
 
 set(libs

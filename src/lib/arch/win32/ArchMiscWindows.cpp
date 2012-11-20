@@ -44,9 +44,9 @@ typedef DWORD EXECUTION_STATE;
 // ArchMiscWindows
 //
 
-ArchMiscWindows::Dialogs* ArchMiscWindows::s_dialogs   = NULL;
+ArchMiscWindows::Dialogs*	ArchMiscWindows::s_dialogs   = NULL;
 DWORD						ArchMiscWindows::s_busyState = 0;
-ArchMiscWindows::STES_t	ArchMiscWindows::s_stes      = NULL;
+ArchMiscWindows::STES_t		ArchMiscWindows::s_stes      = NULL;
 HICON						ArchMiscWindows::s_largeIcon = NULL;
 HICON						ArchMiscWindows::s_smallIcon = NULL;
 HINSTANCE					ArchMiscWindows::s_instanceWin32 = NULL;

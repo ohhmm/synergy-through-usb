@@ -26,14 +26,8 @@ include_directories(
 	${LIBUSB_1_INCLUDE_DIR}
 )
 
-if (UNIX)
-	include_directories(
-		../../..
-	)
-endif()
-
 add_library(net STATIC ${sources})
 
 if (UNIX)
-	target_link_libraries(net mt io)
+	target_link_libraries(net base mt io)
 endif()

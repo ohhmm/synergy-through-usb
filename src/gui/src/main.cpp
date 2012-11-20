@@ -19,6 +19,8 @@
 #define TRAY_RETRY_COUNT 10
 #define TRAY_RETRY_WAIT 2000
 
+#include "arch/Arch.h"
+
 #include "QSynergyApplication.h"
 #include "MainWindow.h"
 #include "AppConfig.h"
@@ -55,6 +57,9 @@ bool checkMacAssistiveDevices();
 
 int main(int argc, char* argv[])
 {
+	Arch arch;
+	arch.init();
+
 	QCoreApplication::setOrganizationName("Synergy");
 	QCoreApplication::setOrganizationDomain("http://synergy-project.org/");
 	QCoreApplication::setApplicationName("Synergy");

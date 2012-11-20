@@ -37,12 +37,6 @@ include_directories(
 	../../../ext
 )
 
-if (UNIX)
-	include_directories(
-		../../..
-	)
-endif()
-
 if (SYNERGY_ADD_HEADERS)
 	list(APPEND sources ${headers})
 endif()
