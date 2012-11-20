@@ -49,7 +49,7 @@ DWORD						CArchMiscWindows::s_busyState = 0;
 CArchMiscWindows::STES_t	CArchMiscWindows::s_stes      = NULL;
 HICON						CArchMiscWindows::s_largeIcon = NULL;
 HICON						CArchMiscWindows::s_smallIcon = NULL;
-HINSTANCE					CArchMiscWindows::s_instanceWin32 = NULL;
+HINSTANCE					CArchMiscWindows::s_instanceWin32 = GetModuleHandle(NULL);
 
 void
 CArchMiscWindows::cleanup()

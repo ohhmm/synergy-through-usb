@@ -19,6 +19,8 @@
 #define TRAY_RETRY_COUNT 10
 #define TRAY_RETRY_WAIT 2000
 
+#include "CArch.h"
+
 #include "QSynergyApplication.h"
 #include "MainWindow.h"
 #include "AppConfig.h"
@@ -41,6 +43,9 @@ int waitForTray();
 
 int main(int argc, char* argv[])
 {
+	CArch arch;
+	arch.init();
+
 	QCoreApplication::setOrganizationName("Synergy");
 	QCoreApplication::setOrganizationDomain("http://synergy-foss.org/");
 	QCoreApplication::setApplicationName("Synergy");

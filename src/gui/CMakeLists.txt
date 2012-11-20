@@ -19,15 +19,19 @@ find_package (Qt4 REQUIRED QtCore QtGui QtNetwork)
 
 
 include_directories (	. 
-						./src
-						./res 
-		      			${QT_INCLUDE_DIR}
-		      			${QT_QTCORE_INCLUDE_DIR}
-		      			${QT_QTGUI_INCLUDE_DIR}
-						${QT_QTNETWORK_INCLUDE_DIR}
-						${QT_QTSQL_INCLUDE_DIR}
-						${CMAKE_BINARY_DIR}
-						${CMAKE_CURRENT_BINARY_DIR}
+	./src
+	./res 
+	../lib/arch
+	../lib/base
+	../lib/common
+	../lib/net
+	${QT_INCLUDE_DIR}
+	${QT_QTCORE_INCLUDE_DIR}
+	${QT_QTGUI_INCLUDE_DIR}
+	${QT_QTNETWORK_INCLUDE_DIR}
+	${QT_QTSQL_INCLUDE_DIR}
+	${CMAKE_BINARY_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # SYNERGY_SRCS variable that contains a list of all .cpp files
@@ -125,10 +129,15 @@ add_executable ( synergygui ${SYNERGYGUI_SRCS}
 		${SYNERGYGUI_TRANS_SRCS}
 )
 
-target_link_libraries ( synergygui ${QT_LIBRARIES} 
-			${QT_QTCORE_LIBRARIES} 
-			${QT_QTGUI_LIBRARIES} 
-			${QT_QTNETWORK_LIBRARIES} 
+target_link_libraries ( synergygui 
+	arch
+	base
+	common
+	net
+	${QT_LIBRARIES} 
+	${QT_QTCORE_LIBRARIES} 
+	${QT_QTGUI_LIBRARIES} 
+	${QT_QTNETWORK_LIBRARIES} 
 )
 
 
@@ -136,7 +145,7 @@ target_link_libraries ( synergygui ${QT_LIBRARIES}
 # Remade Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
 # Copying required Qt libs into the build directory.
 
-if (WIN32 AND MSVC)   
+if (MSVC)   
 	if (DEFINED QT_QMAKE_EXECUTABLE)
 		set (QTLIBLIST QtCore QtGui QtNetwork)
 		foreach (qtlib ${QTLIBLIST})
@@ -147,26 +156,28 @@ if (WIN32 AND MSVC)
 			file (MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/MinSizeRel)
 			file (MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}/RelWithDebInfo)
 
+			set (TYPE "")
+			add_custom_command(
+				TARGET synergygui
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E
+				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/
+				COMMENT "Copying ${qtlib}${TYPE}4.dll to
+				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
+			)
+
 			set (TYPE "d")
 			add_custom_command(
 				TARGET synergygui
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
 				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
-				${EXECUTABLE_OUTPUT_PATH}/Debug/
+				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/
 				COMMENT "Copying ${qtlib}${TYPE}4.dll to
-				${EXECUTABLE_OUTPUT_PATH}/Debug/"
+				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
 
-			add_custom_command(
-				TARGET synergygui
-				POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E
-				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}4.dll
-				${EXECUTABLE_OUTPUT_PATH}/Release/
-				COMMENT "Copying ${qtlib}4.dll to
-				${EXECUTABLE_OUTPUT_PATH}/Release/"
-			)
 		endforeach(qtlib)
 	endif(DEFINED QT_QMAKE_EXECUTABLE)
 endif()

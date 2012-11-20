@@ -19,6 +19,7 @@
 #define WEBSITE_ADDRESS "synergy-foss.org"
 
 #include <iostream>
+#include <sstream>
 
 #include "MainWindow.h"
 #include "AboutDialog.h"
@@ -39,6 +40,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
+#include "CUSBAddress.h"
 
 #if defined(Q_OS_WIN)
 static const char synergyConfigName[] = "synergy.sgc";
@@ -400,8 +402,8 @@ void MainWindow::startSynergy()
 #endif
 	}
 
-	if ((synergyType() == synergyNetworkClient && !clientArgs(args, app))
-		|| (synergyType() == synergyUSBClient && !clientArgs(args, app))
+	if ((synergyType() == synergyNetworkClient && !networkClientArgs(args, app))
+		|| (synergyType() == synergyUSBClient && !usbClientArgs(args, app))
 		|| (synergyType() == synergyServer && !serverArgs(args, app)))
 	{
 		if (desktopMode)
@@ -454,7 +456,7 @@ void MainWindow::startSynergy()
 	}
 }
 
-bool MainWindow::clientArgs(QStringList& args, QString& app)
+bool MainWindow::networkClientArgs(QStringList& args, QString& app)
 {
 	app = appPath(appConfig().synergycName());
 
@@ -481,6 +483,38 @@ bool MainWindow::clientArgs(QStringList& args, QString& app)
 	}
 
 	args << m_pLineEditHostname->text() + ":" + QString::number(appConfig().port());
+
+	return true;
+}
+
+bool MainWindow::usbClientArgs(QStringList& args, QString& app)
+{
+	app = appPath(appConfig().synergycName());
+
+	if (!QFile::exists(app))
+	{
+		show();
+		QMessageBox::warning(this, tr("Synergy client not found"),
+							 tr("The executable for the synergy client does not exist."));
+		return false;
+	}
+
+	auto usbDeviceAddress = m_USBClientDevicesComboBox->currentText();
+	if (usbDeviceAddress.isEmpty())
+	{
+		show();
+		QMessageBox::warning(this, tr("Hostname is empty"),
+							 tr("Please fill in a hostname for the synergy client to connect to."));
+		return false;
+	}
+
+	if (appConfig().logToFile())
+	{
+		appConfig().persistLogDir();
+		args << "--log" << appConfig().logFilename();
+	}
+
+	args << usbDeviceAddress;
 
 	return true;
 }
@@ -547,7 +581,14 @@ bool MainWindow::serverArgs(QStringList& args, QString& app)
 		args << "--log" << appConfig().logFilename();
 	}
 
-	args << "-c" << configFilename() << "--address" << address();
+	args << "-c" << configFilename();
+	
+	if(m_useUSBServer->isChecked())
+		args << "--address" << m_USBServerDevice->currentText();
+
+	if(m_useNewtworkServer->isChecked())
+		args << "--address" << address();
+
 
 	return true;
 }
@@ -804,6 +845,30 @@ void MainWindow::on_m_pElevateCheckBox_toggled(bool checked)
 	m_ElevateProcess = checked;
 	settings().setValue("elevateChecked", checked);
 	settings().sync();
+}
+
+void MainWindow::setActiveClientServer( MainWindow::qSynergyType activeObject )
+{
+	m_pGroupServer->setChecked( synergyServer == activeObject );
+	m_pUSBGroupClient->setChecked( synergyUSBClient == activeObject ); 
+	m_pGroupClient->setChecked( synergyNetworkClient == activeObject ); 
+}
+
+bool MainWindow::populateUsbDeviceList( QComboBox * usbComboBox )
+{
+	bool listNotEmpty = false;
+	m_USBClientDevicesComboBox->clear();
+	auto names = CUSBAddress::getConnectedCompatibleDeviceNames();
+	std::stringstream ss(names);
+	do {
+		CString deviceName;
+		ss >> deviceName;
+		if(!deviceName.empty()) {
+			listNotEmpty = true;
+			usbComboBox->addItem(QString(deviceName.c_str()));
+		}
+	} while (!ss.eof());
+	return listNotEmpty; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
 }
 
 void MainWindow::on_m_pButtonApply_clicked()

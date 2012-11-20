@@ -100,8 +100,13 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 	protected slots:
 		void on_m_pGroupClient_toggled(bool on) { if( on ) setActiveClientServer( synergyNetworkClient ); }
 		void on_m_pGroupServer_toggled(bool on) { if( on ) setActiveClientServer( synergyServer ); }
-		void on_m_pUSBGroupClient_toggled(bool on) { if( on && updateUSBClientDeviceList( on ) ) setActiveClientServer( synergyUSBClient ); }
-		void on_m_useUSBServer_toggled(bool on) { m_useUSBServer->setChecked( on && updateUSBServerDeviceList( on ) ); }
+		void on_m_pUSBGroupClient_toggled(bool on) { if( on && populateUsbDeviceList(m_USBClientDevicesComboBox) ) setActiveClientServer( synergyUSBClient ); }
+		void on_m_useUSBServer_toggled(bool on)
+		{
+			if(on)
+				m_useUSBServer->setChecked( on && populateUsbDeviceList(m_USBServerDevice) );
+			m_USBServerDevice->setEnabled(on);
+		}
 
 		bool on_m_pButtonBrowseConfigFile_clicked();
 		void on_m_pButtonConfigureServer_clicked();
@@ -134,7 +139,8 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void setIcon(qSynergyState state);
 		void setSynergyState(qSynergyState state);
 		bool checkForApp(int which, QString& app);
-		bool clientArgs(QStringList& args, QString& app);
+		bool networkClientArgs(QStringList& args, QString& app);
+		bool usbClientArgs(QStringList& args, QString& app);
 		bool serverArgs(QStringList& args, QString& app);
 		void setStatus(const QString& status);
 		void sendIpcMessage(qIpcMessageType type, const char* buffer, bool showErrors);
@@ -146,25 +152,8 @@ class MainWindow : public QMainWindow, public Ui::MainWindowBase
 		void stopDesktop();
 		void setFormEnabled(bool enabled);
 
-		void setActiveClientServer( qSynergyType activeObject )
-		{
-			m_pGroupServer->setChecked( synergyServer == activeObject );
-			m_pUSBGroupClient->setChecked( synergyUSBClient == activeObject ); 
-			m_pGroupClient->setChecked( synergyNetworkClient == activeObject ); 
-		}
-		bool updateUSBServerDeviceList( bool on )
-		{
-			m_USBServerDevice->setEnabled( on );
-			// TODO: fill list of the accesable USB devices and activate a first one
-			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
-		}
-		bool updateUSBClientDeviceList( bool /*on*/ )
-		{
-			// TODO: fill list of the accesable USB devices and activate a first one
-			m_USBClientDevicesComboBox->clear();
-			m_USBClientDevicesComboBox->addItem( "USB Debug" );
-			return true; // return "false" if no available USB devices and show Warning to user "Please connect USB Debug cable"
-		}
+		void setActiveClientServer( qSynergyType activeObject );
+		bool populateUsbDeviceList( QComboBox * );
 
 	private:
 		QSettings& m_Settings;
