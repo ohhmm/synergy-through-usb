@@ -50,12 +50,6 @@ include_directories(
 	../../lib/
 )
 
-if (UNIX)
-	include_directories(
-		../../..
-	)
-endif()
-
 if (WIN32)
 	add_executable(synergyp WIN32 ${sources})
 else()

@@ -38,12 +38,6 @@ include_directories(
 	../../../ext
 )
 
-if (UNIX)
-	include_directories(
-		../../..
-	)
-endif()
-
 add_library(synergy STATIC ${sources})
 
 if (UNIX)
