@@ -343,7 +343,8 @@ CUSBDataLink::initConnection(const BaseAddress& addr)
 	Lock lock(&m_mutex);
 
 	assert(addr.getAddressType() == BaseAddress::USB);
-	const CUSBAddress& usbAddress = reinterpret_cast<const CUSBAddress&>(addr);
+	CUSBAddress& usbAddress = const_cast<CUSBAddress&>(
+		reinterpret_cast<const CUSBAddress&>(addr));
 
 	m_config.idVendor = usbAddress.GetVID();
 	m_config.idProduct = usbAddress.GetPID();
@@ -357,6 +358,20 @@ CUSBDataLink::initConnection(const BaseAddress& addr)
 	{
 		m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);	
 		if (!m_device) {
+			usbAddress.resolve();
+
+			m_config.idVendor = usbAddress.GetVID();
+			m_config.idProduct = usbAddress.GetPID();
+			m_config.busNumber = usbAddress.GetIDBus();
+			m_config.deviceAddress = usbAddress.GetIDDeviceOnBus();
+			m_config.ifid = 0;
+			m_config.bulkin = usbAddress.GetIDBulkIN();
+			m_config.bulkout = usbAddress.GetIDBulkOut();
+
+			m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);	
+			if (!m_device) 
+				throw XSocketConnect("Open device failed");
+
 			throw XSocketConnect("Open device failed");
 		}
 
