@@ -1058,7 +1058,9 @@ CMSWindowsScreen::onEvent(HWND hwnd, UINT msg,
 		assert(hwnd!=m_nextClipboardWindow);
 
 		// first pass on the message
-		if (m_nextClipboardWindow) {
+		if (m_nextClipboardWindow 
+			&& hwnd != m_nextClipboardWindow)
+		{
 			SendMessage(m_nextClipboardWindow, msg, wParam, lParam);
 		}
 
@@ -1066,13 +1068,14 @@ CMSWindowsScreen::onEvent(HWND hwnd, UINT msg,
 		return onClipboardChange();
 
 	case WM_CHANGECBCHAIN:
-		if(wParam==lParam)
-			m_nextClipboardWindow = 0;
-		else
-			m_nextClipboardWindow = (HWND)lParam;
-
 		LOG((CLOG_DEBUG "clipboard chain: new next: 0x%08x", m_nextClipboardWindow));
-		if (m_nextClipboardWindow)
+
+		assert(wParam != lParam); // substitute with itself?
+		assert((HWND)wParam != hwnd); // need to process self deletion?
+
+		if(m_nextClipboardWindow == (HWND)wParam)
+			m_nextClipboardWindow = (HWND)lParam;
+		else if(m_nextClipboardWindow)
 			SendMessage(m_nextClipboardWindow, msg, wParam, lParam);
 
 		return 0;
