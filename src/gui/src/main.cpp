@@ -55,7 +55,16 @@ int waitForTray();
 bool checkMacAssistiveDevices();
 #endif
 
+#ifdef WIN32
+int CALLBACK WinMain(
+  _In_  HINSTANCE hInstance,
+  _In_  HINSTANCE hPrevInstance,
+  _In_  LPSTR lpCmdLine,
+  _In_  int nCmdShow
+)
+#else
 int main(int argc, char* argv[])
+#endif
 {
 	Arch arch;
 	arch.init();
@@ -63,6 +72,11 @@ int main(int argc, char* argv[])
 	QCoreApplication::setOrganizationName("Synergy");
 	QCoreApplication::setOrganizationDomain("http://synergy-project.org/");
 	QCoreApplication::setApplicationName("Synergy");
+
+#ifdef WIN32
+	int argc = __argc;
+	auto argv = __argv;
+#endif
 
 	QSynergyApplication app(argc, argv);
 
