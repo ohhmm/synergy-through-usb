@@ -28,5 +28,5 @@ include_directories(
 add_library(ipc STATIC ${sources})
 
 if (UNIX)
-	target_link_libraries(ipc arch base common mt io net synergy)
+	target_link_libraries(ipc arch base common mt io net synergylib)
 endif()

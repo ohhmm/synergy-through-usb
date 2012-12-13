@@ -23,7 +23,7 @@ include_directories(
 
 add_executable(syntool ${sources})
 target_link_libraries(syntool
-	synergy arch base client common io ipc mt net platform server cryptopp ${libs})
+	synergylib arch base client common io ipc mt net platform server cryptopp ${libs})
 
 if (CONF_CPACK)
 	install(TARGETS

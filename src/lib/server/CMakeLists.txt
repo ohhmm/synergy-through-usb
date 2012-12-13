@@ -29,5 +29,5 @@ include_directories(
 add_library(server STATIC ${sources})
 
 if (UNIX)
-	target_link_libraries(server synergy)
+	target_link_libraries(server synergylib)
 endif()
