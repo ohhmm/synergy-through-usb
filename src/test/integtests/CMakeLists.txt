@@ -62,4 +62,4 @@ include_directories(
 
 add_executable(integtests ${sources})
 target_link_libraries(integtests
-	arch base client common io ipc mt net platform server synergy gtest gmock cryptopp ${libs})
+	arch base client common io ipc mt net platform server synergylib gtest gmock cryptopp ${libs})

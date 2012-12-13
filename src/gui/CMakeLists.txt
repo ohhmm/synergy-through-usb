@@ -83,14 +83,14 @@ qt4_wrap_cpp ( SYNERGYGUI_MOC_SRCS ${SYNERGYGUI_MOC_HDRS} )
 qt4_create_translation ( SYNERGYGUI_TRANS_SRCS ${SYNERGYGUI_TRANS} )
 
 
-add_executable ( synergygui WIN32 ${SYNERGYGUI_SRCS}
+add_executable ( synergy WIN32 ${SYNERGYGUI_SRCS}
 		${SYNERGYGUI_MOC_SRCS}
 		${SYNERGYGUI_UI_HDRS}
 		${SYNERGYGUI_RC_SRCS}
 		${SYNERGYGUI_TRANS_SRCS}
 )
 
-target_link_libraries ( synergygui 
+target_link_libraries ( synergy
 	pthread
 	arch
 	base

@@ -57,7 +57,7 @@ else()
 endif()	
 	
 target_link_libraries(synergyp
-	arch base client common io mt net ipc platform server synergy client cryptopp ${libs})
+	arch base client common io mt net ipc platform server synergylib client cryptopp ${libs})
 
 if (CONF_CPACK)
 	install(TARGETS

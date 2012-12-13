@@ -38,8 +38,8 @@ include_directories(
 	../../../ext
 )
 
-add_library(synergy STATIC ${sources})
+add_library(synergylib STATIC ${sources})
 
 if (UNIX)
-	target_link_libraries(synergy arch client ipc net base platform mt server)
+	target_link_libraries(synergylib arch client ipc net base platform mt server)
 endif()

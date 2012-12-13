@@ -29,7 +29,7 @@ else()
 endif()
 
 target_link_libraries(synergyd
-	arch base common io ipc mt net platform synergy cryptopp ${libs})
+	arch base common io ipc mt net platform synergylib cryptopp ${libs})
 
 if (CONF_CPACK)
 	install(TARGETS
