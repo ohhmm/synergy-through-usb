@@ -124,8 +124,8 @@ elseif (WIN32)
 endif()
 
 include_directories(${inc})
-add_library(synergy STATIC ${src})
+add_library(synergylib STATIC ${src})
 
 if (UNIX)
-	target_link_libraries(synergy arch client ipc net base platform mt server)
+	target_link_libraries(synergylib arch client ipc net base platform mt server)
 endif()

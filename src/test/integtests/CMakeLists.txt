@@ -72,4 +72,4 @@ endif()
 include_directories(${inc})
 add_executable(integtests ${src})
 target_link_libraries(integtests
-	arch base client common io ipc mt net platform server synergy gtest gmock ${libs})
+	arch base client common io ipc mt net platform server synergylib gtest gmock ${libs})
