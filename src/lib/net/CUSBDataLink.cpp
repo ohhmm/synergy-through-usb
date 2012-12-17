@@ -484,7 +484,7 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 				data_ptr += sizeof(hdr);
 				this_->m_leftToRead = hdr.data_size;
 
-				if (hdr.id > MSGID_LAST)
+				if (static_cast<unsigned>(hdr.id) > MSGID_LAST)
 				{
 					LOG((CLOG_ERR "USB datalink: invalid data packet"));
 					this_->onDisconnect();
