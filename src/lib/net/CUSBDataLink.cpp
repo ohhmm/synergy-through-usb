@@ -371,8 +371,6 @@ CUSBDataLink::initConnection(const CBaseAddress& addr)
 			m_device = ARCH->usbOpenDevice(m_config, m_config.ifid);	
 			if (!m_device) 
 				throw XSocketConnect("Open device failed");
-
-			throw XSocketConnect("Open device failed");
 		}
 
 		m_transferRead = libusb_alloc_transfer(0);

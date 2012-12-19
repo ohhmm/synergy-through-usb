@@ -81,6 +81,12 @@ bool CUSBAddress::resolve() {
 		}
 	}
 
+	if(fullPathSpecified && !result) {
+		fullPathSpecified = false;
+		ARCH->usbFreeDeviceList(devices);
+		return resolve();
+	}
+
 	fullPathSpecified = result;
 	if( result ){
 		busNumber = info.busNumber;
@@ -94,24 +100,31 @@ bool CUSBAddress::resolve() {
 }
 
 CString CUSBAddress::getConnectedCompatibleDeviceNames() {
-	std::stringstream ss;
 
 	USBDeviceEnumerator* devices;
 	size_t count = ARCH->usbGetDeviceList(&devices);
-	USBDeviceInfo info;
-	if( count==1 ) {
-		ARCH->usbGetDeviceInfo(devices[count], info);
+
+	unsigned compatibleDevicesCount = 0;
+	for( size_t i = 0; i < count; i++ ) {
+		USBDeviceInfo info;
+		ARCH->usbGetDeviceInfo(devices[i], info);
 		UsbDeviceType deviceTypeConnected(info.idVendor, info.idProduct);
 		if(deviceTypeConnected.isCompatible())
-			ss << deviceTypeConnected.toString() << std::endl;
+			++compatibleDevicesCount;
 	}
-	else {
-		for( size_t i = 0; i < count; i++ ) {
-			ARCH->usbGetDeviceInfo(devices[i], info);
-			UsbDeviceType deviceTypeConnected(info.idVendor, info.idProduct);
-			if(deviceTypeConnected.isCompatible()) {
-				CUSBAddress local(info.idVendor, info.idProduct, info.inputEndpoint, info.outputEndpoint, info.busNumber, info.deviceAddress);
-				ss<< local.getName().c_str() << std::endl;
+
+	bool showShortName = compatibleDevicesCount == 1;
+	std::stringstream ss;
+	for( size_t i = 0; i < count; i++ ) {
+		USBDeviceInfo info;
+		ARCH->usbGetDeviceInfo(devices[i], info);
+		UsbDeviceType deviceTypeConnected(info.idVendor, info.idProduct);
+		if(deviceTypeConnected.isCompatible()) {
+			if(showShortName) {
+				ss << deviceTypeConnected.toString() << std::endl;
+			} else {
+				ss	<< CUSBAddress(info.idVendor, info.idProduct, info.inputEndpoint, info.outputEndpoint, info.busNumber, info.deviceAddress).getName().c_str()
+					<< std::endl;
 			}
 		}
 	}
