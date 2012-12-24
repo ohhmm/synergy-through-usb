@@ -345,18 +345,13 @@ endif()
 if (CONF_CPACK)
 
 	if (WIN32)
-		#message(FATAL_ERROR "CPack support for Windows has been removed.")
-	   	#install(TARGETS
-		#	synergys
-		#	synergyc
-		#	synrgyhk
-		#	COMPONENT core
-		#	DESTINATION bin)
-
-	   	set(CPACK_COMPONENT_CORE_REQUIRED true)
+		set(CPACK_COMPONENT_CORE_REQUIRED true)
+		set(WIN32_ICON "${root_dir}/src/gui/res/icons/256x256/synergy.ico")
+		set(CPACK_NSIS_MUI_ICON ${WIN32_ICON})
+		set(CPACK_NSIS_MUI_UNIICON ${WIN32_ICON})
+		set(CPACK_NSIS_INSTALLED_ICON_NAME "bin/synergy.exe")
 		set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Server and Client")
-
-		
+		set(CPACK_COMPONENT_GUI_DISPLAY_NAME "Graphical User Interface")	
 	endif()
 
 	if (UNIX)
