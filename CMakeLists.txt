@@ -308,6 +308,7 @@ endif()
 # Additional build params
 # Build GUI configuration tool
 option ( SYNERGY_BUILD_GUI "Build GUI configuration tool" OFF )
+option ( CONF_CPACK "Configure Cpack" OFF )
 
 add_subdirectory(src)
 
@@ -344,7 +345,18 @@ endif()
 if (CONF_CPACK)
 
 	if (WIN32)
-	   message(FATAL_ERROR "CPack support for Windows has been removed.")
+		#message(FATAL_ERROR "CPack support for Windows has been removed.")
+	   	#install(TARGETS
+		#	synergys
+		#	synergyc
+		#	synrgyhk
+		#	COMPONENT core
+		#	DESTINATION bin)
+
+	   	set(CPACK_COMPONENT_CORE_REQUIRED true)
+		set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Server and Client")
+
+		
 	endif()
 
 	if (UNIX)

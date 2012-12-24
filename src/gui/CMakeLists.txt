@@ -142,8 +142,19 @@ target_link_libraries ( synergy
 
 
 
+if (CONF_CPACK)
+	install(TARGETS
+		synergy
+		COMPONENT gui
+		DESTINATION bin)
+endif()
+
+set(CPACK_COMPONENT_GUI_DISPLAY_NAME "Graphical User Interface")
+
+
 # Remade Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
 # Copying required Qt libs into the build directory.
+
 
 if (MSVC)   
 	if (DEFINED QT_QMAKE_EXECUTABLE)
@@ -158,7 +169,7 @@ if (MSVC)
 
 			set (TYPE "")
 			add_custom_command(
-				TARGET synergygui
+				TARGET synergy
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
 				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
@@ -166,10 +177,18 @@ if (MSVC)
 				COMMENT "Copying ${qtlib}${TYPE}4.dll to
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
+			if (CONF_CPACK)
+				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+					DESTINATION bin
+					CONFIGURATIONS Release
+					COMPONENT gui)
+			endif(CONF_CPACK)
+			
+
 
 			set (TYPE "d")
 			add_custom_command(
-				TARGET synergygui
+				TARGET synergy
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
 				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
@@ -177,6 +196,12 @@ if (MSVC)
 				COMMENT "Copying ${qtlib}${TYPE}4.dll to
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
+			if (CONF_CPACK)
+				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+					DESTINATION bin
+					CONFIGURATIONS Debug
+					COMPONENT gui)
+			endif(CONF_CPACK)
 
 		endforeach(qtlib)
 	endif(DEFINED QT_QMAKE_EXECUTABLE)
