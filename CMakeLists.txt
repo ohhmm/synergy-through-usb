@@ -324,6 +324,7 @@ endif()
 # Additional build params
 # Build GUI configuration tool
 option ( SYNERGY_BUILD_GUI "Build GUI configuration tool" OFF )
+option ( CONF_CPACK "Configure Cpack" OFF )
 
 add_subdirectory(src)
 add_subdirectory(ext)
@@ -352,7 +353,60 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "IRIX")
 endif()
 
 if (CONF_CPACK)
-	message(FATAL_ERROR "CPack support has been removed.")
+
+	if (WIN32)
+		#message(FATAL_ERROR "CPack support for Windows has been removed.")
+	   	#install(TARGETS
+		#	synergys
+		#	synergyc
+		#	synrgyhk
+		#	COMPONENT core
+		#	DESTINATION bin)
+
+	   	set(CPACK_COMPONENT_CORE_REQUIRED true)
+		set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Server and Client")
+
+		
+	endif()
+
+	if (UNIX)
+		if (APPLE)
+			message(FATAL_ERROR "CPack support for Apple has been removed.")
+		else ()
+			install(FILES bin/synergy
+				DESTINATION bin
+				PERMISSIONS
+				OWNER_READ OWNER_WRITE OWNER_EXECUTE
+				GROUP_READ GROUP_EXECUTE
+				WORLD_READ WORLD_EXECUTE)
+
+			# install gnome menu item
+			install(FILES res/synergy.desktop
+				DESTINATION share/applications)
+			install(FILES res/synergy.ico
+				DESTINATION share/icons)
+		endif()
+	endif()
+
+	# The default CPack behaviour is not to append the system processor
+	# type, which is undesirable in our case, since we want to support 
+	# both 32-bit and 64-bit processors.
+	set(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+
+	set(CPACK_PACKAGE_NAME "synergy")
+	set(CPACK_PACKAGE_VENDOR "The Synergy Project")
+	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Synergy server and client")
+	set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
+	set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
+	set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_REV})
+	set(CPACK_PACKAGE_VERSION ${VERSION})
+	set(CPACK_PACKAGE_CONTACT http://synergy-foss.org/)
+	set(CPACK_RESOURCE_FILE_LICENSE "${cmake_dir}/License.rtf")
+	set(CPACK_RESOURCE_FILE_README "${cmake_dir}/Readme.txt")
+
+	# Must be last (since it relies of CPACK_ vars).
+	include(CPack)
+
 endif()
 
 if (CONF_DOXYGEN)
