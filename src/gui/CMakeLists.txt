@@ -68,6 +68,17 @@ set (SYNERGYGUI_SRCS
 	src/ZeroconfService.cpp
 )
 
+# Add additional windows rc file 
+if (WIN32)
+	set ( SYNERGYGUI_WRC
+		./res/win/Synergy.rc
+	)
+else(WIN32)
+	set ( SYNERGYGUI_WRC
+		
+	)
+endif(WIN32)
+
 file(GLOB SYNERGYGUI_UIS "./res/*.ui")
 file(GLOB SYNERGYGUI_RCS "./res/*.qrc")
 file(GLOB SYNERGYGUI_MOC_HDRS "./src/*.h")
@@ -84,6 +95,7 @@ qt4_create_translation ( SYNERGYGUI_TRANS_SRCS ${SYNERGYGUI_TRANS} )
 
 
 add_executable ( synergy WIN32 ${SYNERGYGUI_SRCS}
+		${SYNERGYGUI_WRC}
 		${SYNERGYGUI_MOC_SRCS}
 		${SYNERGYGUI_UI_HDRS}
 		${SYNERGYGUI_RC_SRCS}
@@ -116,7 +128,6 @@ if (CONF_CPACK)
 		DESTINATION bin)
 endif()
 
-set(CPACK_COMPONENT_GUI_DISPLAY_NAME "Graphical User Interface")
 
 
 # Remade Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
@@ -173,3 +184,4 @@ if (MSVC)
 		endforeach(qtlib)
 	endif(DEFINED QT_QMAKE_EXECUTABLE)
 endif()
+
