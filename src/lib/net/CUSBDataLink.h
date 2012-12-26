@@ -91,7 +91,6 @@ private:
 	libusb_transfer*	m_transferWrite;
 
 	Mutex				m_mutex;
-	char				m_writeBuffer[1024*1024];
 	char				m_readBuffer[1024*1024];
 
 	StreamBuffer		m_inputBuffer;
@@ -104,6 +103,9 @@ private:
 	CondVar<bool>		m_acceptedFlag;
 	CondVar<int>		m_activeTransfers;
 
+    char*               m_writeBuffer;
+    unsigned int        m_writeBufferSize;
+    unsigned int        m_writeBufferSent;
 	unsigned int		m_leftToWrite;
 	unsigned int		m_leftToRead;
 };
