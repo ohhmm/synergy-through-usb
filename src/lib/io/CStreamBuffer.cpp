@@ -40,7 +40,7 @@ const void*
 CStreamBuffer::peek(UInt32 n)
 {
 	assert(n <= m_size);
-
+   
 	// if requesting no data then return NULL so we don't try to access
 	// an empty list.
 	if (n == 0) {
@@ -49,14 +49,23 @@ CStreamBuffer::peek(UInt32 n)
 
 	// reserve space in first chunk
 	ChunkList::iterator head = m_chunks.begin();
-	head->reserve(n + m_headUsed);
 
-	// consolidate chunks into the first chunk until it has n bytes
+    // add additional kChunkSize here to prevent reallocation during chunks consolidation.
+    head->reserve(n + m_headUsed + kChunkSize);
+
+	// consolidate chunks into the first chunk until it has at least n bytes
 	ChunkList::iterator scan = head;
 	++scan;
 	while (head->size() - m_headUsed < n && scan != m_chunks.end()) {
-		head->insert(head->end(), scan->begin(), scan->end());
-		scan = m_chunks.erase(scan);
+        if (scan->size() > 0) {
+            assert(head->capacity() - head->size() >= scan->size());
+            int size = head->size();
+            Chunk::iterator destPtr = head->end();
+
+            head->resize(head->size() + scan->size());
+            memcpy(&(*destPtr), &(*scan->begin()), scan->size());            
+        }
+        scan = m_chunks.erase(scan);
 	}
 
 	return reinterpret_cast<const void*>(&(head->begin()[m_headUsed]));
@@ -70,7 +79,7 @@ CStreamBuffer::pop(UInt32 n)
 		m_size     = 0;
 		m_headUsed = 0;
 		m_chunks.clear();
-		return;
+        return;
 	}
 
 	// update size
@@ -116,6 +125,9 @@ CStreamBuffer::write(const void* vdata, UInt32 n)
 	}
 	if (scan == m_chunks.end()) {
 		scan = m_chunks.insert(scan, Chunk());
+        // reserve space at once so that chunk internal buffer won't ever reallocate except in "peek" call.
+        // this needed for using the pointer returned by "peek" call safely.
+        scan->reserve(kChunkSize);
 	}
 
 	// append data in chunks

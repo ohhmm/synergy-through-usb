@@ -62,6 +62,9 @@ CUSBDataLink::CUSBDataLink() :
 	m_writable(false),
 	m_acceptedFlag(&m_mutex, false),
 	m_activeTransfers(&m_mutex, 0),
+    m_writeBuffer(NULL),
+    m_writeBufferSize(0),
+    m_writeBufferSent(0),
 	m_leftToWrite(0),
 	m_leftToRead(0)
 {
@@ -484,14 +487,21 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 
 				if (static_cast<unsigned>(hdr.id) > MSGID_LAST)
 				{
-					LOG((CLOG_ERR "USB datalink: invalid data packet"));
+					LOG((CLOG_ERR "USB datalink: invalid data packet. Unknown MSGID"));
 					this_->onDisconnect();
 					return;
 				}
 
 				checkHeader = hdr.id != MSGID_NORMAL;
-				// if we check header after collecting data, than all buffer must be collected here
+
+				// if we check header after collecting data, than all the buffer must be sent within this transfer
 				assert(!checkHeader || hdr.data_size <= n);
+                if (checkHeader && hdr.data_size > n)
+                {
+					LOG((CLOG_ERR "USB datalink: invalid data packet. Data size is too big."));
+					this_->onDisconnect();
+					return;
+                }
 			}
 
 			size_t chunkSize = this_->m_leftToRead;
@@ -620,14 +630,34 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 	if (n > 0) 
 	{
 		assert(this_->m_leftToWrite >= n);
-		this_->m_leftToWrite -= n;
+        assert(this_->m_writeBufferSent + n <= this_->m_writeBufferSize);
 
-		this_->m_outputBuffer.pop(n);
+		this_->m_leftToWrite -= n;
+        this_->m_writeBufferSent += n;
 	}
 
-	n = this_->m_outputBuffer.getSize();
-	if (n == 0) 
+    // check if we have finished to transfer the message
+    if (this_->m_leftToWrite == 0)
+    {
+        // if all the write buffer was sent then get next buffer 
+        if (this_->m_writeBufferSent >= this_->m_writeBufferSize)
+        {
+		    this_->m_outputBuffer.pop(this_->m_writeBufferSent);
+
+            this_->m_writeBufferSent = 0;            
+            this_->m_writeBufferSize = this_->m_outputBuffer.getSize();
+            this_->m_writeBuffer = (char*)this_->m_outputBuffer.peek(this_->m_writeBufferSize);
+        }
+
+        if (this_->m_writeBufferSize > 0)
+            this_->m_leftToWrite = sizeof(message_hdr) + ((message_hdr*)(this_->m_writeBuffer + this_->m_writeBufferSent))->data_size;
+    }
+
+    if (this_->m_leftToWrite == 0) 
 	{
+        // no data to transfer. notify that write buffer flushed
+        assert(this_->m_outputBuffer.getSize() == 0);
+
 		if (!this_->m_flushed)
 		{
 			this_->sendEvent(this_->getOutputFlushedEvent());
@@ -637,28 +667,18 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 	}
 	else
 	{
-		// write data
-		if (n > sizeof(this_->m_writeBuffer))
-			n = sizeof(this_->m_writeBuffer);
+        // schedule the transfer of the next message
+        n = this_->m_leftToWrite;
 		
-		if (this_->m_leftToWrite > 0 && n > this_->m_leftToWrite)
-			n = this_->m_leftToWrite;
-		
-		const void* buffer = this_->m_outputBuffer.peek(n);
-		memcpy(this_->m_writeBuffer, buffer, n);
-
-		if (!this_->m_leftToWrite)
-		{
-			this_->m_leftToWrite = sizeof(message_hdr) + ((message_hdr*)this_->m_writeBuffer)->data_size;
-			if (n > this_->m_leftToWrite)
-				n = this_->m_leftToWrite;
-		}
+        // the size of the data sent must not exceed read buffer size.
+		if (n > sizeof(this_->m_readBuffer))
+			n = sizeof(this_->m_readBuffer);
 
 		libusb_fill_bulk_transfer(
 			this_->m_transferWrite, 
 			this_->m_device, 
 			this_->m_config.bulkout, 
-			(unsigned char*)this_->m_writeBuffer, 
+			(unsigned char*)(this_->m_writeBuffer + this_->m_writeBufferSent), 
 			n, 
 			CUSBDataLink::writeCallback, 
 			this_, 
