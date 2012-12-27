@@ -53,7 +53,9 @@ private:
 private:
 	Mutex				m_mutex;
 	UInt32				m_size;
-	StreamBuffer		m_buffer;
+    UInt32              m_bytesPopped;
+	char*               m_bufPtr;
+    StreamBuffer		m_buffer;
 	bool				m_inputShutdown;
 	IEventQueue*		m_events;
 };
