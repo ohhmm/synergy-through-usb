@@ -52,7 +52,9 @@ private:
 private:
 	CMutex				m_mutex;
 	UInt32				m_size;
-	CStreamBuffer		m_buffer;
+    UInt32              m_bytesPopped;
+	char*               m_bufPtr;
+    CStreamBuffer		m_buffer;
 	bool				m_inputShutdown;
 };
 

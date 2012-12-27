@@ -31,6 +31,8 @@
 CPacketStreamFilter::CPacketStreamFilter(synergy::IStream* stream, bool adoptStream) :
 	CStreamFilter(stream, adoptStream),
 	m_size(0),
+    m_bytesPopped(0),
+    m_bufPtr(NULL),
 	m_inputShutdown(false)
 {
 	// do nothing
@@ -46,6 +48,8 @@ CPacketStreamFilter::close()
 {
 	CLock lock(&m_mutex);
 	m_size = 0;
+    m_bytesPopped = 0;
+    m_bufPtr = NULL;
 	m_buffer.pop(m_buffer.getSize());
 	CStreamFilter::close();
 }
@@ -71,9 +75,12 @@ CPacketStreamFilter::read(void* buffer, UInt32 n)
 
 	// read it
 	if (buffer != NULL) {
-		memcpy(buffer, m_buffer.peek(n), n);
+		//memcpy(buffer, m_buffer.peek(n), n);
+        memcpy(buffer, m_bufPtr, n);
 	}
-	m_buffer.pop(n);
+	//m_buffer.pop(n);
+    m_bufPtr += n;
+    m_bytesPopped += n;
 	m_size -= n;
 
 	// get next packet's size if we've finished with this packet and
@@ -108,6 +115,8 @@ CPacketStreamFilter::shutdownInput()
 {
 	CLock lock(&m_mutex);
 	m_size = 0;
+    m_bytesPopped = 0;
+    m_bufPtr = NULL;
 	m_buffer.pop(m_buffer.getSize());
 	CStreamFilter::shutdownInput();
 }
@@ -137,14 +146,19 @@ CPacketStreamFilter::readPacketSize()
 {
 	// note -- m_mutex must be locked on entry
 
-	if (m_size == 0 && m_buffer.getSize() >= 4) {
-		UInt8 buffer[4];
+	if (m_size == 0 && m_buffer.getSize() - m_bytesPopped >= 4) {
+        m_buffer.pop(m_bytesPopped);
+        m_bytesPopped = 0;
+
+        UInt8 buffer[4];
 		memcpy(buffer, m_buffer.peek(sizeof(buffer)), sizeof(buffer));
 		m_buffer.pop(sizeof(buffer));
 		m_size = ((UInt32)buffer[0] << 24) |
 				 ((UInt32)buffer[1] << 16) |
 				 ((UInt32)buffer[2] <<  8) |
 				  (UInt32)buffer[3];
+
+        m_bufPtr = isReadyNoLock() ? (char*)m_buffer.peek(m_size) : NULL;
 	}
 }
 
@@ -167,10 +181,15 @@ CPacketStreamFilter::readMore()
 	// if possible.
 	readPacketSize();
 
+    bool bReady = isReadyNoLock();
+
+    if (!m_bufPtr && bReady)
+        m_bufPtr = (char*)m_buffer.peek(m_size);
+
 	// note if we now have a whole packet.
 	// if we weren't ready before but now we are then send a
 	// input ready event apparently from the filtered stream.
-	return isReadyNoLock();
+    return bReady;
 }
 
 void
