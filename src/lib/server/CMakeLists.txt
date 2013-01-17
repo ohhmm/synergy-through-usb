@@ -76,5 +76,5 @@ if (WIN32)
 endif()
 
 if (UNIX)
-	target_link_libraries(server synergy)
+	target_link_libraries(server synergylib)
 endif()

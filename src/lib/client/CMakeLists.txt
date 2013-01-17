@@ -49,5 +49,5 @@ include_directories(${inc})
 add_library(client STATIC ${src})
 
 if (UNIX)
-	target_link_libraries(client synergy io)
+	target_link_libraries(client synergylib io)
 endif()

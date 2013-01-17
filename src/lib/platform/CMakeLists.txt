@@ -195,5 +195,5 @@ if (WIN32)
 endif()
 
 if (UNIX)
-	target_link_libraries(platform io net ipc synergy ${libs})
+	target_link_libraries(platform io net ipc synergylib ${libs})
 endif()
