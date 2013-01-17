@@ -90,6 +90,7 @@ add_executable ( synergy WIN32 ${SYNERGYGUI_SRCS}
 		${SYNERGYGUI_TRANS_SRCS}
 )
 
+
 target_link_libraries ( synergy
 	pthread
 	arch
@@ -103,6 +104,9 @@ target_link_libraries ( synergy
 	dns_sd
 )
 
+if (UNIX)
+	target_link_libraries( synergy synergylib )
+endif()
 
 
 # Remade Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
