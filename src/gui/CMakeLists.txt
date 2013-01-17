@@ -19,6 +19,7 @@ find_package (Qt4 REQUIRED QtCore QtGui QtNetwork)
 
 
 include_directories (	. 
+	../../
 	./src
 	./res 
 	../lib/arch
@@ -129,6 +130,7 @@ add_executable ( synergy WIN32 ${SYNERGYGUI_SRCS}
 		${SYNERGYGUI_TRANS_SRCS}
 )
 
+
 target_link_libraries ( synergy
 	arch
 	base
@@ -140,6 +142,9 @@ target_link_libraries ( synergy
 	${QT_QTNETWORK_LIBRARIES} 
 )
 
+if (UNIX)
+	target_link_libraries( synergy synergylib )
+endif()
 
 
 # Remade Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
