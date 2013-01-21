@@ -84,7 +84,6 @@ MainWindow::MainWindow(QSettings& settings, AppConfig& appConfig) :
 	m_pLabelIpAddresses->setText(getIPAddresses());
 
 	m_SetupWizard = new SetupWizard(*this, false);
-
 #if defined(Q_OS_WIN)
 	// ipc must always be enabled, so that we can disable command when switching to desktop mode.
 	connect(&m_IpcClient, SIGNAL(readLogLine(const QString&)), this, SLOT(appendLogRaw(const QString&)));
@@ -260,7 +259,6 @@ void MainWindow::saveSettings()
 	settings().setValue("groupClientChecked", m_pGroupClient->isChecked());
 	settings().setValue("groupUSBClientChecked", m_pUSBGroupClient->isChecked());
 	settings().setValue("serverHostname", m_pLineEditHostname->text());
-
 	settings().sync();
 }
 
@@ -324,6 +322,7 @@ void MainWindow::updateFound(const QString &version)
 void MainWindow::appendLogNote(const QString& text)
 {
 	appendLogRaw("NOTE: " + text);
+	//appendLogRaw("LOGSIZE: " + QString::number(m_pLogOutput->document()->lineCount()) + " lines \n ");
 }
 
 void MainWindow::appendLogError(const QString& text)
@@ -334,7 +333,19 @@ void MainWindow::appendLogError(const QString& text)
 void MainWindow::appendLogRaw(const QString& text)
 {
 	foreach(QString line, text.split(QRegExp("\r|\n|\r\n"))) {
+		
+		//Deleting first lines if the limit of lines is exceeded
+		if(m_pLogOutput->document()->lineCount() > appConfig().logDisplayLines())
+		{
+			m_pLogOutput->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+			m_pLogOutput->moveCursor(QTextCursor::Down, QTextCursor::KeepAnchor);
+			m_pLogOutput->moveCursor(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+			m_pLogOutput->textCursor().removeSelectedText();
+			// Move cursor to the end of the document after deleting
+			m_pLogOutput->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+		}
 		if (!line.isEmpty()) {
+
 			m_pLogOutput->append(line);
 			updateStateFromLogLine(line);
 		}

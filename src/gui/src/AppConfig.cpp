@@ -51,6 +51,7 @@ AppConfig::AppConfig(QSettings* settings) :
 	m_Port(24800),
 	m_Interface(),
 	m_LogLevel(0),
+	m_LogDisplayLines(),
 	m_AutoStart(false),
 	m_AutoHide(false),
 	m_AutoStartPrompt(false),
@@ -149,6 +150,7 @@ void AppConfig::loadSettings()
 	m_Port = settings().value("port", 24800).toInt();
 	m_Interface = settings().value("interface").toString();
 	m_LogLevel = settings().value("logLevel", 2).toInt();
+	m_LogDisplayLines = settings().value("logDisplayLines", 1000).toInt();
 	m_LogToFile = settings().value("logToFile", false).toBool();
 	m_LogFilename = settings().value("logFilename", synergyLogDir() + "synergy.log").toString();
 	m_AutoStart = settings().value("autoStart", false).toBool();
@@ -165,6 +167,7 @@ void AppConfig::saveSettings()
 	settings().setValue("port", m_Port);
 	settings().setValue("interface", m_Interface);
 	settings().setValue("logLevel", m_LogLevel);
+	settings().setValue("logDisplayLines", m_LogDisplayLines);
 	settings().setValue("logToFile", m_LogToFile);
 	settings().setValue("logFilename", m_LogFilename);
 	settings().setValue("autoStart", m_AutoStart);
