@@ -51,6 +51,7 @@ AppConfig::AppConfig(QSettings* settings) :
 	m_Port(24800),
 	m_Interface(),
 	m_LogLevel(0),
+	m_LogDisplayLines(0),
 	m_WizardLastRun(0),
 	m_CryptoPass(),
 	m_ProcessMode(DEFAULT_PROCESS_MODE),
@@ -116,6 +117,7 @@ void AppConfig::loadSettings()
 	m_Port = settings().value("port", 24800).toInt();
 	m_Interface = settings().value("interface").toString();
 	m_LogLevel = settings().value("logLevel", 3).toInt(); // level 3: INFO
+	m_LogDisplayLines = settings().value("logDisplayLines", 1000).toInt();
 	m_LogToFile = settings().value("logToFile", false).toBool();
 	m_LogFilename = settings().value("logFilename", synergyLogDir() + "synergy.log").toString();
 	m_WizardLastRun = settings().value("wizardLastRun", 0).toInt();
@@ -133,6 +135,7 @@ void AppConfig::saveSettings()
 	settings().setValue("port", m_Port);
 	settings().setValue("interface", m_Interface);
 	settings().setValue("logLevel", m_LogLevel);
+	settings().setValue("logDisplayLines", m_LogDisplayLines);
 	settings().setValue("logToFile", m_LogToFile);
 	settings().setValue("logFilename", m_LogFilename);
 	settings().setValue("wizardLastRun", kWizardVersion);

@@ -41,6 +41,7 @@ SettingsDialog::SettingsDialog(QWidget* parent, AppConfig& config) :
 	m_pSpinBoxPort->setValue(appConfig().port());
 	m_pLineEditInterface->setText(appConfig().interface());
 	m_pComboLogLevel->setCurrentIndex(appConfig().logLevel());
+	m_pLogDisplayLastLines->setValue(appConfig().logDisplayLines());
 	m_pCheckBoxLogToFile->setChecked(appConfig().logToFile());
 	m_pLineEditLogFilename->setText(appConfig().logFilename());
 	m_pCheckBoxEnableCrypto->setChecked(appConfig().cryptoEnabled());
@@ -78,6 +79,7 @@ void SettingsDialog::accept()
 	appConfig().setPort(m_pSpinBoxPort->value());
 	appConfig().setInterface(m_pLineEditInterface->text());
 	appConfig().setLogLevel(m_pComboLogLevel->currentIndex());
+	appConfig().setLogDisplayLines(m_pLogDisplayLastLines->value());
 	appConfig().setLogToFile(m_pCheckBoxLogToFile->isChecked());
 	appConfig().setLogFilename(m_pLineEditLogFilename->text());
 	appConfig().setCryptoEnabled(cryptoEnabled);
