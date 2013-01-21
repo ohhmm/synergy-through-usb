@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>368</width>
-    <height>354</height>
+    <width>383</width>
+    <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -252,20 +252,44 @@
        </widget>
       </item>
       <item row="1" column="0">
+       <widget class="QLabel" name="m_pLabel_4">
+        <property name="text">
+         <string>Display last</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="m_pLogDisplayLastLines">
+        <property name="minimum">
+         <number>10</number>
+        </property>
+        <property name="maximum">
+         <number>30000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="m_pLabel_5">
+        <property name="text">
+         <string>lines</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
        <widget class="QCheckBox" name="m_pCheckBoxLogToFile">
         <property name="text">
          <string>Log to file:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <widget class="QLineEdit" name="m_pLineEditLogFilename">
         <property name="enabled">
          <bool>false</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
+      <item row="2" column="2">
        <widget class="QPushButton" name="m_pButtonBrowseLog">
         <property name="enabled">
          <bool>false</bool>
