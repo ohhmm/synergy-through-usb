@@ -63,8 +63,18 @@ set ( SYNERGYGUI_SRCS
 	./src/IpcClient.cpp
 	./src/IpcReader.cpp
 	./src/Ipc.cpp
-
 )
+
+# Add additional windows rc file 
+if (WIN32)
+	set ( SYNERGYGUI_WRC
+		./res/win/Synergy.rc
+	)
+else(WIN32)
+	set ( SYNERGYGUI_WRC
+		
+	)
+endif(WIN32)
 
 set ( SYNERGYGUI_MOC_HDRS
 	./src/MainWindow.h
@@ -113,6 +123,11 @@ set ( SYNERGYGUI_TRANS
 	./res/lang/nl_NL.ts
 )
 
+
+
+
+
+
 # ADD_DEFINITIONS( -Wall )
 set ( QT_USE_QTNETWORK TRUE )
 
@@ -124,6 +139,7 @@ qt4_create_translation ( SYNERGYGUI_TRANS_SRCS ${SYNERGYGUI_TRANS} )
 
 
 add_executable ( synergy WIN32 ${SYNERGYGUI_SRCS}
+		${SYNERGYGUI_WRC}
 		${SYNERGYGUI_MOC_SRCS}
 		${SYNERGYGUI_UI_HDRS}
 		${SYNERGYGUI_RC_SRCS}
@@ -147,8 +163,18 @@ if (UNIX)
 endif()
 
 
+if (CONF_CPACK)
+	install(TARGETS
+		synergy
+		COMPONENT gui
+		DESTINATION bin)
+endif()
+
+
+
 # Remade Solution from http://www.cmake.org/pipermail/cmake/2010-February/034971.html
 # Copying required Qt libs into the build directory.
+
 
 if (MSVC)   
 	if (DEFINED QT_QMAKE_EXECUTABLE)
@@ -163,7 +189,7 @@ if (MSVC)
 
 			set (TYPE "")
 			add_custom_command(
-				TARGET synergygui
+				TARGET synergy
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
 				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
@@ -171,10 +197,18 @@ if (MSVC)
 				COMMENT "Copying ${qtlib}${TYPE}4.dll to
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
+			if (CONF_CPACK)
+				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+					DESTINATION bin
+					CONFIGURATIONS Release
+					COMPONENT gui)
+			endif(CONF_CPACK)
+			
+
 
 			set (TYPE "d")
 			add_custom_command(
-				TARGET synergygui
+				TARGET synergy
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
 				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
@@ -182,7 +216,14 @@ if (MSVC)
 				COMMENT "Copying ${qtlib}${TYPE}4.dll to
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
+			if (CONF_CPACK)
+				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+					DESTINATION bin
+					CONFIGURATIONS Debug
+					COMPONENT gui)
+			endif(CONF_CPACK)
 
 		endforeach(qtlib)
 	endif(DEFINED QT_QMAKE_EXECUTABLE)
 endif()
+
