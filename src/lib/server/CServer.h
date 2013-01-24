@@ -395,6 +395,10 @@ private:
 	// force the cursor off of \p client
 	void				forceLeaveClient(CBaseClientProxy* client);
 
+	// managed event handling
+	void 				safeAdoptHandler(CEvent::Type type, void* target, IEventJob* handler);
+	void 				removeHandlers(const CEvent& event);
+
 private:
 	class CClipboardInfo {
 	public:
@@ -485,6 +489,9 @@ private:
 
 	// server screen
 	CScreen*			m_screen;
+
+	/// managed event targets
+	std::vector<void*> m_eventTargets;
 
 	static CEvent::Type	s_errorEvent;
 	static CEvent::Type	s_connectedEvent;

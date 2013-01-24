@@ -36,6 +36,7 @@
 #include <cstring>
 #include <cstdlib>
 #include "CScreen.h"
+#include <algorithm>
 
 //
 // CServer
@@ -228,6 +229,12 @@ CServer::~CServer()
 	EVENTQUEUE->removeHandler(IPlatformScreen::getFakeInputEndEvent(),
 							m_inputFilter);
 	EVENTQUEUE->removeHandler(CEvent::kTimer, this);
+
+	for(auto target = m_eventTargets.begin();
+			target != m_eventTargets.end();
+			++target)
+		EVENTQUEUE->removeHandlers(*target);
+	m_eventTargets.clear();
 	stopSwitch();
 
 	// force immediate disconnection of secondary clients
@@ -299,13 +306,13 @@ CServer::adoptClient(CBaseClientProxy* client)
 	assert(client != NULL);
 
 	// watch for client disconnection
-	EVENTQUEUE->adoptHandler(CClientProxy::getDisconnectedEvent(), client,
-							new TMethodEventJob<CServer>(this,
-								&CServer::handleClientDisconnected, client));
+	safeAdoptHandler(CClientProxy::getDisconnectedEvent(),
+			client,
+			new TMethodEventJob<CServer>(this, &CServer::handleClientDisconnected, client));
 
 	// name must be in our configuration
 	if (!m_config.isScreen(client->getName())) {
-		LOG((CLOG_WARN "unrecognised client name \"%s\", check server config", client->getName().c_str()));
+		LOG((CLOG_WARN "Unrecognized client name \"%s\", check server config", client->getName().c_str()));
 		closeClient(client, kMsgEUnknown);
 		return;
 	}
@@ -1450,9 +1457,10 @@ CServer::handleClientDisconnected(const CEvent&, void* vclient)
 }
 
 void
-CServer::handleClientCloseTimeout(const CEvent&, void* vclient)
+CServer::handleClientCloseTimeout(const CEvent& event, void* vclient)
 {
-	// client took too long to disconnect.  just dump it.
+	// client took too long to disconnect.  just dump it. and remove handler
+	removeHandlers(event);
 	CBaseClientProxy* client = reinterpret_cast<CBaseClientProxy*>(vclient);
 	LOG((CLOG_NOTE "forced disconnection of client \"%s\"", getName(client).c_str()));
 	removeOldClient(client);
@@ -2112,10 +2120,10 @@ CServer::closeClient(CBaseClientProxy* client, const char* msg)
 
 	// install timer.  wait timeout seconds for client to close.
 	double timeout = 5.0;
-	CEventQueueTimer* timer = EVENTQUEUE->newOneShotTimer(timeout, NULL);
-	EVENTQUEUE->adoptHandler(CEvent::kTimer, timer,
-							new TMethodEventJob<CServer>(this,
-								&CServer::handleClientCloseTimeout, client));
+	auto timer = EVENTQUEUE->newOneShotTimer(timeout, NULL);
+	safeAdoptHandler(CEvent::kTimer,
+			timer,
+			new TMethodEventJob<CServer>(this, &CServer::handleClientCloseTimeout, client));
 
 	// move client to closing list
 	removeClient(client);
@@ -2298,4 +2306,18 @@ CServer::CKeyboardBroadcastInfo::alloc(State state, const CString& screens)
 	info->m_state = state;
 	strcpy(info->m_screens, screens.c_str());
 	return info;
+}
+
+void
+CServer::safeAdoptHandler(CEvent::Type type, void* target, IEventJob* handler)
+{
+	EVENTQUEUE->adoptHandler(type, target, handler);
+	m_eventTargets.push_back(target);
+}
+
+void
+CServer::removeHandlers(const CEvent& event)
+{
+	auto it = std::find(m_eventTargets.begin(), m_eventTargets.end(), event.getTarget());
+	m_eventTargets.erase(it);
 }
