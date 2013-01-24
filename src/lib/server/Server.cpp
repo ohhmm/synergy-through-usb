@@ -41,6 +41,7 @@
 #include "base/TMethodEventJob.h"
 #include "common/stdexcept.h"
 
+#include <algorithm>
 #include <cstring>
 #include <cstdlib>
 #include <sstream>
@@ -239,6 +240,13 @@ Server::~Server()
 	m_events->removeHandler(m_events->forIPrimaryScreen().fakeInputEnd(),
 							m_inputFilter);
 	m_events->removeHandler(Event::kTimer, this);
+
+	for(auto target = m_eventTargets.begin();
+			target != m_eventTargets.end();
+			++target)
+        m_events->removeHandlers(*target);
+	m_eventTargets.clear();
+
 	stopSwitch();
 
 	// force immediate disconnection of secondary clients
@@ -309,9 +317,9 @@ Server::adoptClient(BaseClientProxy* client)
 	assert(client != NULL);
 
 	// watch for client disconnection
-	m_events->adoptHandler(m_events->forClientProxy().disconnected(), client,
-							new TMethodEventJob<Server>(this,
-								&Server::handleClientDisconnected, client));
+	safeAdoptHandler(m_events->forClientProxy().disconnected(), client,
+						new TMethodEventJob<Server>(this,
+						&Server::handleClientDisconnected, client));
 
 	// name must be in our configuration
 	if (!m_config->isScreen(client->getName())) {
@@ -1362,9 +1370,10 @@ Server::handleClientDisconnected(const Event&, void* vclient)
 }
 
 void
-Server::handleClientCloseTimeout(const Event&, void* vclient)
+Server::handleClientCloseTimeout(const Event& event, void* vclient)
 {
-	// client took too long to disconnect.  just dump it.
+	// client took too long to disconnect.  just dump it. and remove handler
+	removeHandlers(event);
 	BaseClientProxy* client = reinterpret_cast<BaseClientProxy*>(vclient);
 	LOG((CLOG_NOTE "forced disconnection of client \"%s\"", getName(client).c_str()));
 	removeOldClient(client);
@@ -2129,9 +2138,9 @@ Server::closeClient(BaseClientProxy* client, const char* msg)
 	// install timer.  wait timeout seconds for client to close.
 	double timeout = 5.0;
 	EventQueueTimer* timer = m_events->newOneShotTimer(timeout, NULL);
-	m_events->adoptHandler(Event::kTimer, timer,
-							new TMethodEventJob<Server>(this,
-								&Server::handleClientCloseTimeout, client));
+	safeAdoptHandler(Event::kTimer, timer,
+						new TMethodEventJob<Server>(this,
+						&Server::handleClientCloseTimeout, client));
 
 	// move client to closing list
 	removeClient(client);
@@ -2376,4 +2385,18 @@ Server::dragInfoReceived(UInt32 fileNum, String content)
 	DragInformation::parseDragInfo(m_dragFileList, fileNum, content);
 
 	m_screen->startDraggingFiles(m_dragFileList);
+}
+
+void
+Server::safeAdoptHandler(Event::Type type, void* target, IEventJob* handler)
+{
+	m_events->adoptHandler(type, target, handler);
+	m_eventTargets.push_back(target);
+}
+
+void
+Server::removeHandlers(const Event& event)
+{
+	auto it = std::find(m_eventTargets.begin(), m_eventTargets.end(), event.getTarget());
+	m_eventTargets.erase(it);
 }

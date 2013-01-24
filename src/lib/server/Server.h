@@ -366,6 +366,10 @@ private:
 	// send drag info to new client screen
 	void				sendDragInfo(BaseClientProxy* newScreen);
 
+    // managed event handling
+    void 				safeAdoptHandler(Event::Type type, void* target, IEventJob* handler);
+    void 				removeHandlers(const Event& event);
+
 public:
 	bool				m_mock;
 
@@ -459,6 +463,9 @@ private:
 
 	// server screen
 	synergy::Screen*			m_screen;
+
+	/// managed event targets
+	std::vector<void*> m_eventTargets;
 
 	IEventQueue*		m_events;
 
