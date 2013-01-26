@@ -352,6 +352,7 @@ if (CONF_CPACK)
 		set(CPACK_NSIS_INSTALLED_ICON_NAME "bin/synergy.exe")
 		set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Server and Client")
 		set(CPACK_COMPONENT_GUI_DISPLAY_NAME "Graphical User Interface")	
+		set(CPACK_COMPONENT_PLUGINS_DISPLAY_NAME "Plugins")
 	endif()
 
 	if (UNIX)

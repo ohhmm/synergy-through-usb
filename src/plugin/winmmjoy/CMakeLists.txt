@@ -32,3 +32,10 @@ add_custom_command(
 		..\\..\\..\\..\\lib\\${CMAKE_CFG_INTDIR}\\winmmjoy.*
 		..\\..\\..\\..\\bin\\${CMAKE_CFG_INTDIR}\\plugins\\
 )
+
+if (CONF_CPACK)
+	install(TARGETS
+		winmmjoy
+		COMPONENT plugins
+		DESTINATION bin\\plugins)
+endif()

@@ -197,3 +197,11 @@ endif()
 if (UNIX)
 	target_link_libraries(platform io net ipc synergylib ${libs})
 endif()
+
+# include lib into package
+if (CONF_CPACK)
+	install(TARGETS
+		synrgyhk
+		COMPONENT core
+		DESTINATION bin)
+endif(CONF_CPACK)
