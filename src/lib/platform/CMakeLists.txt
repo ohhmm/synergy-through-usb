@@ -51,3 +51,11 @@ if (APPLE)
 	find_library(COCOA_LIBRARY Cocoa)
 	target_link_libraries(platform ${COCOA_LIBRARY})
 endif()
+
+# include lib into package
+if (CONF_CPACK)
+	install(TARGETS
+		synrgyhk
+		COMPONENT core
+		DESTINATION bin)
+endif(CONF_CPACK)
