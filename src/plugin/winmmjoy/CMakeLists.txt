@@ -23,12 +23,16 @@ endif()
 
 add_library(winmmjoy SHARED ${sources})
 
+
+string(REGEX REPLACE "/" "\\\\" EXECUTABLE_OUTPUT_PATH_REVERSED ${EXECUTABLE_OUTPUT_PATH})
+string(REGEX REPLACE "/" "\\\\" LIBRARY_OUTPUT_PATH_REVERSED ${LIBRARY_OUTPUT_PATH})
+
 add_custom_command(
 	TARGET winmmjoy 
 	POST_BUILD
 	COMMAND xcopy /Y /Q
-		..\\..\\..\\..\\lib\\${CMAKE_CFG_INTDIR}\\winmmjoy.*
-		..\\..\\..\\..\\bin\\${CMAKE_CFG_INTDIR}\\plugins\\
+		${LIBRARY_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\winmmjoy.*
+		${EXECUTABLE_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\plugins\\
 )
 
 if (CONF_CPACK)

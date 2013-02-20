@@ -41,23 +41,23 @@ endif()
 project(synergy C CXX)
 
 # put binaries in a different dir to make them easier to find.
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/binaries/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/binaries/lib)
+
 
 # for unix, put debug files in a separate bin "debug" dir.
 # release bin files should stay in the root of the bin dir.
 if (CMAKE_GENERATOR STREQUAL "Unix Makefiles")
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-		set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/debug)
-		set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/debug)
+		set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/binaries/bin/debug)
+		set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/binaries/lib/debug)
 	endif()
 endif()
 
 # Set some easy to type variables.
 set(root_dir ${CMAKE_SOURCE_DIR})
 set(cmake_dir ${root_dir}/res)
-set(bin_dir ${root_dir}/bin)
-set(doc_dir ${root_dir}/doc)
+set(bin_dir ${EXECUTABLE_OUTPUT_PATH})
 set(doc_dir ${root_dir}/doc)
 
 # Declare libs, so we can use list in linker later. There's probably 
@@ -399,6 +399,10 @@ if (CONF_CPACK)
 	set(CPACK_PACKAGE_CONTACT http://synergy-foss.org/)
 	set(CPACK_RESOURCE_FILE_LICENSE "${cmake_dir}/License.rtf")
 	set(CPACK_RESOURCE_FILE_README "${cmake_dir}/Readme.txt")
+
+	# specify the destination output dir and filename for package
+	set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR})
+	set(CPACK_OUTPUT_FILE_PREFIX ${PROJECT_BINARY_DIR}/binaries/packages/)
 
 	# Must be last (since it relies of CPACK_ vars).
 	include(CPack)
