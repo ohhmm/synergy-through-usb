@@ -89,7 +89,10 @@ MainWindow::MainWindow(QSettings& settings, AppConfig& appConfig) :
 	connect(&m_IpcClient, SIGNAL(readLogLine(const QString&)), this, SLOT(appendLogRaw(const QString&)));
 	connect(&m_IpcClient, SIGNAL(errorMessage(const QString&)), this, SLOT(appendLogError(const QString&)));
 	connect(&m_IpcClient, SIGNAL(infoMessage(const QString&)), this, SLOT(appendLogNote(const QString&)));
-	m_IpcClient.connectToHost();
+	if (appConfig.processMode() == Service)
+	{
+		m_IpcClient.connectToHost();
+	}
 #else
 	// elevate checkbox is only useful on ms windows.
 	m_pElevateCheckBox->hide();
@@ -463,6 +466,7 @@ void MainWindow::startSynergy()
 	if (serviceMode)
 	{
 		QString command(app + " " + args.join(" "));
+		m_IpcClient.connectToHost();
 		m_IpcClient.sendCommand(command, m_ElevateProcess);
 	}
 }
@@ -628,8 +632,9 @@ void MainWindow::stopSynergy()
 
 void MainWindow::stopService()
 {
-	// send empty command to stop service from laucning anything.
+	// send empty command to stop service from lauching anything.
 	m_IpcClient.sendCommand("", m_ElevateProcess);
+	m_IpcClient.disconnectFromHost();
 }
 
 void MainWindow::stopDesktop()
