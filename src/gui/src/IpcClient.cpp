@@ -62,6 +62,8 @@ void IpcClient::connectToHost()
 
 void IpcClient::disconnectFromHost()
 {
+	m_Enabled = false;
+
 	infoMessage("service disconnect");
 	m_Reader->stop();
 	m_Socket->close();

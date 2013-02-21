@@ -95,7 +95,8 @@ MainWindow::MainWindow(QSettings& settings, AppConfig& appConfig) :
 	connect(&m_IpcClient, SIGNAL(readLogLine(const QString&)), this, SLOT(appendLogRaw(const QString&)));
 	connect(&m_IpcClient, SIGNAL(errorMessage(const QString&)), this, SLOT(appendLogError(const QString&)));
 	connect(&m_IpcClient, SIGNAL(infoMessage(const QString&)), this, SLOT(appendLogNote(const QString&)));
-	m_IpcClient.connectToHost();
+	if (appConfig.processMode() == Service)
+		m_IpcClient.connectToHost();
 #endif
 
 	// change default size based on os
@@ -482,6 +483,7 @@ void MainWindow::startSynergy()
 	if (serviceMode)
 	{
 		QString command(app + " " + args.join(" "));
+        m_IpcClient.connectToHost();
 		m_IpcClient.sendCommand(command, appConfig().elevateMode());
 	}
 
@@ -669,6 +671,7 @@ void MainWindow::stopService()
 {
 	// send empty command to stop service from laucning anything.
 	m_IpcClient.sendCommand("", appConfig().elevateMode());
+	m_IpcClient.disconnectFromHost();
 }
 
 void MainWindow::stopDesktop()
