@@ -20,8 +20,8 @@
 #include "arch/win32/ArchMiscWindows.h"
 #include "arch/win32/XArchWindows.h"
 
-#include "tchar.h"
-#include <string>
+#include <tchar.h>
+#include <sstream>
 
 static const char* s_settingsKeyNames[] = {
 	_T("SOFTWARE"),
@@ -83,10 +83,16 @@ ArchSystemWindows::getOSName() const
 			if (info.dwMajorVersion == 5 && info.dwMinorVersion == 0) {
 				return "Microsoft Windows Server 2000";
 			}
-			char buffer[100];
-			sprintf(buffer, "Microsoft Windows %d.%d",
-							info.dwMajorVersion, info.dwMinorVersion);
-			return buffer;
+			if (info.dwMajorVersion <= 4) {
+				return "Microsoft Windows NT";
+			}
+
+			{
+				std::stringstream result("Microsoft Windows");
+				result << info.dwMajorVersion << '.' << info.dwMinorVersion;
+				return result.str();
+			}
+			break;
 
 		default:
 			break;
