@@ -125,7 +125,7 @@ MSWindowsClipboardBitmapConverter::toIClipboard(HANDLE data) const
 	}
 	else {
 		//http://msdn.microsoft.com/en-us/library/ke55d167(VS.80).aspx
-		srcBits += (1i64 << bitmap->bmiHeader.biBitCount) * sizeof(RGBQUAD);
+		srcBits += (UInt64(1) << bitmap->bmiHeader.biBitCount) * sizeof(RGBQUAD);
 	}
 
 	// copy source image to destination image

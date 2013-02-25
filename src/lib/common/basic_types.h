@@ -19,13 +19,15 @@
 #pragma once
 
 #include "common/common.h"
+#include <stdint.h>
 
 //
 // pick types of particular sizes
 //
 
+
 #if !defined(TYPE_OF_SIZE_1)
-#	if SIZEOF_CHAR == 1
+#	if SIZE_OF_CHAR == 1
 #		define TYPE_OF_SIZE_1 char
 #	endif
 #endif
@@ -47,7 +49,7 @@
 #	endif
 #endif
 
-	//
+//
 // verify existence of required types
 //
 
@@ -83,6 +85,10 @@ typedef unsigned TYPE_OF_SIZE_2	UInt16;
 typedef unsigned TYPE_OF_SIZE_4	UInt32;
 #endif
 #endif
+
+typedef int64_t					SInt64;
+typedef uint64_t				UInt64;
+
 //
 // clean up
 //
@@ -90,3 +96,5 @@ typedef unsigned TYPE_OF_SIZE_4	UInt32;
 #undef TYPE_OF_SIZE_1
 #undef TYPE_OF_SIZE_2
 #undef TYPE_OF_SIZE_4
+#undef TYPE_OF_SIZE_8
+
