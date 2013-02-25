@@ -45,14 +45,6 @@ mbtowc(wchar_t* dst, const char* src, int n)
 	return 1;
 }
 
-static inline
-int
-wctomb(char* dst, wchar_t src)
-{
-	*dst = static_cast<char>(src);
-	return 1;
-}
-
 #endif
 
 #endif

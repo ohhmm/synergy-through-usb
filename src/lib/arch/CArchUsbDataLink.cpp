@@ -165,7 +165,7 @@ void CArchUsbDataLink::usbGetDeviceInfo(USBDeviceEnumerator devEnum, struct USBD
 					for(int i=0; i<interface_desc->bNumEndpoints; i++)
 					{
 						const libusb_endpoint_descriptor* endpoint_desc = &interface_desc->endpoint[i];
-						if( (endpoint_desc->bmAttributes&3) == libusb_transfer_type::LIBUSB_TRANSFER_TYPE_BULK )
+						if( (endpoint_desc->bmAttributes&3) == LIBUSB_TRANSFER_TYPE_BULK )
 						{
 							if( endpoint_desc->bEndpointAddress&0x80 )
 							{

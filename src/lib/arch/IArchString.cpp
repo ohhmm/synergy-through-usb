@@ -29,6 +29,13 @@ static CArchMutex              s_mutex = NULL;
 // use C library non-reentrant multibyte conversion with mutex
 //
 
+inline int wctomb(char* dst, wchar_t src)
+{
+	*dst = static_cast<char>(src);
+	return 1;
+}
+
+
 IArchString::~IArchString()
 {
 	if (s_mutex != NULL) {
