@@ -54,8 +54,10 @@ struct UsbDeviceType {
 };
 
 const UsbDeviceType CompatibleDevices[] = {
+		UsbDeviceType(0x067b, 0x25a1),
 		UsbDeviceType(0x0402, 0x5632),
-		UsbDeviceType(0x067b, 0x25a1) };
+		UsbDeviceType(0x067b, 0x2501)
+};
 
 bool UsbDeviceType::isCompatible() const {
 	bool result = false;
