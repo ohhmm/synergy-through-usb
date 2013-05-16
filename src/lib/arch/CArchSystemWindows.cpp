@@ -20,8 +20,8 @@
 #include "CArchMiscWindows.h"
 #include "XArchWindows.h"
 
-#include "tchar.h"
-#include <string>
+#include <tchar.h>
+#include <sstream>
 
 static const char* s_settingsKeyNames[] = {
 	_T("SOFTWARE"),
@@ -86,10 +86,13 @@ CArchSystemWindows::getOSName() const
 			if (info.dwMajorVersion <= 4) {
 				return "Microsoft Windows NT";
 			}
-			char buffer[100];
-			sprintf(buffer, "Microsoft Windows %d.%d",
-							info.dwMajorVersion, info.dwMinorVersion);
-			return buffer;
+
+			{
+				std::stringstream result("Microsoft Windows");
+				result << info.dwMajorVersion << '.' << info.dwMinorVersion;
+				return result.str();
+			}
+			break;
 
 		case VER_PLATFORM_WIN32_WINDOWS:
 			if (info.dwMajorVersion == 4 && info.dwMinorVersion == 0) {

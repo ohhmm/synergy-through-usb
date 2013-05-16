@@ -91,6 +91,7 @@ endif()
 find_package(libusb-1.0 REQUIRED)
 
 set(inc
+	.
 	../base
 	../common
 	../mt

@@ -58,6 +58,7 @@ if (WIN32)
 endif()
 
 set(inc
+	.
 	../arch
 	../common
 	../mt
