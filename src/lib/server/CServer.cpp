@@ -52,6 +52,7 @@ CEvent::Type			CServer::s_lockCursorToScreen = CEvent::kUnknown;
 CEvent::Type			CServer::s_screenSwitched     = CEvent::kUnknown;
 
 CServer::CServer(const CConfig& config, CPrimaryClient* primaryClient, CScreen* screen) :
+	m_mock(false),
 	m_primaryClient(primaryClient),
 	m_active(primaryClient),
 	m_seqNum(0),
@@ -203,6 +204,10 @@ CServer::CServer(const CConfig& config, CPrimaryClient* primaryClient, CScreen* 
 
 CServer::~CServer()
 {
+	if (m_mock) {
+		return;
+	}
+
 	// remove event handlers and timers
 	EVENTQUEUE->removeHandler(IPlatformScreen::getKeyDownEvent(*EVENTQUEUE),
 							m_inputFilter);

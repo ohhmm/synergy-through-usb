@@ -17,6 +17,13 @@
  */
 
 #include "IEventQueue.h"
+#include "CLog.h"
+
+#if WINAPI_CARBON
+#include <execinfo.h>
+#include <stdio.h>
+#endif
+
 
 //
 // IEventQueue
@@ -35,6 +42,18 @@ IEventQueue::getSystemTarget()
 IEventQueue*
 IEventQueue::getInstance()
 {
+	if (s_instance == NULL) {
+		LOG((CLOG_ERR "null event queue"));
+#if WINAPI_CARBON
+		void* callstack[128];
+		int i, frames = backtrace(callstack, 128);
+		char** strs = backtrace_symbols(callstack, frames);
+		for (i = 0; i < frames; ++i) {
+			printf("%s\n", strs[i]);
+		}
+		free(strs);
+#endif
+	}
 	assert(s_instance != NULL);
 	return s_instance;
 }

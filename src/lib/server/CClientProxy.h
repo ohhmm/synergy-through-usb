@@ -49,7 +49,8 @@ public:
 
 	//! Get stream
 	/*!
-	Returns the stream passed to the c'tor.
+	Returns a crypto stream if the user has this enabled,
+	otherwise returns the original stream passed to the c'tor.
 	*/
 	synergy::IStream*			getStream() const;
 
@@ -116,6 +117,7 @@ public:
 	virtual void		gameDeviceSticks(GameDeviceID id, SInt16 x1, SInt16 y1, SInt16 x2, SInt16 y2) = 0;
 	virtual void		gameDeviceTriggers(GameDeviceID id, UInt8 t1, UInt8 t2) = 0;
 	virtual void		gameDeviceTimingReq() = 0;
+	virtual void		cryptoIv(const UInt8* iv) = 0;
 
 private:
 	synergy::IStream*	m_stream;

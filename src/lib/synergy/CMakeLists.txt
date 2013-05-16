@@ -17,6 +17,7 @@
 set(inc
 	CClientTaskBarReceiver.h
 	CServerTaskBarReceiver.h
+	CPortableTaskBarReceiver.h
 	CApp.h
 	CClientApp.h
 	CServerApp.h
@@ -49,11 +50,16 @@ set(inc
 	IAppUtil.h
 	CEventGameDevice.h
 	CVncClient.h
+	CCryptoStream.h
+	CCryptoMode.h
+	ECryptoMode.h
+	CCryptoOptions.h
 )
 
 set(src
 	CClientTaskBarReceiver.cpp
 	CServerTaskBarReceiver.cpp
+	CPortableTaskBarReceiver.cpp
 	CApp.cpp
 	CClientApp.cpp
 	CServerApp.cpp
@@ -79,6 +85,9 @@ set(src
 	CEventGameDevice.cpp
 	CVncClient.cpp
 	CGameDevice.cpp
+	CCryptoStream.cpp
+	CCryptoMode.cpp
+	CCryptoOptions.cpp
 )
 
 if (WIN32)
@@ -110,7 +119,7 @@ set(inc
 	../server
 	../synergy
 	../..
-	../../vnc/common
+	../../../tools
 )
 
 if (UNIX)
@@ -127,5 +136,5 @@ include_directories(${inc})
 add_library(synergylib STATIC ${src})
 
 if (UNIX)
-	target_link_libraries(synergylib arch client ipc net base platform mt server)
+	target_link_libraries(synergylib arch client ipc net base platform mt server cryptopp)
 endif()

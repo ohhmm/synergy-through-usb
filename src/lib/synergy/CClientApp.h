@@ -38,7 +38,6 @@ public:
 	public:
 		int m_yscroll;
 		CBaseAddress* m_serverAddress;
-		//CAddress* m_serverAddress;
 	};
 
 	CClientApp(CreateTaskBarReceiverFunc createTaskBarReceiver);
@@ -76,7 +75,7 @@ public:
 	void handleClientConnected(const CEvent&, void*);
 	void handleClientFailed(const CEvent& e, void*);
 	void handleClientDisconnected(const CEvent&, void*);
-	CClient* openClient(const CString& name, const CBaseAddress& address, CScreen* screen);
+	CClient* openClient(const CString& name, const CBaseAddress& address, CScreen* screen, const CCryptoOptions& crypto);
 	void closeClient(CClient* client);
 	bool startClient();
 	void stopClient();

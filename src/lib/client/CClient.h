@@ -23,6 +23,7 @@
 #include "IClipboard.h"
 #include "CNetworkAddress.h"
 #include "INode.h"
+#include "CCryptoOptions.h"
 
 class CEventQueueTimer;
 class CScreen;
@@ -32,6 +33,7 @@ class ITransportFactory;
 namespace synergy { class IStream; }
 class IStreamFilterFactory;
 class IEventQueue;
+class CCryptoStream;
 
 //! Synergy client
 /*!
@@ -46,21 +48,23 @@ public:
 		CString			m_what;
 	};
 
-protected:
-	CClient(IEventQueue& eventQueue);
-
 public:
 	/*!
 	This client will attempt to connect to the server using \p name
 	as its name and \p address as the server's address and \p factory
 	to create the socket.  \p screen is	the local screen.
 	*/
-	CClient(IEventQueue& eventQueue,
+	CClient(IEventQueue* eventQueue,
 							const CString& name, const CBaseAddress& address,
 							ITransportFactory* transportFactory,
 							IStreamFilterFactory* streamFilterFactory,
-							CScreen* screen);
+							CScreen* screen,
+							const CCryptoOptions& crypto);
 	~CClient();
+	
+#ifdef TEST_ENV
+	CClient() { }
+#endif
 
 	//! @name manipulators
 	//@{
@@ -82,7 +86,10 @@ public:
 	/*!
 	Notifies the client that the connection handshake has completed.
 	*/
-	void				handshakeComplete();
+	virtual void		handshakeComplete();
+
+	//! Set crypto IV for decryption
+	virtual void		setDecryptIv(const UInt8* iv);
 
 	//@}
 	//! @name accessors
@@ -190,6 +197,9 @@ private:
 	void				handleGameDeviceTimingResp(const CEvent& event, void*);
 	void				handleGameDeviceFeedback(const CEvent& event, void*);
 	
+public:
+	bool					m_mock;
+
 private:
 	CString					m_name;
 	CBaseAddress*			m_serverAddress;
@@ -207,14 +217,13 @@ private:
 	bool					m_sentClipboard[kClipboardEnd];
 	IClipboard::Time		m_timeClipboard[kClipboardEnd];
 	CString					m_dataClipboard[kClipboardEnd];
-	IEventQueue&			m_eventQueue;
+	IEventQueue*			m_eventQueue;
+	CCryptoStream*			m_cryptoStream;
+	CCryptoOptions			m_crypto;
 
-	static CEvent::Type	s_connectedEvent;
-	static CEvent::Type	s_connectionFailedEvent;
-	static CEvent::Type	s_disconnectedEvent;
-
-protected:
-	bool					m_mock;
+	static CEvent::Type		s_connectedEvent;
+	static CEvent::Type		s_connectionFailedEvent;
+	static CEvent::Type		s_disconnectedEvent;
 };
 
 #endif

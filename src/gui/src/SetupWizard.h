@@ -18,8 +18,8 @@
 #pragma once
 
 #include <QWizard>
-
 #include "ui_SetupWizardBase.h"
+#include "CryptoMode.h"
 
 class MainWindow;
 
@@ -31,8 +31,11 @@ public:
 	virtual ~SetupWizard();
 	bool validateCurrentPage();
 protected slots:
-	void handlefinished();
+	void handleFinished();
 private:
 	MainWindow& m_MainWindow;
 	bool m_StartMain;
+	CryptoMode parseCryptoMode(const QString& s);
+private slots:
+    void on_m_pComboCryptoMode_currentIndexChanged(int index);
 };

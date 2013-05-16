@@ -28,23 +28,17 @@
 !define icon "..\res\synergy.ico"
 !define controlPanelReg "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
 
+!addplugindir "..\res"
+
 !define MUI_ICON ${icon}
 !define MUI_UNICON ${icon}
 
 !include "MUI2.nsh"
 !include "DefineIfExist.nsh"
 
-!define avgNameShort "${product}"
-!define avgNameLong "the ${product} project"
-!include "avgtb.nsh"
-
 ${!defineifexist} gameDeviceSupport "${binDir}\Release\synxinhk.dll"
 
 !insertmacro MUI_PAGE_LICENSE "..\\res\\License.rtf"
-
-!ifdef haveAvgTb
-Page custom avgPageEnter avgPageLeave
-!endif
 
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -78,7 +72,6 @@ InstallDirRegKey HKEY_LOCAL_MACHINE "SOFTWARE\${product}" ""
   Delete "${dir}\uninstall.exe"
   Delete "${dir}\synxinhk.dll"
   Delete "${dir}\sxinpx13.dll"
-  Delete "${dir}\avgtb.exe"
   
   RMDir "${dir}"
 
@@ -94,8 +87,6 @@ is32bit:
     Abort
   ${EndIf}
 end:
-
-  Call avgInit
   
 FunctionEnd
 
@@ -218,12 +209,6 @@ Section "Graphical User Interface" gui
 
 SectionEnd
 
-!ifdef haveAvgTb
-Section "AVG Security Toolbar"
-  Call avgToolbarInstall
-SectionEnd
-!endif
-
 Section Uninstall
 
   SetShellVarContext all
@@ -260,7 +245,7 @@ SectionEnd
 
 Function .onInstSuccess
 
-  ; start the GUI automatically.
+  ; relies on !addplugindir
   ShellExecAsUser::ShellExecAsUser "" "$INSTDIR\synergy.exe" SW_SHOWNORMAL
 
 FunctionEnd

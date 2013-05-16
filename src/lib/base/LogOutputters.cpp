@@ -263,3 +263,50 @@ CFileLogOutputter::close() {}
 
 void
 CFileLogOutputter::show(bool showIfEmpty) {}
+
+//
+// CMesssageBoxLogOutputter
+//
+
+CMesssageBoxLogOutputter::CMesssageBoxLogOutputter()
+{
+	// do nothing
+}
+
+CMesssageBoxLogOutputter::~CMesssageBoxLogOutputter()
+{
+	// do nothing
+}
+
+void
+CMesssageBoxLogOutputter::open(const char* title) 
+{
+	// do nothing
+}
+
+void
+CMesssageBoxLogOutputter::close()
+{
+	// do nothing
+}
+
+void
+CMesssageBoxLogOutputter::show(bool showIfEmpty)
+{
+	// do nothing
+}
+
+bool
+CMesssageBoxLogOutputter::write(ELevel level, const char* msg)
+{
+	// don't spam user with messages.
+	if (level > kERROR) {
+		return true;
+	}
+
+#if SYSAPI_WIN32
+	MessageBox(NULL, msg, CLOG->getFilterName(level), MB_OK);
+#endif
+
+	return true;
+}

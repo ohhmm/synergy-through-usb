@@ -208,7 +208,7 @@ CServerApp::help()
 		ARCH->concatPath(ARCH->getSystemDirectory(), SYS_CONFIG_NAME).c_str()
 	);
 
-	std::cout << buffer << std::endl;
+	LOG((CLOG_PRINT "%s", buffer));
 }
 
 void
@@ -710,7 +710,8 @@ CServerApp::openClientListener(const CBaseAddress& address)
 {
 	CClientListener* listen = new CClientListener(address,
 			ITransportFactory::createFactory(address.getAddressType()),
-			NULL);
+			NULL,
+			args().m_crypto);
 
 	EVENTQUEUE->adoptHandler(CClientListener::getConnectedEvent(), listen,
 		new TMethodEventJob<CServerApp>(

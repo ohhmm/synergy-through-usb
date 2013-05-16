@@ -19,7 +19,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_mo
 # Version number for Synergy
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 4)
-set(VERSION_REV 11)
+set(VERSION_REV 13)
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REV}")
 
 # The check for 2.6 may be too strict (consider lowering).
@@ -311,6 +311,7 @@ option ( SYNERGY_BUILD_GUI "Build GUI configuration tool" OFF )
 option ( CONF_CPACK "Configure Cpack" OFF )
 
 add_subdirectory(src)
+add_subdirectory(tools)
 
 if (WIN32)
 	# add /analyze in order to unconver potential bugs in the source code

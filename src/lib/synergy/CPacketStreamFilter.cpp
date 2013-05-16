@@ -29,7 +29,7 @@
 //
 
 CPacketStreamFilter::CPacketStreamFilter(synergy::IStream* stream, bool adoptStream) :
-	CStreamFilter(stream, adoptStream),
+	CStreamFilter(EVENTQUEUE, stream, adoptStream),
 	m_size(0),
     m_bytesPopped(0),
     m_bufPtr(NULL),
