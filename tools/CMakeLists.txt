@@ -22,14 +22,12 @@ if (WIN32)
 	list(APPEND cpp_src ${cpp_hdr})
 endif()
 
-file(GLOB cpp_ignore
-	${cpp_dir}/simple.cpp
-	${cpp_dir}/strciphr.cpp
-	${cpp_dir}/polynomi.cpp
-	${cpp_dir}/eprecomp.cpp
-	${cpp_dir}/eccrypto.cpp
-	${cpp_dir}/algebra.cpp)
-list(REMOVE_ITEM cpp_src ${cpp_ignore})
+list(REMOVE_ITEM cpp_src ${cpp_dir}/simple.cpp)
+list(REMOVE_ITEM cpp_src ${cpp_dir}/strciphr.cpp)
+list(REMOVE_ITEM cpp_src ${cpp_dir}/polynomi.cpp)
+list(REMOVE_ITEM cpp_src ${cpp_dir}/eprecomp.cpp)
+list(REMOVE_ITEM cpp_src ${cpp_dir}/eccrypto.cpp)
+list(REMOVE_ITEM cpp_src ${cpp_dir}/algebra.cpp)
 
 # if 64-bit windows, compile asm file.
 if (CMAKE_CL_64)

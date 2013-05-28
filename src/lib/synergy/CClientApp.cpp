@@ -412,7 +412,7 @@ CClient*
 CClientApp::openClient(const CString& name, const CBaseAddress& address, CScreen* screen, const CCryptoOptions& crypto)
 {
 	ITransportFactory* transportFactory = ITransportFactory::createFactory(address.getAddressType());
-	CClient* client = new CClient(*EVENTQUEUE, name, address, transportFactory, NULL, screen, crypto);
+	CClient* client = new CClient(EVENTQUEUE, name, address, transportFactory, NULL, screen, crypto);
 
 	try {
 		EVENTQUEUE->adoptHandler(
