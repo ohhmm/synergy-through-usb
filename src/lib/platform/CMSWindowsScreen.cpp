@@ -37,7 +37,6 @@
 #include "CArch.h"
 #include "CArchMiscWindows.h"
 #include <string.h>
-#include <pbt.h>
 
 //
 // add backwards compatible multihead support (and suppress bogus warning).

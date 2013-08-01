@@ -294,6 +294,9 @@ else (UNIX)
 		endif()
 	endif()
 
+    if (NOT (MSVC_VERSION LESS 1700))
+        add_definitions(/D_ALLOW_KEYWORD_MACROS)
+    endif()
 endif()
 
 if (GAME_DEVICE_SUPPORT)
