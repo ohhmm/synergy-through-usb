@@ -319,6 +319,9 @@ else() # not-unix
 		endif()
 	endif()
 
+    if (NOT (MSVC_VERSION LESS 1700))
+        add_definitions(/D_ALLOW_KEYWORD_MACROS)
+    endif()
 endif()
 
 # Additional build params
