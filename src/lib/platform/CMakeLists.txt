@@ -44,7 +44,7 @@ add_library(platform STATIC ${sources})
 target_link_libraries(platform client ${libs})
 
 if (WIN32)
-	add_library(synrgyhk SHARED ${inc_hook} ${src_hook})
+	#add_library(synrgyhk SHARED ${inc_hook} ${src_hook})
 
 	# copy the dlls (and supporting files) from the lib dir to 
 	# the bin dir, so that synergyc and synergys can easily find them.

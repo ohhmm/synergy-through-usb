@@ -37,7 +37,7 @@
 class CUSBDataLinkListener : public IListenSocket {
 public:
 	CUSBDataLinkListener(IEventQueue* events);
-    virtual ~CUSBDataLinkListener();
+	virtual ~CUSBDataLinkListener();
 
 	// ISocket overrides
 	virtual void		bind(const BaseAddress &);
