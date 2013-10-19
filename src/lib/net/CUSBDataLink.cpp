@@ -548,7 +548,7 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 						else
 						{
 							LOG((CLOG_ERR "USB datalink: unexpected data during handshake, connection is not accepted"));	
-							// Just skip setting m_connected in this case. "Connect" funcion detects this and drops exception
+							// Just skip setting m_connected in this case. "Connect" function detects this and drops exception
 						}
 
 						this_->m_acceptedFlag = true;
@@ -576,7 +576,7 @@ void CUSBDataLink::readCallback(libusb_transfer *transfer)
 		}
 
 		if ((this_->m_inputBuffer.getSize() > 0) && !this_->m_leftToRead) {
-            this_->sendEvent(this_->m_events->forIStream().inputReady());
+			this_->sendEvent(this_->m_events->forIStream().inputReady());
 		}
 
 	}
@@ -660,7 +660,7 @@ void CUSBDataLink::writeCallback(libusb_transfer *transfer)
 
 		if (!this_->m_flushed)
 		{
-            this_->sendEvent(this_->m_events->forIStream().outputFlushed());
+			this_->sendEvent(this_->m_events->forIStream().outputFlushed());
 			this_->m_flushed = true;
 			this_->m_flushed.broadcast();
 		}

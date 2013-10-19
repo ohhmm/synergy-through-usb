@@ -148,7 +148,7 @@ void CUSBDataLinkListener::handleData(const Event&, void* ctx)
 			LOG((CLOG_DEBUG "USB datalink listener: connection request detected"));
 
 			m_waitingLinks.push_back(dataLink);
-            m_events->addEvent(Event(m_events->forIListenSocket().connecting(), this, NULL));
+			m_events->addEvent(Event(m_events->forIListenSocket().connecting(), this, NULL));
 		}
 		else
 		{

@@ -28,6 +28,4 @@ include_directories(
 
 add_library(io STATIC ${sources})
 
-if (UNIX)
-	target_link_libraries(io cryptopp)
-endif()
+target_link_libraries(io cryptopp)

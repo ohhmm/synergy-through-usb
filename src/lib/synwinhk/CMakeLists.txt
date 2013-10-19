@@ -31,10 +31,12 @@ add_library(synwinhk SHARED ${sources})
 # we should leave the other libraries compiling to the lib dir,
 # so that the bin dir remains tidy. the path is relative to the
 # build dir (in this case, that's: build\src\lib\platform).
+string(REGEX REPLACE "/" "\\\\" EXECUTABLE_OUTPUT_PATH_REVERSED ${EXECUTABLE_OUTPUT_PATH})
+string(REGEX REPLACE "/" "\\\\" LIBRARY_OUTPUT_PATH_REVERSED ${LIBRARY_OUTPUT_PATH})
 add_custom_command(
 	TARGET synwinhk 
 	POST_BUILD
 	COMMAND xcopy /Y /Q
-		..\\..\\..\\..\\lib\\${CMAKE_CFG_INTDIR}\\synwinhk.*
-		..\\..\\..\\..\\bin\\${CMAKE_CFG_INTDIR}\\
+		${LIBRARY_OUTPUT_PATH_REVERSED}\\\\${CMAKE_CFG_INTDIR}\\synwinhk.*
+		${EXECUTABLE_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\
 )
