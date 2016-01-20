@@ -16,17 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "base/Log.h"
+#include "CUSBDataLink.h"
 #include "CUSBDataLinkListener.h"
-#include "CUSBAddress.h"
+#include "base/TMethodEventJob.h"
+#include <algorithm>
 #include "arch/Arch.h"
-#include "arch/IArchUsbDataLink.h"
 #include "mt/Mutex.h"
 
 //
 // CUSBDataLinkListener
 //
 
-CUSBDataLinkListener::CUSBDataLinkListener()
+CUSBDataLinkListener::CUSBDataLinkListener(IEventQueue* events)
+: m_events(events)
 {
 	m_mutex = new Mutex;
 }
@@ -40,50 +43,49 @@ CUSBDataLinkListener::~CUSBDataLinkListener()
 void
 CUSBDataLinkListener::bind(const BaseAddress & addr)
 {
-//	assert(addr.getAddressType() == BaseAddress::USB);
-//	const CUSBAddress& usbAddress(reinterpret_cast<const CUSBAddress&>(addr));
-
-	USBDeviceEnumerator *list;
-	USBDeviceEnumerator iter;
-
-	size_t i = 0;
-
-	const unsigned int idVendor = 0x0402;
-	const unsigned int idProduct = 0x5632;
-
-	ARCH->usbGetDeviceList(&list);
+	Lock lock(m_mutex);
+	
+	IDataSocket* dataLink = new CUSBDataLink(m_events);
 	try
 	{
-		while ((iter = list[i++]) != NULL) 
-		{
-			USBDeviceInfo info;
-			
-			ARCH->usbGetDeviceInfo(iter, info);
+		dataLink->bind(addr);
+		
+		m_events->adoptHandler(
+            m_events->forIStream().inputReady(),
+			dataLink->getEventTarget(),
+			new TMethodEventJob<CUSBDataLinkListener>(this, &CUSBDataLinkListener::handleData, dataLink));
 
-			if (info.idVendor == idVendor &&
-				info.idProduct == idProduct)
-			{
-				m_usbLinks.push_back(ARCH->usbOpenDevice(iter, 0));
-			}
-		}
+		m_bindedLinks.insert(dataLink);
 	}
 	catch(...)
 	{
-		ARCH->usbFreeDeviceList(list);
+		delete dataLink;
 		throw;
 	}
-
-	ARCH->usbFreeDeviceList(list);
 }
 
 void
 CUSBDataLinkListener::close()
 {
-	for (CUSBLinks::iterator i=m_usbLinks.begin(); i!=m_usbLinks.end(); ++i)
+	Lock lock(m_mutex);
+
+	for (CUSBLinkSet::const_iterator i=m_bindedLinks.begin(); i!=m_bindedLinks.end(); ++i)
 	{
-		ARCH->usbCloseDevice(*i, 0);
+		delete *i;
 	}
-	m_usbLinks.clear();
+	m_bindedLinks.clear();
+
+	for (CUSBLinkDeque::const_iterator i=m_waitingLinks.begin(); i!=m_waitingLinks.end(); ++i)
+	{
+		delete *i;
+	}
+	m_waitingLinks.clear();
+
+	for (CUSBLinkSet::const_iterator i=m_activeLinks.begin(); i!=m_activeLinks.end(); ++i)
+	{
+		delete *i;
+	}
+	m_activeLinks.clear();
 }
 
 void*
@@ -95,6 +97,42 @@ CUSBDataLinkListener::getEventTarget() const
 IDataSocket*
 CUSBDataLinkListener::accept()
 {
-	// TODO : USB
-	return NULL;
+	Lock lock(m_mutex);
+
+	IDataSocket* result = m_waitingLinks.front();
+	m_waitingLinks.pop_front();
+
+	m_activeLinks.insert(result);
+
+	std::string buf("USB_ACCEPT");
+	result->write(buf.c_str(), buf.size());
+
+	return result;
+}
+
+void CUSBDataLinkListener::handleData(const Event&, void* ctx)
+{
+	LOG((CLOG_PRINT "CUSBDataLinkListener::handleData"));
+
+	IDataSocket* dataLink = reinterpret_cast<IDataSocket*>(ctx);
+
+	m_events->removeHandler(
+			m_events->forIStream().inputReady(),
+			dataLink->getEventTarget());
+
+	std::string buf("");
+		
+	buf.resize(dataLink->getSize(), 0);
+	dataLink->read((void*)buf.c_str(), buf.size());
+
+	assert(buf == "USB_CONNECT");
+
+	{
+		Lock lock(m_mutex);
+
+		m_bindedLinks.erase(dataLink);
+		m_waitingLinks.push_back(dataLink);
+	}
+
+	m_events->addEvent(Event(m_events->forIListenSocket().connecting(), this, NULL));
 }

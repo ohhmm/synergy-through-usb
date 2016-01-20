@@ -23,6 +23,7 @@ endif()
 
 include_directories(
 	../
+	${LIBUSB_1_INCLUDE_DIR}
 )
 
 if (UNIX)

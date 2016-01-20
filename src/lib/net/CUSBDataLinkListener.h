@@ -21,9 +21,12 @@
 
 #include "arch/IArchUsbDataLink.h"
 #include "IListenSocket.h"
+#include "IDataSocket.h"
 #include "mt/Lock.h"
 #include "mt/Thread.h"
-#include <vector>
+#include <set>
+#include <deque>
+
 
 //! USB data link cable listen
 /*!
@@ -31,7 +34,7 @@
 */
 class CUSBDataLinkListener : public IListenSocket {
 public:
-	CUSBDataLinkListener();
+	CUSBDataLinkListener(IEventQueue* events);
 	~CUSBDataLinkListener();
 
 	// ISocket overrides
@@ -43,13 +46,17 @@ public:
 	virtual IDataSocket*	accept();
 
 private:
-	void				serviceThread(void*);
+	void				handleData(const Event&, void*);
 
-	typedef std::vector<USBDeviceHandle> CUSBLinks;
+	typedef std::set<IDataSocket*> CUSBLinkSet;
+	typedef std::deque<IDataSocket*> CUSBLinkDeque;
+    
+	CUSBLinkSet			m_bindedLinks;
+	CUSBLinkDeque		m_waitingLinks;
+	CUSBLinkSet			m_activeLinks;
 
-	CUSBLinks			m_usbLinks;
 	Mutex*				m_mutex;
-	USBDataLinkConfig 	m_config;
+	IEventQueue*		m_events;
 };
 
 #endif

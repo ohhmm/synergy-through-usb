@@ -36,7 +36,7 @@ IDataSocket* CUSBDataLinkFactory::create() const
 
 IListenSocket* CUSBDataLinkFactory::createListen() const
 {
-	return new CUSBDataLinkListener();
+	return new CUSBDataLinkListener(m_events);
 }
 
 

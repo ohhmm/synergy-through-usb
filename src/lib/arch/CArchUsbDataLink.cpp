@@ -1,8 +1,10 @@
+#include "Arch.h"
 #include "XArch.h"
 #include "CArchUsbDataLink.h"
 #include <libusb.h>
 
 CArchUsbDataLink::CArchUsbDataLink() :
+	m_thread(NULL),
 	m_usbContext(NULL)
 {
 }
@@ -28,18 +30,82 @@ void CArchUsbDataLink::usbInit()
 	int rc = libusb_init(&m_usbContext);
 	if (rc != 0)
 	{
-		m_usbContext = NULL;
+		usbShut();
 		throw XArchNetwork("libusb_init failed");
+	}
+
+	m_thread = ARCH->newThread(&CArchUsbDataLink::threadFunc, m_usbContext);
+	if (m_thread == NULL) 
+	{
+		usbShut();
+		throw XArchNetwork("cannot create working thread");		
 	}
 }
 
 void CArchUsbDataLink::usbShut()
 {
+	if (m_thread)
+	{
+		ARCH->cancelThread(m_thread);
+		ARCH->wait(m_thread, -1);
+		ARCH->closeThread(m_thread);
+		m_thread = NULL;
+	}
+
 	if (m_usbContext)
 	{
 		libusb_exit(m_usbContext);
 		m_usbContext = NULL;
 	}
+}
+
+void* CArchUsbDataLink::threadFunc(void* ctx)
+{
+	USBContextHandle usbContext = reinterpret_cast<USBContextHandle>(ctx);
+	void* result = NULL;
+
+//	// get this thread's id for logging
+//	IArchMultithread::ThreadID id;
+//	{
+//		CArchThread thread = ARCH->newCurrentThread();
+//		id = ARCH->getIDOfThread(thread);
+//		ARCH->closeThread(thread);
+//	}
+
+	try {
+		// go
+		//LOG((CLOG_DEBUG1 "thread 0x%08x entry", id));
+
+		for (;;) {
+			ARCH->testCancelThread();
+
+			libusb_handle_events(usbContext);
+		}
+
+		//LOG((CLOG_DEBUG1 "thread 0x%08x exit", id));
+	}
+
+	catch (XThreadCancel&) {
+		// client called cancel()
+//		LOG((CLOG_DEBUG1 "caught cancel on thread 0x%08x", id));
+		throw;
+	}
+//	catch (XThreadExit& e) {
+		// client called exit()
+//		result = e.m_result;
+//		LOG((CLOG_DEBUG1 "caught exit on thread 0x%08x, result %p", id, result));
+//	}
+//	catch (XBase& e) {
+//		LOG((CLOG_ERR "exception on thread 0x%08x: %s", id, e.what()));
+//		throw;
+//	}
+	catch (...) {
+		//LOG((CLOG_ERR "exception on thread 0x%08x: <unknown>", id));
+		throw;
+	}
+
+	// return exit result
+	return result;
 }
 
 USBContextHandle CArchUsbDataLink::usbGetContext()
@@ -153,12 +219,12 @@ void CArchUsbDataLink::usbCloseDevice(USBDeviceHandle dev, int ifid)
 	}
 }
 
-int CArchUsbDataLink::usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout)
+int CArchUsbDataLink::usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, char* buf, unsigned int len, unsigned int timeout)
 {
 	unsigned char iomode = write ? LIBUSB_ENDPOINT_OUT : LIBUSB_ENDPOINT_IN;
 
 	int transferred = 0;
-	int rc = libusb_bulk_transfer(dev, port | iomode, buf, len, &transferred, timeout);
+	int rc = libusb_bulk_transfer(dev, port | iomode, (unsigned char*)buf, len, &transferred, timeout);
 	if (rc != 0) // libusb error
 	{
 		if (rc == LIBUSB_ERROR_TIMEOUT)
@@ -172,12 +238,12 @@ int CArchUsbDataLink::usbBulkTransfer(USBDeviceHandle dev, bool write, unsigned 
 	return transferred;
 }
 
-int CArchUsbDataLink::usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, unsigned char* buf, unsigned int len, unsigned int timeout)
+int CArchUsbDataLink::usbTryBulkTransfer(USBDeviceHandle dev, bool write, unsigned char port, char* buf, unsigned int len, unsigned int timeout)
 {
 	unsigned char iomode = write ? LIBUSB_ENDPOINT_OUT : LIBUSB_ENDPOINT_IN;
 
 	int transferred = 0;
-	int rc = libusb_bulk_transfer(dev, port | iomode, buf, len, &transferred, timeout);
+	int rc = libusb_bulk_transfer(dev, port | iomode, (unsigned char*)buf, len, &transferred, timeout);
 	if (rc != 0)
 	{
 		transferred = 0;
