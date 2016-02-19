@@ -87,6 +87,14 @@ if (WIN32)
 				${EXECUTABLE_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\
 			)
 	endif()
+	
+	# include lib into package
+	if (CONF_CPACK)
+		install(TARGETS
+			synrgyhk
+			COMPONENT core
+			DESTINATION bin)
+	endif(CONF_CPACK)
 endif()
 
 if (UNIX)
@@ -98,10 +106,3 @@ if (APPLE)
 	target_link_libraries(platform ${COCOA_LIBRARY})
 endif()
 
-# include lib into package
-if (CONF_CPACK)
-	install(TARGETS
-		synrgyhk
-		COMPONENT core
-		DESTINATION bin)
-endif(CONF_CPACK)
