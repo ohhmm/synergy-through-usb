@@ -92,7 +92,7 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 	else {
 		if (!args().m_synergyAddress.empty()) {
 			try {
-				std::auto_ptr<CUSBAddress> usbAddress(new CUSBAddress());
+				std::unique_ptr<CUSBAddress> usbAddress(new CUSBAddress());
 				if( usbAddress->setUSBHostName(args().m_synergyAddress) )
 				{
 					usbAddress->resolve();
@@ -100,7 +100,7 @@ ServerApp::parseArgs(int argc, const char* const* argv)
 				}
 				else
 				{
-					std::auto_ptr<NetworkAddress> networkAddress(new NetworkAddress(args().m_synergyAddress, kDefaultPort));
+					std::unique_ptr<NetworkAddress> networkAddress(new NetworkAddress(args().m_synergyAddress, kDefaultPort));
 					networkAddress->resolve();
 					m_synergyAddresses.push_back(networkAddress.release());
 				}
