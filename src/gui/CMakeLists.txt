@@ -13,9 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-cmake_minimum_required ( VERSION 2.6 )
-find_package (Qt4 REQUIRED QtCore QtGui QtNetwork)
+set(QVer 5)
+find_package (Qt${QVer} REQUIRED Core Gui Network LinguistTools)
 
 
 include_directories (	.
@@ -88,10 +87,10 @@ file(GLOB SYNERGYGUI_TRANS "./res/lang/*.ts")
 set ( QT_USE_QTNETWORK TRUE )
 
 
-qt4_add_resources ( SYNERGYGUI_RC_SRCS ${SYNERGYGUI_RCS} )
-qt4_wrap_ui ( SYNERGYGUI_UI_HDRS ${SYNERGYGUI_UIS} )
-qt4_wrap_cpp ( SYNERGYGUI_MOC_SRCS ${SYNERGYGUI_MOC_HDRS} )
-qt4_create_translation ( SYNERGYGUI_TRANS_SRCS ${SYNERGYGUI_TRANS} )
+qt5_add_resources ( SYNERGYGUI_RC_SRCS ${SYNERGYGUI_RCS} )
+qt_wrap_ui ( SYNERGYGUI_UI_HDRS ${SYNERGYGUI_UIS} )
+qt_wrap_cpp ( SYNERGYGUI_MOC_SRCS ${SYNERGYGUI_MOC_HDRS} )
+qt5_create_translation ( SYNERGYGUI_TRANS_SRCS ${SYNERGYGUI_TRANS} )
 
 
 add_executable ( synergy WIN32 ${SYNERGYGUI_SRCS}
@@ -150,13 +149,13 @@ if (MSVC)
 				TARGET synergy
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
-				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}${QVer}.dll
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/
-				COMMENT "Copying ${qtlib}${TYPE}4.dll to
+				COMMENT "Copying ${qtlib}${TYPE}${QVer}.dll to
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
 			if (CONF_CPACK)
-				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}${QVer}.dll
 					DESTINATION bin
 					CONFIGURATIONS Release
 					COMPONENT gui)
@@ -169,13 +168,13 @@ if (MSVC)
 				TARGET synergy
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND} -E
-				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+				copy_if_different ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}${QVer}.dll
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/
-				COMMENT "Copying ${qtlib}${TYPE}4.dll to
+				COMMENT "Copying ${qtlib}${TYPE}${QVer}.dll to
 				${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/"
 			)
 			if (CONF_CPACK)
-				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}4.dll
+				install(FILES ${QT_DLL_PATH_tmp}/${qtlib}${TYPE}${QVer}.dll
 					DESTINATION bin
 					CONFIGURATIONS Debug
 					COMPONENT gui)
