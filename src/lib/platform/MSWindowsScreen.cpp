@@ -1049,7 +1049,7 @@ MSWindowsScreen::onPreDispatchPrimary(HWND,
 }
 
 bool
-CMSWindowsScreen::onEvent(HWND hwnd, UINT msg,
+MSWindowsScreen::onEvent(HWND hwnd, UINT msg,
 				WPARAM wParam, LPARAM lParam, LRESULT* result)
 {
 	switch (msg) {

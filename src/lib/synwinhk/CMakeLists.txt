@@ -40,3 +40,11 @@ add_custom_command(
 		${LIBRARY_OUTPUT_PATH_REVERSED}\\\\${CMAKE_CFG_INTDIR}\\synwinhk.*
 		${EXECUTABLE_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\
 )
+
+# include lib into package
+if (CONF_CPACK)
+install(TARGETS
+		synwinhk
+		COMPONENT core
+		DESTINATION bin)
+endif(CONF_CPACK)

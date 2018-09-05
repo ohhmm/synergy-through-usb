@@ -55,14 +55,6 @@ if (WIN32)
 	string(REGEX REPLACE "/" "\\\\" EXECUTABLE_OUTPUT_PATH_REVERSED ${EXECUTABLE_OUTPUT_PATH})
 	string(REGEX REPLACE "/" "\\\\" LIBRARY_OUTPUT_PATH_REVERSED ${LIBRARY_OUTPUT_PATH})
 
-	add_custom_command(
-		TARGET synrgyhk 
-		POST_BUILD
-		COMMAND xcopy /Y /Q
-			${LIBRARY_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\synrgyhk.*
-			${EXECUTABLE_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\
-	)
-
 	if (GAME_DEVICE_SUPPORT)
 		include_directories($ENV{DXSDK_DIR}/Include)
 		add_library(synxinhk SHARED ${inc_xinhook} ${src_xinhook})
@@ -87,14 +79,7 @@ if (WIN32)
 				${EXECUTABLE_OUTPUT_PATH_REVERSED}\\${CMAKE_CFG_INTDIR}\\
 			)
 	endif()
-	
-	# include lib into package
-	if (CONF_CPACK)
-		install(TARGETS
-			synrgyhk
-			COMPONENT core
-			DESTINATION bin)
-	endif(CONF_CPACK)
+
 endif()
 
 if (UNIX)
